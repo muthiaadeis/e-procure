@@ -9,6 +9,7 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\GlobalSearchController;
 
 Route::get('/', function () {
     return redirect()->route('material-requests.index');
@@ -53,6 +54,10 @@ Route::middleware('auth')->group(function () {
         ->name('purchase-orders.print');
     Route::post('purchase-orders/{purchaseOrder}/approvals/{approval}/sign', [PurchaseOrderController::class, 'sign'])
         ->name('purchase-orders.sign');
+
+    // Global Search & Topbar Notifications
+    Route::get('/search/quick', [GlobalSearchController::class, 'search'])->name('search.quick');
+    Route::get('/notifications/feed', [GlobalSearchController::class, 'notifications'])->name('notifications.feed');
 });
 
 require __DIR__.'/auth.php';
