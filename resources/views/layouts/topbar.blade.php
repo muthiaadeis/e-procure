@@ -187,58 +187,87 @@
                  x-transition:leave="ease-in duration-100"
                  x-transition:leave-start="opacity-100 scale-100"
                  x-transition:leave-end="opacity-0 scale-95"
-                 class="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                 class="absolute right-0 top-full mt-2 w-[340px] sm:w-[420px] md:w-[460px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
 
-                <div class="p-3.5 border-b border-gray-100 flex items-center justify-between bg-gray-50/75">
+                <div class="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between bg-gray-50/75">
                     <div class="flex items-center gap-2">
-                        <h4 class="font-bold text-sm text-gray-800">Notifikasi Pengadaan</h4>
+                        <h4 class="font-bold text-sm text-gray-800">Notifikasi Dokumen</h4>
                         <span x-show="unreadCount > 0"
                               x-cloak
-                              class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[11px] font-bold"
-                              x-text="unreadCount + ' Baru'">
+                              class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[11px] font-bold border border-red-100"
+                              x-text="unreadCount + ' Perlu Tindakan'">
                         </span>
                     </div>
                     <button x-show="unreadCount > 0"
                             x-cloak
                             @click="markAllAsRead()"
                             type="button"
-                            class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
-                        Tandai dibaca
+                            class="text-xs text-indigo-600 hover:text-indigo-700 font-medium transition">
+                        Tandai sudah dibaca
                     </button>
                 </div>
 
-                <div class="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                <div class="max-h-[380px] overflow-y-auto divide-y divide-gray-100">
                     <template x-for="item in notifications" :key="item.id">
-                        <a :href="item.url" class="flex items-start gap-3 p-3.5 hover:bg-gray-50 transition block">
-                            <span class="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5"
-                                  :class="item.badge_class"
-                                  x-text="item.badge">
-                            </span>
+                        <a :href="item.url" class="flex items-start gap-3 p-3.5 sm:p-4 hover:bg-gray-50/80 transition block group">
+                            {{-- Icon --}}
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                                 :class="item.icon_bg">
+                                <template x-if="item.icon_type === 'warning'">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                </template>
+                                <template x-if="item.icon_type === 'clock'">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </template>
+                                <template x-if="item.icon_type === 'document'">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                </template>
+                                <template x-if="item.icon_type === 'cart'">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                    </svg>
+                                </template>
+                            </div>
+
+                            {{-- Content --}}
                             <div class="min-w-0 flex-1">
-                                <div class="flex items-center justify-between gap-1">
-                                    <p class="text-xs font-semibold text-gray-800 truncate" x-text="item.title"></p>
-                                    <span class="text-[10px] text-gray-400 shrink-0" x-text="item.time"></span>
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border"
+                                              :class="item.module_badge_class"
+                                              x-text="item.module"></span>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border"
+                                              :class="item.status_class"
+                                              x-text="item.status_label"></span>
+                                    </div>
+                                    <span class="text-[11px] text-gray-400 shrink-0" x-text="item.time"></span>
                                 </div>
-                                <p class="text-xs text-gray-500 line-clamp-2 mt-0.5" x-text="item.message"></p>
+
+                                <p class="text-xs sm:text-[13px] font-semibold text-gray-800 group-hover:text-indigo-600 transition leading-snug" x-text="item.title"></p>
+                                <p class="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-relaxed" x-text="item.message"></p>
                             </div>
                         </a>
                     </template>
 
-                    <div x-show="notifications.length === 0" class="py-8 text-center px-4">
-                        <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                        <p class="text-xs text-gray-500 font-medium">Semua dokumen dalam kondisi terkini. Tidak ada notifikasi tertunda.</p>
+                    <div x-show="notifications.length === 0" class="py-10 text-center px-4">
+                        <div class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center mx-auto mb-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <p class="text-xs font-semibold text-gray-700">Semua Beres!</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Tidak ada dokumen atau persetujuan yang tertunda.</p>
                     </div>
-                </div>
-
-                <div class="p-2.5 bg-gray-50 text-center border-t border-gray-100">
-                    <a href="{{ route('material-requests.index') }}" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
-                        Lihat Seluruh Material Request &rarr;
-                    </a>
                 </div>
             </div>
         </div>
+
 
         {{-- 3. Help Center (?) Icon with Interactive Modal --}}
         <div>
