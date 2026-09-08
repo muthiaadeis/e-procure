@@ -49,6 +49,62 @@
                 form.querySelector('[name=reason]').value = this.rejectReason;
                 this.rejectOpen = false;
                 form.submit();
+            },
+            init() {
+                @php
+                    $autoOpenReq = null;
+                    if (request('auto_open')) {
+                        $autoOpenTarget = request('auto_open');
+                        $autoOpenReq = $requests->first(function($r) use ($autoOpenTarget) {
+                            return $r->id == $autoOpenTarget || $r->no_mr == $autoOpenTarget;
+                        });
+                        if (! $autoOpenReq) {
+                            $autoOpenReq = \App\Models\MaterialRequest::with(['items', 'approverA', 'approverC', 'rejectorA', 'rejectorC', 'financeRejector'])
+                                ->where('id', $autoOpenTarget)
+                                ->orWhere('no_mr', $autoOpenTarget)
+                                ->first();
+                        }
+                    }
+                @endphp
+                @if(isset($autoOpenReq) && $autoOpenReq)
+                    @php
+                        $autoPayload = [
+                            'no' => 1,
+                            'no_mr' => $autoOpenReq->no_mr ?? '-',
+                            'date' => $autoOpenReq->date ? $autoOpenReq->date->format('d-m-Y') : '-',
+                            'charge_to' => $autoOpenReq->charge_to,
+                            'items' => $autoOpenReq->items->map(fn ($item) => [
+                                'description' => $item->description,
+                                'quantity' => $item->quantity,
+                                'unit' => $item->unit,
+                                'remarks' => $item->remarks,
+                            ])->values(),
+                            'approver_a' => $autoOpenReq->approverA->name ?? '-',
+                            'is_approved_a' => $autoOpenReq->is_approved_by_a,
+                            'approved_a_at' => $autoOpenReq->approved_a_at ? $autoOpenReq->approved_a_at->format('d-m-Y') : null,
+                            'is_rejected_a' => $autoOpenReq->is_rejected_by_a,
+                            'rejection_a_reason' => $autoOpenReq->rejection_a_reason,
+                            'approver_c' => $autoOpenReq->approverC->name ?? '-',
+                            'is_approved_c' => $autoOpenReq->is_approved_by_c,
+                            'approved_c_at' => $autoOpenReq->approved_c_at ? $autoOpenReq->approved_c_at->format('d-m-Y') : null,
+                            'is_rejected_c' => $autoOpenReq->is_rejected_by_c,
+                            'rejection_c_reason' => $autoOpenReq->rejection_c_reason,
+                            'is_rejected_finance' => $autoOpenReq->is_rejected_by_finance,
+                            'finance_rejection_reason' => $autoOpenReq->finance_rejection_reason,
+                            'finance_rejector' => $autoOpenReq->financeRejector->name ?? '-',
+                            'status' => $autoOpenReq->status,
+                            'is_overdue' => $autoOpenReq->is_overdue,
+                            'overdue_reason' => $autoOpenReq->overdue_reason,
+                        ];
+                    @endphp
+                    this.$nextTick(() => {
+                        this.openDetail({{ \Illuminate\Support\Js::from($autoPayload) }});
+                        const targetRow = document.getElementById('mr-row-{{ $autoOpenReq->id }}');
+                        if (targetRow) {
+                            targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                @endif
             }
         }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">

@@ -32,6 +32,13 @@
     // Notification state
     notificationOpen: false,
     notifications: [],
+    readNotificationIds: (function() {
+        try {
+            return JSON.parse(localStorage.getItem('eprocure_read_notifications') || '[]');
+        } catch(e) {
+            return [];
+        }
+    })(),
     unreadCount: 0,
     notificationLoading: false,
     async loadNotifications() {
@@ -39,15 +46,46 @@
         try {
             const res = await fetch(`{{ route('notifications.feed') }}`);
             const data = await res.json();
-            this.notifications = data.notifications || [];
-            this.unreadCount = data.unread_count || 0;
+            const rawList = data.notifications || [];
+
+            try {
+                this.readNotificationIds = JSON.parse(localStorage.getItem('eprocure_read_notifications') || '[]');
+            } catch(e) {}
+
+            this.notifications = rawList.map(item => ({
+                ...item,
+                is_read: this.readNotificationIds.includes(item.id)
+            }));
+            this.unreadCount = this.notifications.filter(item => !item.is_read).length;
         } catch (e) {
             this.notifications = [];
+            this.unreadCount = 0;
         } finally {
             this.notificationLoading = false;
         }
     },
+    markAsRead(item) {
+        if (!item.is_read) {
+            if (!this.readNotificationIds.includes(item.id)) {
+                this.readNotificationIds.push(item.id);
+                try {
+                    localStorage.setItem('eprocure_read_notifications', JSON.stringify(this.readNotificationIds));
+                } catch (e) {}
+            }
+            item.is_read = true;
+            this.unreadCount = Math.max(0, this.unreadCount - 1);
+        }
+    },
     markAllAsRead() {
+        this.notifications.forEach(item => {
+            if (!this.readNotificationIds.includes(item.id)) {
+                this.readNotificationIds.push(item.id);
+            }
+            item.is_read = true;
+        });
+        try {
+            localStorage.setItem('eprocure_read_notifications', JSON.stringify(this.readNotificationIds));
+        } catch (e) {}
         this.unreadCount = 0;
     },
 
@@ -197,6 +235,11 @@
                               class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[11px] font-bold border border-red-100"
                               x-text="unreadCount + ' Perlu Tindakan'">
                         </span>
+                        <span x-show="unreadCount === 0 && notifications.length > 0"
+                              x-cloak
+                              class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-medium border border-emerald-100">
+                            Semua Terbaca
+                        </span>
                     </div>
                     <button x-show="unreadCount > 0"
                             x-cloak
@@ -209,7 +252,10 @@
 
                 <div class="max-h-[380px] overflow-y-auto divide-y divide-gray-100">
                     <template x-for="item in notifications" :key="item.id">
-                        <a :href="item.url" class="flex items-start gap-3 p-3.5 sm:p-4 hover:bg-gray-50/80 transition block group">
+                        <a :href="item.url"
+                           @click="markAsRead(item)"
+                           class="flex items-start gap-3 p-3.5 sm:p-4 hover:bg-gray-50/80 transition block group relative"
+                           :class="item.is_read ? 'bg-white opacity-70 hover:opacity-100' : 'bg-indigo-50/20'">
                             {{-- Icon --}}
                             <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
                                  :class="item.icon_bg">
@@ -246,10 +292,15 @@
                                               :class="item.status_class"
                                               x-text="item.status_label"></span>
                                     </div>
-                                    <span class="text-[11px] text-gray-400 shrink-0" x-text="item.time"></span>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <span class="text-[11px] text-gray-400" x-text="item.time"></span>
+                                        <span x-show="!item.is_read" class="w-2 h-2 rounded-full bg-indigo-600 inline-block" title="Belum dibaca"></span>
+                                    </div>
                                 </div>
 
-                                <p class="text-xs sm:text-[13px] font-semibold text-gray-800 group-hover:text-indigo-600 transition leading-snug" x-text="item.title"></p>
+                                <p class="text-xs sm:text-[13px] group-hover:text-indigo-600 transition leading-snug"
+                                   :class="item.is_read ? 'text-gray-700 font-medium' : 'text-gray-900 font-bold'"
+                                   x-text="item.title"></p>
                                 <p class="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-relaxed" x-text="item.message"></p>
                             </div>
                         </a>

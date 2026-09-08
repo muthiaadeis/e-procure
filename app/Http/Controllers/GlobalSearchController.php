@@ -38,7 +38,7 @@ class GlobalSearchController extends Controller
                 'title' => $mr->no_mr ?? 'MR-' . $mr->id,
                 'subtitle' => $mr->charge_to ?? 'Material Request',
                 'status' => $mr->status ?? 'Active',
-                'url' => route('material-requests.show', $mr),
+                'url' => route('material-requests.index', ['search' => $mr->no_mr, 'auto_open' => $mr->id]),
             ];
         }
 
@@ -142,7 +142,7 @@ class GlobalSearchController extends Controller
                 'title' => 'Permintaan Terlambat: ' . ($m->no_mr ?? 'MR-' . $m->id),
                 'message' => 'Material request untuk ' . ($m->charge_to ?? 'proyek') . ' telah melebihi batas waktu approval.',
                 'time' => $m->created_at->diffForHumans(),
-                'url' => route('material-requests.show', $m),
+                'url' => route('material-requests.index', ['search' => $m->no_mr, 'filter' => 'overdue', 'auto_open' => $m->id]),
             ];
         }
 
@@ -160,7 +160,7 @@ class GlobalSearchController extends Controller
                 'title' => 'Menunggu Approval: ' . ($m->no_mr ?? 'MR-' . $m->id),
                 'message' => 'Membutuhkan persetujuan Approver A (' . ($m->charge_to ?? 'Umum') . ').',
                 'time' => $m->created_at->diffForHumans(),
-                'url' => route('material-requests.show', $m),
+                'url' => route('material-requests.index', ['search' => $m->no_mr, 'filter' => 'pending_approval', 'auto_open' => $m->id]),
             ];
         }
 

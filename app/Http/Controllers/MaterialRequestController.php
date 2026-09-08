@@ -71,6 +71,20 @@ class MaterialRequestController extends Controller
         return view('material_requests.index', compact('requests', 'search'));
     }
 
+    public function show(Request $request, MaterialRequest $materialRequest)
+    {
+        $params = [
+            'search' => $materialRequest->no_mr,
+            'auto_open' => $materialRequest->id,
+        ];
+
+        if ($request->filled('filter')) {
+            $params['filter'] = $request->query('filter');
+        }
+
+        return redirect()->route('material-requests.index', $params);
+    }
+
     public function create()
     {
         abort_unless(auth()->user()->isInput(), 403, "You don't have permission to add a Material Request.");

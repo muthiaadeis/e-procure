@@ -23,7 +23,7 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             @forelse($requests as $req)
-                            <tr class="hover:bg-gray-50 transition">
+                            <tr id="mr-row-{{ $req->id }}" class="transition {{ request('auto_open') && ($req->id == request('auto_open') || $req->no_mr == request('auto_open')) ? 'bg-indigo-50/80 ring-2 ring-indigo-500/50' : 'hover:bg-gray-50' }}">
                                 <td class="px-4 py-3.5 text-gray-500">{{ $requests->firstItem() + $loop->index }}</td>
                                 <td class="px-4 py-3.5 font-medium text-gray-800 truncate">{{ $req->no_mr ?? '-' }}</td>
                                 <td class="px-4 py-3.5 text-gray-600 whitespace-nowrap">{{ $req->date->format('d-m-Y') }}</td>
