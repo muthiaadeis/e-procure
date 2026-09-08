@@ -2,21 +2,21 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Dashboard Pengadaan</h1>
-                <p class="text-sm text-gray-500 mt-1">Ringkasan analitik dan aktivitas pengadaan lintas seluruh modul (MR, RLP, PR, PO).</p>
+                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Procurement Dashboard</h1>
+                <p class="text-sm text-gray-500 mt-1">Analytics overview and procurement activity across all modules (MR, RLP, PR, PO).</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('vendors.index') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 font-medium hover:bg-gray-50 transition shadow-sm">
                     <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                     </svg>
-                    <span><strong class="text-gray-800">{{ number_format($totalVendor) }}</strong> Vendor Aktif</span>
+                    <span><strong class="text-gray-800">{{ number_format($totalVendor) }}</strong> Active Vendors</span>
                 </a>
                 <span class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 font-medium shadow-sm">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
-                    {{ now()->translatedFormat('F Y') }}
+                    {{ now()->format('F Y') }}
                 </span>
             </div>
         </div>
@@ -35,14 +35,14 @@
                         </svg>
                     </span>
                     <span class="inline-flex items-center text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/70">
-                        {{ number_format($mrThisMonth) }} bln ini
+                        {{ number_format($mrThisMonth) }} this month
                     </span>
                 </div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Material Request (MR)</p>
                 <div class="flex items-baseline justify-between mt-1">
                     <p class="text-2xl font-bold text-gray-800">{{ number_format($totalMr) }}</p>
                     <span class="text-xs text-indigo-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                        Lihat <span aria-hidden="true">&rarr;</span>
+                        View <span aria-hidden="true">&rarr;</span>
                     </span>
                 </div>
             </a>
@@ -56,14 +56,14 @@
                         </svg>
                     </span>
                     <span class="inline-flex items-center text-xs font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100/70">
-                        {{ number_format($rlpThisMonth) }} bln ini
+                        {{ number_format($rlpThisMonth) }} this month
                     </span>
                 </div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Local Purchase (RLP)</p>
                 <div class="flex items-baseline justify-between mt-1">
                     <p class="text-2xl font-bold text-gray-800">{{ number_format($totalRlp) }}</p>
                     <span class="text-xs text-purple-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                        Lihat <span aria-hidden="true">&rarr;</span>
+                        View <span aria-hidden="true">&rarr;</span>
                     </span>
                 </div>
             </a>
@@ -77,14 +77,14 @@
                         </svg>
                     </span>
                     <span class="inline-flex items-center text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100/70">
-                        {{ number_format($prThisMonth) }} bln ini
+                        {{ number_format($prThisMonth) }} this month
                     </span>
                 </div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Purchase Request (PR)</p>
                 <div class="flex items-baseline justify-between mt-1">
                     <p class="text-2xl font-bold text-gray-800">{{ number_format($totalPr) }}</p>
                     <span class="text-xs text-amber-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                        Lihat <span aria-hidden="true">&rarr;</span>
+                        View <span aria-hidden="true">&rarr;</span>
                     </span>
                 </div>
             </a>
@@ -98,14 +98,14 @@
                         </svg>
                     </span>
                     <span class="inline-flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100/70">
-                        {{ number_format($poThisMonth) }} bln ini
+                        {{ number_format($poThisMonth) }} this month
                     </span>
                 </div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Purchase Order (PO)</p>
                 <div class="flex items-baseline justify-between mt-1">
                     <p class="text-2xl font-bold text-gray-800">{{ number_format($totalPo) }}</p>
                     <span class="text-xs text-emerald-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                        Lihat <span aria-hidden="true">&rarr;</span>
+                        View <span aria-hidden="true">&rarr;</span>
                     </span>
                 </div>
             </a>
@@ -121,27 +121,27 @@
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-100">
                         <div>
                             <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
-                                <span>Tren Pengadaan Seluruh Dokumen</span>
-                                <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold">6 Bulan Terakhir</span>
+                                <span>Procurement Trends Across All Documents</span>
+                                <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold">Last 6 Months</span>
                             </h3>
-                            <p class="text-xs text-gray-500 mt-0.5">Perbandingan volume penerbitan MR, RLP, PR, dan PO per bulan.</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Monthly issuance comparison of MR, RLP, PR, and PO documents.</p>
                         </div>
 
                         {{-- Tipe Grafik Toggle (Batang vs Garis) --}}
                         <div class="inline-flex p-1 bg-gray-100 rounded-lg text-xs font-medium text-gray-600">
                             <button type="button" id="btnChartBar" class="chart-type-btn px-3 py-1.5 rounded-md bg-white text-gray-800 font-semibold shadow-sm transition">
-                                Batang
+                                Bar
                             </button>
                             <button type="button" id="btnChartLine" class="chart-type-btn px-3 py-1.5 rounded-md text-gray-500 hover:text-gray-800 transition">
-                                Garis
+                                Line
                             </button>
                         </div>
                     </div>
 
-                    {{-- Filter Tabs (Semua / MR / RLP / PR / PO) --}}
+                    {{-- Filter Tabs (All / MR / RLP / PR / PO) --}}
                     <div class="flex flex-wrap items-center gap-1.5 mb-5">
                         <button type="button" class="filter-tab active px-3 py-1 rounded-lg text-xs font-medium border border-indigo-600 bg-indigo-600 text-white shadow-sm transition" data-filter="all">
-                            Semua Dokumen ({{ $totalAll }})
+                            All Documents ({{ $totalAll }})
                         </button>
                         <button type="button" class="filter-tab px-3 py-1 rounded-lg text-xs font-medium border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition" data-filter="mr">
                             <span class="inline-block w-2 h-2 rounded-full bg-indigo-500 mr-1.5"></span>MR ({{ $totalMr }})
@@ -170,7 +170,7 @@
                             <span class="text-[11px] font-semibold text-indigo-700">Material Request</span>
                             <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
                         </div>
-                        <p class="text-lg font-bold text-gray-800 mt-1">{{ $trend->sum('mr') }} <span class="text-[10px] text-gray-500 font-normal">dokumen</span></p>
+                        <p class="text-lg font-bold text-gray-800 mt-1">{{ $trend->sum('mr') }} <span class="text-[10px] text-gray-500 font-normal">documents</span></p>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-purple-50/50 border border-purple-100/60">
@@ -178,7 +178,7 @@
                             <span class="text-[11px] font-semibold text-purple-700">Local Purchase</span>
                             <span class="w-2 h-2 rounded-full bg-purple-500"></span>
                         </div>
-                        <p class="text-lg font-bold text-gray-800 mt-1">{{ $trend->sum('rlp') }} <span class="text-[10px] text-gray-500 font-normal">dokumen</span></p>
+                        <p class="text-lg font-bold text-gray-800 mt-1">{{ $trend->sum('rlp') }} <span class="text-[10px] text-gray-500 font-normal">documents</span></p>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-amber-50/50 border border-amber-100/60">
@@ -186,7 +186,7 @@
                             <span class="text-[11px] font-semibold text-amber-700">Purchase Request</span>
                             <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                         </div>
-                        <p class="text-lg font-bold text-gray-800 mt-1">{{ $trend->sum('pr') }} <span class="text-[10px] text-gray-500 font-normal">dokumen</span></p>
+                        <p class="text-lg font-bold text-gray-800 mt-1">{{ $trend->sum('pr') }} <span class="text-[10px] text-gray-500 font-normal">documents</span></p>
                     </div>
 
                     <div class="p-2.5 rounded-lg bg-emerald-50/50 border border-emerald-100/60">
@@ -194,7 +194,7 @@
                             <span class="text-[11px] font-semibold text-emerald-700">Purchase Order</span>
                             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                         </div>
-                        <p class="text-lg font-bold text-gray-800 mt-1">{{ $trend->sum('po') }} <span class="text-[10px] text-gray-500 font-normal">dokumen</span></p>
+                        <p class="text-lg font-bold text-gray-800 mt-1">{{ $trend->sum('po') }} <span class="text-[10px] text-gray-500 font-normal">documents</span></p>
                     </div>
                 </div>
             </div>
@@ -204,8 +204,8 @@
                 <div>
                     <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
                         <div>
-                            <h3 class="font-bold text-gray-800 text-lg">Distribusi Dokumen</h3>
-                            <p class="text-xs text-gray-500 mt-0.5">Proporsi seluruh dokumen pengadaan.</p>
+                            <h3 class="font-bold text-gray-800 text-lg">Document Distribution</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Proportion of all procurement documents.</p>
                         </div>
                         <span class="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold">
                             Total: {{ number_format($totalAll) }}
@@ -217,7 +217,7 @@
                         <canvas id="procurementDistributionChart" class="max-w-[210px] max-h-[210px]"></canvas>
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                             <span class="text-2xl font-extrabold text-gray-800">{{ number_format($totalAll) }}</span>
-                            <span class="text-[11px] text-gray-400 font-medium">Total Dokumen</span>
+                            <span class="text-[11px] text-gray-400 font-medium">Total Documents</span>
                         </div>
                     </div>
                 </div>
@@ -278,17 +278,17 @@
             <div class="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="p-5 border-b border-gray-100 flex items-center justify-between">
                     <div>
-                        <h3 class="font-semibold text-gray-800">Rincian Dokumen per Bulan</h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Rekapitulasi kuantitas setiap dokumen pengadaan dalam 6 bulan terakhir.</p>
+                        <h3 class="font-semibold text-gray-800">Monthly Document Breakdown</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Recap of document quantities over the last 6 months.</p>
                     </div>
-                    <span class="text-xs text-gray-400">Terakhir diperbarui: {{ now()->translatedFormat('d M Y H:i') }}</span>
+                    <span class="text-xs text-gray-400">Last updated: {{ now()->format('d M Y H:i') }}</span>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
                         <thead class="bg-gray-50/75 text-xs text-gray-500 uppercase font-semibold border-b border-gray-100">
                             <tr>
-                                <th class="py-3 px-5">Bulan</th>
+                                <th class="py-3 px-5">Month</th>
                                 <th class="py-3 px-4 text-center">MR</th>
                                 <th class="py-3 px-4 text-center">RLP</th>
                                 <th class="py-3 px-4 text-center">PR</th>
@@ -330,7 +330,7 @@
                         </tbody>
                         <tfoot class="bg-gray-50/75 border-t border-gray-100 font-semibold text-xs text-gray-800">
                             <tr>
-                                <td class="py-3 px-5 uppercase">Total 6 Bulan</td>
+                                <td class="py-3 px-5 uppercase">6-Month Total</td>
                                 <td class="py-3 px-4 text-center text-indigo-700">{{ $trend->sum('mr') }}</td>
                                 <td class="py-3 px-4 text-center text-purple-700">{{ $trend->sum('rlp') }}</td>
                                 <td class="py-3 px-4 text-center text-amber-700">{{ $trend->sum('pr') }}</td>
@@ -346,8 +346,8 @@
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-                        <h3 class="font-semibold text-gray-800">Aktivitas Dokumen Terbaru</h3>
-                        <a href="{{ route('material-requests.index') }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-700">Semua MR &rarr;</a>
+                        <h3 class="font-semibold text-gray-800">Recent Document Activities</h3>
+                        <a href="{{ route('material-requests.index') }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-700">All MRs &rarr;</a>
                     </div>
 
                     <div class="space-y-3.5">
@@ -368,17 +368,17 @@
                                 </div>
                             </a>
                         @empty
-                            <p class="text-sm text-gray-400 text-center py-6">Belum ada aktivitas dokumen.</p>
+                            <p class="text-sm text-gray-400 text-center py-6">No recent document activities.</p>
                         @endforelse
                     </div>
                 </div>
 
                 <div class="pt-4 mt-4 border-t border-gray-100 grid grid-cols-2 gap-2 text-center text-xs">
                     <a href="{{ route('purchase-requests.index') }}" class="py-2 px-3 rounded-lg bg-gray-50 hover:bg-amber-50 hover:text-amber-700 text-gray-600 font-medium transition">
-                        Buka PR &rarr;
+                        Open PR &rarr;
                     </a>
                     <a href="{{ route('purchase-orders.index') }}" class="py-2 px-3 rounded-lg bg-gray-50 hover:bg-emerald-50 hover:text-emerald-700 text-gray-600 font-medium transition">
-                        Buka PO &rarr;
+                        Open PO &rarr;
                     </a>
                 </div>
             </div>
@@ -511,7 +511,7 @@
                                     items.forEach(function (item) {
                                         sum += item.raw;
                                     });
-                                    return 'Total Dokumen: ' + sum;
+                                    return 'Total Documents: ' + sum;
                                 }
                             }
                         }

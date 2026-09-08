@@ -129,7 +129,7 @@
                @input.debounce.250ms="performSearch()"
                @focus="if(searchQuery.trim().length >= 2) searchOpen = true"
                @keydown.escape="searchOpen = false"
-               placeholder="Cari dokumen (MR, RLP, PR, PO, Vendor)..."
+               placeholder="Search documents (MR, RLP, PR, PO, Vendor)..."
                class="w-full bg-gray-50 border-gray-200 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 rounded-lg text-sm pl-10 pr-16 py-2 placeholder:text-gray-400 transition shadow-sm">
 
         {{-- Right Controls: Clear or Shortcut Key --}}
@@ -160,8 +160,8 @@
              class="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
 
             <div class="p-2 border-b border-gray-100 flex items-center justify-between text-xs text-gray-500 bg-gray-50/75">
-                <span class="font-medium">Hasil Pencarian</span>
-                <span x-text="searchResults.length + ' item ditemukan'"></span>
+                <span class="font-medium">Search Results</span>
+                <span x-text="searchResults.length + ' items found'"></span>
             </div>
 
             <div class="max-h-80 overflow-y-auto divide-y divide-gray-100">
@@ -188,12 +188,12 @@
                     <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <p class="text-xs text-gray-500 font-medium">Tidak ada dokumen yang sesuai dengan kata kunci.</p>
+                    <p class="text-xs text-gray-500 font-medium">No documents found matching your search.</p>
                 </div>
             </div>
 
             <div class="p-2 bg-gray-50 text-[11px] text-gray-400 text-center border-t border-gray-100">
-                Tekan <kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-[10px]">Esc</kbd> untuk menutup
+                Press <kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-[10px]">Esc</kbd> to close
             </div>
         </div>
     </div>
@@ -204,7 +204,7 @@
         <div class="relative" @click.outside="notificationOpen = false">
             <button @click="notificationOpen = !notificationOpen"
                     type="button"
-                    title="Notifikasi"
+                    title="Notifications"
                     class="relative w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -229,16 +229,16 @@
 
                 <div class="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between bg-gray-50/75">
                     <div class="flex items-center gap-2">
-                        <h4 class="font-bold text-sm text-gray-800">Notifikasi Dokumen</h4>
+                        <h4 class="font-bold text-sm text-gray-800">Document Notifications</h4>
                         <span x-show="unreadCount > 0"
                               x-cloak
                               class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[11px] font-bold border border-red-100"
-                              x-text="unreadCount + ' Perlu Tindakan'">
+                              x-text="unreadCount + ' Action Required'">
                         </span>
                         <span x-show="unreadCount === 0 && notifications.length > 0"
                               x-cloak
                               class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-medium border border-emerald-100">
-                            Semua Terbaca
+                            All Read
                         </span>
                     </div>
                     <button x-show="unreadCount > 0"
@@ -246,7 +246,7 @@
                             @click="markAllAsRead()"
                             type="button"
                             class="text-xs text-indigo-600 hover:text-indigo-700 font-medium transition">
-                        Tandai sudah dibaca
+                        Mark all as read
                     </button>
                 </div>
 
@@ -294,7 +294,7 @@
                                     </div>
                                     <div class="flex items-center gap-1.5 shrink-0">
                                         <span class="text-[11px] text-gray-400" x-text="item.time"></span>
-                                        <span x-show="!item.is_read" class="w-2 h-2 rounded-full bg-indigo-600 inline-block" title="Belum dibaca"></span>
+                                        <span x-show="!item.is_read" class="w-2 h-2 rounded-full bg-indigo-600 inline-block" title="Unread"></span>
                                     </div>
                                 </div>
 
@@ -312,8 +312,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                         </div>
-                        <p class="text-xs font-semibold text-gray-700">Semua Beres!</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Tidak ada dokumen atau persetujuan yang tertunda.</p>
+                        <p class="text-xs font-semibold text-gray-700">All Caught Up!</p>
+                        <p class="text-xs text-gray-400 mt-0.5">No pending documents or approvals requiring attention.</p>
                     </div>
                 </div>
             </div>
@@ -324,7 +324,7 @@
         <div>
             <button @click="helpOpen = true"
                     type="button"
-                    title="Pusat Bantuan & Panduan Sistem"
+                    title="Help Center & System Guide"
                     class="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -369,7 +369,7 @@
                                     </svg>
                                 </span>
                                 <div>
-                                    <h3 class="font-bold text-gray-800 text-base">Pusat Bantuan & Panduan Sistem</h3>
+                                    <h3 class="font-bold text-gray-800 text-base">Help Center & System Guide</h3>
                                     <p class="text-xs text-gray-500">e-Procurement Management System</p>
                                 </div>
                             </div>
@@ -385,17 +385,17 @@
                             <button @click="helpTab = 'workflow'"
                                     :class="helpTab === 'workflow' ? 'text-indigo-600 border-indigo-600' : 'text-gray-500 border-transparent hover:text-gray-700'"
                                     class="pb-2.5 border-b-2 transition">
-                                Alur Dokumen (Workflow)
+                                Document Workflow
                             </button>
                             <button @click="helpTab = 'shortcuts'"
                                     :class="helpTab === 'shortcuts' ? 'text-indigo-600 border-indigo-600' : 'text-gray-500 border-transparent hover:text-gray-700'"
                                     class="pb-2.5 border-b-2 transition">
-                                Pintasan Keyboard
+                                Keyboard Shortcuts
                             </button>
                             <button @click="helpTab = 'support'"
                                     :class="helpTab === 'support' ? 'text-indigo-600 border-indigo-600' : 'text-gray-500 border-transparent hover:text-gray-700'"
                                     class="pb-2.5 border-b-2 transition">
-                                Kontak Bantuan
+                                Support & Help
                             </button>
                         </div>
 
@@ -410,7 +410,7 @@
                                     </span>
                                     <div>
                                         <h4 class="font-bold text-xs text-indigo-900">1. Material Request (MR)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5">Pengajuan permintaan barang dari proyek/lapangan. Memerlukan persetujuan Approver A dan Approver C sebelum diproses pembayaran oleh Finance.</p>
+                                        <p class="text-xs text-gray-600 mt-0.5">Submission of material requests from project/field sites. Requires Approver A and Approver C authorization prior to payment processing by Finance.</p>
                                     </div>
                                 </div>
 
@@ -420,7 +420,7 @@
                                     </span>
                                     <div>
                                         <h4 class="font-bold text-xs text-purple-900">2. Request for Local Purchase (RRP)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5">Pengadaan lokal cepat yang menyertakan perbandingan penawaran harga vendor, biaya tambahan, serta otorisasi berjenjang.</p>
+                                        <p class="text-xs text-gray-600 mt-0.5">Expedited local procurement featuring multi-vendor price comparisons, additional expense records, and tiered authorizations.</p>
                                     </div>
                                 </div>
 
@@ -430,7 +430,7 @@
                                     </span>
                                     <div>
                                         <h4 class="font-bold text-xs text-amber-900">3. Purchase Request (PR)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5">Permohonan resmi pengadaan kebutuhan operasional ke bagian pengadaan dengan alur persetujuan terstruktur.</p>
+                                        <p class="text-xs text-gray-600 mt-0.5">Formal procurement request for operational and capital requirements with structured approval workflows.</p>
                                     </div>
                                 </div>
 
@@ -440,7 +440,7 @@
                                     </span>
                                     <div>
                                         <h4 class="font-bold text-xs text-emerald-900">4. Purchase Order (PO)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5">Penerbitan surat pesanan resmi kepada vendor yang telah lolos verifikasi harga, termin pembayaran, dan tanda tangan bertahap.</p>
+                                        <p class="text-xs text-gray-600 mt-0.5">Official purchase order issued to verified vendors with agreed pricing, payment terms, and required sign-offs.</p>
                                     </div>
                                 </div>
                             </div>
@@ -448,7 +448,7 @@
                             {{-- Tab 2: Keyboard Shortcuts --}}
                             <div x-show="helpTab === 'shortcuts'" class="space-y-3">
                                 <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100 text-xs">
-                                    <span class="font-medium text-gray-700">Fokus ke Pencarian Cepat Dokumen</span>
+                                    <span class="font-medium text-gray-700">Focus Quick Document Search</span>
                                     <div class="flex items-center gap-1">
                                         <kbd class="px-2 py-1 bg-white border border-gray-200 rounded font-mono font-semibold shadow-xs">Ctrl</kbd>
                                         <span class="text-gray-400">+</span>
@@ -457,14 +457,14 @@
                                 </div>
 
                                 <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100 text-xs">
-                                    <span class="font-medium text-gray-700">Tutup Modal / Kotak Pencarian</span>
+                                    <span class="font-medium text-gray-700">Close Modal / Search Dropdown</span>
                                     <kbd class="px-2 py-1 bg-white border border-gray-200 rounded font-mono font-semibold shadow-xs">Esc</kbd>
                                 </div>
                             </div>
 
                             {{-- Tab 3: Support Contact --}}
                             <div x-show="helpTab === 'support'" class="space-y-3 text-xs text-gray-600">
-                                <p class="leading-relaxed">Jika Anda mengalami kendala operasional, error sistem, atau membutuhkan perubahan wewenang tanda tangan approval, silakan hubungi:</p>
+                                <p class="leading-relaxed">If you experience operational difficulties, system issues, or require authorization adjustments, please contact:</p>
                                 <div class="p-4 rounded-xl bg-gray-50 border border-gray-100 space-y-2">
                                     <div class="flex items-center gap-2">
                                         <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -477,8 +477,8 @@
                                         <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
-                                        <span class="font-semibold text-gray-800">Jam Operasional:</span>
-                                        <span class="text-gray-600">Senin – Jumat, 08:00 – 17:00 WIB</span>
+                                        <span class="font-semibold text-gray-800">Operating Hours:</span>
+                                        <span class="text-gray-600">Monday – Friday, 08:00 – 17:00 WIB</span>
                                     </div>
                                 </div>
                             </div>
@@ -487,7 +487,7 @@
                         {{-- Modal Footer --}}
                         <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex justify-end">
                             <button @click="helpOpen = false" type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
-                                Mengerti & Tutup
+                                Got It, Close
                             </button>
                         </div>
                     </div>
