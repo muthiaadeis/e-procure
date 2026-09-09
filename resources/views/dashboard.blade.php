@@ -3,7 +3,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">Procurement Dashboard</h1>
-                <p class="text-sm text-gray-500 mt-1">Analytics overview and procurement activity across all modules (MR, RLP, PR, PO).</p>
+                <p class="text-sm text-gray-500 mt-1">Analytics overview and procurement activity across all modules (MR, RRP, PR, PO).</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('vendors.index') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 font-medium hover:bg-gray-50 transition shadow-sm">
@@ -59,7 +59,7 @@
                         {{ number_format($rlpThisMonth) }} this month
                     </span>
                 </div>
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Local Purchase (RLP)</p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Local Purchase (RRP)</p>
                 <div class="flex items-baseline justify-between mt-1">
                     <p class="text-2xl font-bold text-gray-800">{{ number_format($totalRlp) }}</p>
                     <span class="text-xs text-purple-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
