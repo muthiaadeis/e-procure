@@ -129,7 +129,7 @@
                @input.debounce.250ms="performSearch()"
                @focus="if(searchQuery.trim().length >= 2) searchOpen = true"
                @keydown.escape="searchOpen = false"
-               placeholder="Search documents (MR, RLP, PR, PO, Vendor)..."
+               placeholder="Search documents (MR, RRP, PR, PO, Vendor)..."
                class="w-full bg-gray-50 border-gray-200 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 rounded-lg text-sm pl-10 pr-16 py-2 placeholder:text-gray-400 transition shadow-sm">
 
         {{-- Right Controls: Clear or Shortcut Key --}}
