@@ -358,12 +358,12 @@
                          x-transition:leave="ease-in duration-150"
                          x-transition:leave-start="opacity-100 scale-100"
                          x-transition:leave-end="opacity-0 scale-95"
-                         class="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-10">
+                         class="relative w-full max-w-xl h-[560px] max-h-[85vh] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-10">
 
                         {{-- Modal Header --}}
-                        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/75">
+                        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/75 shrink-0">
                             <div class="flex items-center gap-3">
-                                <span class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                <span class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
@@ -381,7 +381,7 @@
                         </div>
 
                         {{-- Modal Tabs --}}
-                        <div class="px-6 pt-3 border-b border-gray-100 flex gap-4 text-xs font-semibold">
+                        <div class="px-6 pt-3 border-b border-gray-100 flex gap-4 text-xs font-semibold shrink-0">
                             <button @click="helpTab = 'workflow'"
                                     :class="helpTab === 'workflow' ? 'text-indigo-600 border-indigo-600' : 'text-gray-500 border-transparent hover:text-gray-700'"
                                     class="pb-2.5 border-b-2 transition">
@@ -400,17 +400,17 @@
                         </div>
 
                         {{-- Modal Body --}}
-                        <div class="p-6 max-h-96 overflow-y-auto">
+                        <div class="p-6 flex-1 overflow-y-auto">
 
                             {{-- Tab 1: Workflow --}}
-                            <div x-show="helpTab === 'workflow'" class="space-y-4">
+                            <div x-show="helpTab === 'workflow'" class="space-y-3.5">
                                 <div class="p-3 rounded-xl bg-indigo-50/50 border border-indigo-100 flex items-start gap-3">
                                     <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                                         MR
                                     </span>
                                     <div>
                                         <h4 class="font-bold text-xs text-indigo-900">1. Material Request (MR)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5">Submission of material requests from project/field sites. Requires Approver A and Approver C authorization prior to payment processing by Finance.</p>
+                                        <p class="text-xs text-gray-600 mt-0.5 leading-relaxed">Submission of material requests from project/field sites. Requires Approver A and Approver C authorization prior to payment processing by Finance.</p>
                                     </div>
                                 </div>
 
@@ -419,8 +419,8 @@
                                         RLP
                                     </span>
                                     <div>
-                                        <h4 class="font-bold text-xs text-purple-900">2. Request for Local Purchase (RRP)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5">Expedited local procurement featuring multi-vendor price comparisons, additional expense records, and tiered authorizations.</p>
+                                        <h4 class="font-bold text-xs text-purple-900">2. Request for Local Purchase (RLP)</h4>
+                                        <p class="text-xs text-gray-600 mt-0.5 leading-relaxed">Expedited local procurement featuring multi-vendor price comparisons, additional expense records, and tiered authorizations.</p>
                                     </div>
                                 </div>
 
@@ -430,7 +430,7 @@
                                     </span>
                                     <div>
                                         <h4 class="font-bold text-xs text-amber-900">3. Purchase Request (PR)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5">Formal procurement request for operational and capital requirements with structured approval workflows.</p>
+                                        <p class="text-xs text-gray-600 mt-0.5 leading-relaxed">Formal procurement request for operational and capital requirements with structured approval workflows.</p>
                                     </div>
                                 </div>
 
@@ -440,14 +440,14 @@
                                     </span>
                                     <div>
                                         <h4 class="font-bold text-xs text-emerald-900">4. Purchase Order (PO)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5">Official purchase order issued to verified vendors with agreed pricing, payment terms, and required sign-offs.</p>
+                                        <p class="text-xs text-gray-600 mt-0.5 leading-relaxed">Official purchase order issued to verified vendors with agreed pricing, payment terms, and required sign-offs.</p>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Tab 2: Keyboard Shortcuts --}}
                             <div x-show="helpTab === 'shortcuts'" class="space-y-3">
-                                <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100 text-xs">
+                                <div class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 border border-gray-100 text-xs">
                                     <span class="font-medium text-gray-700">Focus Quick Document Search</span>
                                     <div class="flex items-center gap-1">
                                         <kbd class="px-2 py-1 bg-white border border-gray-200 rounded font-mono font-semibold shadow-xs">Ctrl</kbd>
@@ -456,36 +456,44 @@
                                     </div>
                                 </div>
 
-                                <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100 text-xs">
+                                <div class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 border border-gray-100 text-xs">
                                     <span class="font-medium text-gray-700">Close Modal / Search Dropdown</span>
                                     <kbd class="px-2 py-1 bg-white border border-gray-200 rounded font-mono font-semibold shadow-xs">Esc</kbd>
                                 </div>
                             </div>
 
                             {{-- Tab 3: Support Contact --}}
-                            <div x-show="helpTab === 'support'" class="space-y-3 text-xs text-gray-600">
+                            <div x-show="helpTab === 'support'" class="space-y-4 text-xs text-gray-600">
                                 <p class="leading-relaxed">If you experience operational difficulties, system issues, or require authorization adjustments, please contact:</p>
-                                <div class="p-4 rounded-xl bg-gray-50 border border-gray-100 space-y-2">
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                        </svg>
-                                        <span class="font-semibold text-gray-800">Email:</span>
-                                        <span class="text-gray-600">support@eprocure.internal</span>
+                                <div class="p-4 rounded-xl bg-gray-50 border border-gray-100 space-y-3">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Email Support</div>
+                                            <a href="mailto:support@eprocure.internal" class="font-semibold text-gray-800 hover:text-indigo-600 transition">support@eprocure.internal</a>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        <span class="font-semibold text-gray-800">Operating Hours:</span>
-                                        <span class="text-gray-600">Monday – Friday, 08:00 – 17:00 WIB</span>
+                                    <div class="flex items-center gap-2.5 pt-2.5 border-t border-gray-200/60">
+                                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Operating Hours</div>
+                                            <div class="font-semibold text-gray-800">Monday – Friday, 08:00 – 17:00 WIB</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {{-- Modal Footer --}}
-                        <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex justify-end">
+                        <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex justify-end shrink-0">
                             <button @click="helpOpen = false" type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
                                 Got It, Close
                             </button>

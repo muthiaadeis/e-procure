@@ -84,6 +84,8 @@ class DashboardController extends Controller
                 ->count();
 
             return [
+                'label' => $month->translatedFormat('M'),
+                'full_label' => $month->translatedFormat('F Y'),
                 'label' => $month->format('M'),
                 'full_label' => $month->format('F Y'),
                 'mr' => $mr,
