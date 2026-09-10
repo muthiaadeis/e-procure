@@ -1,4 +1,4 @@
-<aside x-data="{ mobileOpen: false }" x-cloak>
+<aside x-data="{ mobileOpen: false, showLogoutModal: false }" x-cloak>
 
     {{-- Tombol hamburger khusus mobile --}}
     <button @click="mobileOpen = true"
@@ -114,17 +114,47 @@
                 </x-sidebar-link>
             @endunless
 
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <a href="{{ route('logout') }}"
-                   onclick="event.preventDefault(); this.closest('form').submit();"
-                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition cursor-pointer">
-                    <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    Logout
-                </a>
-            </form>
+            <button type="button" @click="showLogoutModal = true"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition cursor-pointer">
+                <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                Logout
+            </button>
+        </div>
+    </div>
+
+    {{-- Modal: konfirmasi logout --}}
+    <div x-show="showLogoutModal" x-cloak
+         x-transition:enter="ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/50 px-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6" @click.outside="showLogoutModal = false">
+            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mx-auto">
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+            </div>
+
+            <h3 class="text-lg font-semibold text-gray-800 text-center mt-4">Log Out?</h3>
+            <p class="text-sm text-gray-500 text-center mt-1">
+                You'll need to log in again to access the system.
+            </p>
+
+            <div class="mt-6 flex gap-3">
+                <button @click="showLogoutModal = false" type="button"
+                        class="flex-1 py-2.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
+                    Cancel
+                </button>
+
+                <form method="POST" action="{{ route('logout') }}" class="flex-1">
+                    @csrf
+                    <button type="submit"
+                            class="w-full py-2.5 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700">
+                        Log Out
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </aside>
