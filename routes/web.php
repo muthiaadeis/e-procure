@@ -10,15 +10,17 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\GlobalSearchController;
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Auth\ForcePasswordChangeController;
 
 Route::get('/', function () {
     return redirect()->route('material-requests.index');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])->name('dashboard');
+    ->middleware(['auth', 'verified', 'force.password.change'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::resource('material-requests', MaterialRequestController::class);
     Route::get('material-requests/{materialRequest}/print', [MaterialRequestController::class, 'printPdf'])
     ->name('material-requests.print');
@@ -58,6 +60,22 @@ Route::middleware('auth')->group(function () {
     // Global Search & Topbar Notifications
     Route::get('/search/quick', [GlobalSearchController::class, 'search'])->name('search.quick');
     Route::get('/notifications/feed', [GlobalSearchController::class, 'notifications'])->name('notifications.feed');
+});
+
+// Halaman ganti password wajib — HARUS di luar grup 'force.password.change'
+// di atas, supaya user yang lagi wajib ganti password tetap bisa membukanya.
+Route::middleware('auth')->group(function () {
+    Route::get('/force-password-change', [ForcePasswordChangeController::class, 'show'])
+        ->name('password.force-change');
+    Route::put('/force-password-change', [ForcePasswordChangeController::class, 'update'])
+        ->name('password.force-change.update');
+});
+
+// Halaman admin: kelola user & reset password
+Route::middleware(['auth', 'admin', 'force.password.change'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('users', [UserManagementController::class, 'index'])->name('users.index');
+    Route::post('users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])
+        ->name('users.reset-password');
 });
 
 require __DIR__.'/auth.php';

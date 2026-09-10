@@ -71,6 +71,18 @@
                 <div class="pt-4 mt-4 border-t border-gray-100 space-y-1">
                     <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Master Data</p>
 
+                    @if (auth()->user()?->is_admin)
+                        <div class="pt-4 mt-4 border-t border-gray-100 space-y-1">
+                            <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Admin</p>
+                            <x-sidebar-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
+                                <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/>
+                                </svg>
+                                Kelola User
+                            </x-sidebar-link>
+                        </div>
+                    @endif
+
                     <x-sidebar-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*')">
                         <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21V9.75l8.25-6 8.25 6V21m-16.5 0h16.5m-16.5 0h-1.5m18 0h1.5m-16.5 0V13.5a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5V21"/>

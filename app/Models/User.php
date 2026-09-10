@@ -19,6 +19,8 @@ class User extends Authenticatable
         'password',
         'is_approver',
         'role',
+        'is_admin',              // tambahkan
+        'must_change_password',
     ];
 
     // Role User B: yang menginput / membuat Material Request
@@ -63,6 +65,11 @@ class User extends Authenticatable
         return $this->role === 'rlp_approver';
     }
 
+    public function isAdmin(): bool
+    {
+    return (bool) $this->is_admin;
+    }
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -74,6 +81,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_approver' => 'boolean',
+            'is_admin' => 'boolean',              // tambahkan
+            'must_change_password' => 'boolean',
         ];
     }
 }
