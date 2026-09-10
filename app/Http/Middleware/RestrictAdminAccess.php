@@ -8,10 +8,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RestrictAdminAccess
 {
-    /**
-     * Route yang tetap boleh diakses akun admin-only,
-     * selain halaman manajemen user (admin.*).
-     */
     protected array $allowedRoutes = [
         'admin.*',
         'password.force-change',

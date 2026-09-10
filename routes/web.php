@@ -14,17 +14,6 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Auth\ForcePasswordChangeController;
 
 Route::get('/', function () {
-    return redirect()->route('material-requests.index');
-});
-
-
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified', 'force.password.change'])->name('dashboard');
-
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified', 'force.password.change', 'restrict.admin'])->name('dashboard');
-
-Route::get('/', function () {
     if (auth()->check() && auth()->user()->is_admin) {
         return redirect()->route('admin.users.index');
     }
@@ -32,7 +21,10 @@ Route::get('/', function () {
     return redirect()->route('material-requests.index');
 });
 
-Route::middleware(['auth', 'force.password.change'])->group(function () {
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified', 'force.password.change', 'restrict.admin'])->name('dashboard');
+
+Route::middleware(['auth', 'force.password.change', 'restrict.admin'])->group(function () {
     Route::resource('material-requests', MaterialRequestController::class);
     Route::get('material-requests/{materialRequest}/print', [MaterialRequestController::class, 'printPdf'])
     ->name('material-requests.print');
@@ -74,8 +66,8 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::get('/notifications/feed', [GlobalSearchController::class, 'notifications'])->name('notifications.feed');
 });
 
-// Halaman ganti password wajib — HARUS di luar grup 'force.password.change'
-// di atas, supaya user yang lagi wajib ganti password tetap bisa membukanya.
+// Halaman ganti password wajib — HARUS di luar grup 'restrict.admin' & 'force.password.change'
+// di atas, supaya user (termasuk admin) yang lagi wajib ganti password tetap bisa membukanya.
 Route::middleware('auth')->group(function () {
     Route::get('/force-password-change', [ForcePasswordChangeController::class, 'show'])
         ->name('password.force-change');
