@@ -17,8 +17,20 @@ Route::get('/', function () {
     return redirect()->route('material-requests.index');
 });
 
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'force.password.change'])->name('dashboard');
+
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified', 'force.password.change', 'restrict.admin'])->name('dashboard');
+
+Route::get('/', function () {
+    if (auth()->check() && auth()->user()->is_admin) {
+        return redirect()->route('admin.users.index');
+    }
+
+    return redirect()->route('material-requests.index');
+});
 
 Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::resource('material-requests', MaterialRequestController::class);
