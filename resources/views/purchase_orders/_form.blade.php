@@ -81,14 +81,14 @@
         <div class="border border-gray-200 rounded-xl p-4 space-y-3">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Subject</label>
-                <input type="text" name="subject"
-                       value="{{ old('subject', $isEdit ? $purchaseOrder->subject : '') }}"
-                       class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                                <input type="text" name="subject"
+                                        value="{{ old('subject', $isEdit ? $purchaseOrder->subject : ($prefill['subject'] ?? '')) }}"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Project Description</label>
-                <textarea name="project_description" rows="2"
-                          class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">{{ old('project_description', $isEdit ? $purchaseOrder->project_description : '') }}</textarea>
+                                <textarea name="project_description" rows="2"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">{{ old('project_description', $isEdit ? $purchaseOrder->project_description : ($prefill['project_description'] ?? '')) }}</textarea>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
@@ -99,9 +99,9 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Client</label>
-                    <input type="text" name="client"
-                           value="{{ old('client', $isEdit ? $purchaseOrder->client : '') }}"
-                           class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                                        <input type="text" name="client"
+                                                value="{{ old('client', $isEdit ? $purchaseOrder->client : ($prefill['client'] ?? '')) }}"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                 </div>
             </div>
         </div>

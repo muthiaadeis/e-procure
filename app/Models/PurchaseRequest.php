@@ -80,6 +80,11 @@ class PurchaseRequest extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function purchaseOrders()
+    {
+        return $this->hasMany(PurchaseOrder::class);
+    }
+
     protected function isFullySigned(): Attribute
     {
         return Attribute::make(

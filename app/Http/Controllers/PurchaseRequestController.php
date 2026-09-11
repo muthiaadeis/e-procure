@@ -74,7 +74,7 @@ class PurchaseRequestController extends Controller
 
     public function show(PurchaseRequest $purchaseRequest)
     {
-        $purchaseRequest->load(['items', 'approvals.signer', 'creator']);
+        $purchaseRequest->load(['items', 'approvals.signer', 'creator', 'purchaseOrders']);
 
         return view('purchase_requests.show', compact('purchaseRequest'));
     }

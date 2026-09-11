@@ -3,7 +3,15 @@
         <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">{{ $purchaseOrder->po_no }}</h1>
-                <p class="text-sm text-gray-500 mt-1">{{ $purchaseOrder->subject ?? '-' }}</p>
+                <p class="text-sm text-gray-500 mt-1">
+                    {{ $purchaseOrder->subject ?? '-' }}
+                    @if($purchaseOrder->purchaseRequest)
+                        · from
+                        <a href="{{ route('purchase-requests.show', $purchaseOrder->purchaseRequest) }}" class="text-indigo-600 hover:underline">
+                            {{ $purchaseOrder->purchaseRequest->no_request }}
+                        </a>
+                    @endif
+                </p>
             </div>
             <div class="flex items-center gap-2">
                 <a href="{{ route('purchase-orders.print', $purchaseOrder) }}" target="_blank"

@@ -27,11 +27,34 @@ class PurchaseOrderController extends Controller
         return view('purchase_orders.index', compact('purchaseOrders', 'search'));
     }
 
-    public function create()
+        public function create(Request $request)
     {
         $nextPoNo = PurchaseOrder::generateNextPoNo();
 
-        return view('purchase_orders.create', compact('nextPoNo'));
+        $fromPurchaseRequest = null;
+        $prefill = [];
+
+        if ($request->filled('from_pr')) {
+            $fromPurchaseRequest = PurchaseRequest::with('items')->find($request->query('from_pr'));
+
+            if ($fromPurchaseRequest) {
+                $prefill = [
+                    'purchase_request_id' => $fromPurchaseRequest->id,
+                    'subject' => $fromPurchaseRequest->title,
+                    'project_description' => $fromPurchaseRequest->note,
+                    'client' => $fromPurchaseRequest->client,
+                    'items' => $fromPurchaseRequest->items->map(fn ($item) => [
+                        'description' => $item->description,
+                        'qty' => (string) $item->qty,
+                        'uom' => $item->unit,
+                        'brand' => '',
+                        'price' => (string) $item->price,
+                    ])->all(),
+                ];
+            }
+        }
+
+        return view('purchase_orders.create', compact('nextPoNo', 'fromPurchaseRequest', 'prefill'));
     }
 
     public function store(Request $request)
@@ -79,7 +102,7 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['items', 'approvals.signer', 'creator']);
+        $purchaseOrder->load(['items', 'approvals.signer', 'creator', 'purchaseRequest']);
 
         return view('purchase_orders.show', compact('purchaseOrder'));
     }
