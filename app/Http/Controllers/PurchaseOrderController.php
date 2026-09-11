@@ -114,7 +114,15 @@ class PurchaseOrderController extends Controller
 
         abort_unless($purchaseOrder->is_draft, 403, 'This PO can no longer be edited because the approval process has already started.');
 
-        return view('purchase_orders.edit', compact('purchaseOrder'));
+        $itemsForJs = old('items') ?: $purchaseOrder->items->map(fn ($item) => [
+            'description' => $item->description,
+            'qty' => (string) $item->qty,
+            'uom' => $item->uom,
+            'brand' => $item->brand,
+            'price' => (string) $item->price,
+        ])->values()->all();
+
+        return view('purchase_orders.edit', compact('purchaseOrder', 'itemsForJs'));
     }
 
     public function update(Request $request, PurchaseOrder $purchaseOrder)

@@ -15,21 +15,11 @@
 
     @php($isEdit = true)
 
-    @php
-        $itemsForJs = old('items') ?: $purchaseOrder->items->map(fn($i) => [
-            'description' => $i->description,
-            'qty'         => (string) $i->qty,
-            'uom'         => $i->uom,
-            'brand'       => $i->brand,
-            'price'       => (string) $i->price,
-        ])->values()->all();
-    @endphp
-
     <div class="py-8">
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-sm rounded-2xl overflow-hidden"
                  x-data="purchaseOrderForm({
-                    items: {{ Js::from($itemsForJs) }},
+                    items: {{ Js::from(old('items', $itemsForJs)) }},
                     use_ppn: {{ Js::from(old('use_ppn', $purchaseOrder->use_ppn)) }},
                     ppn_percent: {{ Js::from(old('ppn_percent', (string) $purchaseOrder->ppn_percent)) }}
                  })">
