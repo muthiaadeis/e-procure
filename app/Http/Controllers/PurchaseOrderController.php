@@ -45,12 +45,12 @@ class PurchaseOrderController extends Controller
                     'project_description' => $fromPurchaseRequest->note,
                     'client' => $fromPurchaseRequest->client,
                     'items' => $fromPurchaseRequest->items->map(fn ($item) => [
-                        'description' => $item->description,
-                        'qty' => (string) $item->qty,
-                        'uom' => $item->unit,
-                        'brand' => '',
-                        'price' => (string) $item->price,
-                    ])->all(),
+                    'description' => $item->description,
+                    'qty' => (string) (int) round((float) $item->qty),
+                    'uom' => $item->unit,
+                    'brand' => '',
+                    'price' => (string) (int) round((float) $item->price),
+                ])->all(),
                 ];
             }
         }
