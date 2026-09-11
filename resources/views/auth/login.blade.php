@@ -62,15 +62,6 @@
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
-        <!-- Forgot password -->
-        <div class="flex items-center justify-end pt-1">
-            @if (Route::has('password.request'))
-                <a class="text-sm text-indigo-600 hover:text-indigo-800 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-        </div>
-
         <x-primary-button class="w-full justify-center py-2.5">
             {{ __('Log in') }}
         </x-primary-button>
