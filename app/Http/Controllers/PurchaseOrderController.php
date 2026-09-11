@@ -116,10 +116,10 @@ class PurchaseOrderController extends Controller
 
         $itemsForJs = old('items') ?: $purchaseOrder->items->map(fn ($item) => [
             'description' => $item->description,
-            'qty' => (string) $item->qty,
+            'qty' => (string) (int) round((float) $item->qty),
             'uom' => $item->uom,
             'brand' => $item->brand,
-            'price' => (string) $item->price,
+            'price' => (string) (int) round((float) $item->price),
         ])->values()->all();
 
         return view('purchase_orders.edit', compact('purchaseOrder', 'itemsForJs'));
