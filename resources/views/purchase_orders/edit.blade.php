@@ -1,3 +1,7 @@
+@php
+    dd('INI-FILE-YANG-BENAR-987');
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-2">
