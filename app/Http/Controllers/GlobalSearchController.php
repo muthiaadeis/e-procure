@@ -138,14 +138,12 @@ class GlobalSearchController extends Controller
                 'module_badge_class' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
                 'icon_bg' => 'bg-red-50 text-red-600',
                 'icon_type' => 'warning',
-                'status_label' => 'Terlambat',
                 'status_label' => 'Overdue',
                 'status_class' => 'bg-red-50 text-red-700 border-red-200',
-                'title' => 'Permintaan Terlambat: ' . ($m->no_mr ?? 'MR-' . $m->id),
-                'message' => 'Material request untuk ' . ($m->charge_to ?? 'proyek') . ' telah melebihi batas waktu approval.',
                 'title' => 'Overdue Request: ' . ($m->no_mr ?? 'MR-' . $m->id),
                 'message' => 'Material request for ' . ($m->charge_to ?? 'project') . ' has exceeded the approval deadline.',
                 'time' => $m->created_at->diffForHumans(),
+                'sort_at' => $m->created_at,
                 'url' => route('material-requests.index', ['search' => $m->no_mr, 'filter' => 'overdue', 'auto_open' => $m->id]),
             ];
         }
@@ -159,14 +157,12 @@ class GlobalSearchController extends Controller
                 'module_badge_class' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
                 'icon_bg' => 'bg-amber-50 text-amber-600',
                 'icon_type' => 'clock',
-                'status_label' => 'Approval A',
                 'status_label' => 'Pending Approval',
                 'status_class' => 'bg-yellow-50 text-yellow-800 border-yellow-200',
-                'title' => 'Menunggu Approval: ' . ($m->no_mr ?? 'MR-' . $m->id),
-                'message' => 'Membutuhkan persetujuan Approver A (' . ($m->charge_to ?? 'Umum') . ').',
                 'title' => 'Awaiting Approval: ' . ($m->no_mr ?? 'MR-' . $m->id),
                 'message' => 'Requires Approver A authorization (' . ($m->charge_to ?? 'General') . ').',
                 'time' => $m->created_at->diffForHumans(),
+                'sort_at' => $m->created_at,
                 'url' => route('material-requests.index', ['search' => $m->no_mr, 'filter' => 'pending_approval', 'auto_open' => $m->id]),
             ];
         }
@@ -180,19 +176,37 @@ class GlobalSearchController extends Controller
                 'module_badge_class' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'icon_bg' => 'bg-purple-50 text-purple-600',
                 'icon_type' => 'document',
-                'status_label' => 'Review',
                 'status_label' => 'Under Review',
                 'status_class' => 'bg-purple-50 text-purple-700 border-purple-200',
                 'title' => 'Local Purchase: ' . ($r->no_rlp ?? 'RLP-' . $r->id),
-                'message' => 'Membutuhkan review dan verifikasi dokumen pengadaan lokal.',
                 'message' => 'Requires review and verification of local purchase document.',
                 'time' => $r->created_at->diffForHumans(),
+                'sort_at' => $r->created_at,
                 'url' => route('rlps.index'),
             ];
         }
 
-        // 4. PR & PO
-        $prs = PurchaseRequest::latest('created_at')->take(1)->get();
+        // 4. New POs
+        $pos = PurchaseOrder::latest('created_at')->take(2)->get();
+        foreach ($pos as $po) {
+            $notifications[] = [
+                'id' => 'po_' . $po->id,
+                'module' => 'PO',
+                'module_badge_class' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                'icon_bg' => 'bg-emerald-50 text-emerald-600',
+                'icon_type' => 'cart',
+                'status_label' => 'New Document',
+                'status_class' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                'title' => 'Purchase Order: ' . ($po->po_no ?? 'PO-' . $po->id),
+                'message' => $po->subject ?? 'Purchase order document has been issued.',
+                'time' => $po->created_at->diffForHumans(),
+                'sort_at' => $po->created_at,
+                'url' => route('purchase-orders.show', $po),
+            ];
+        }
+
+        // 5. New PRs
+        $prs = PurchaseRequest::latest('created_at')->take(2)->get();
         foreach ($prs as $pr) {
             $notifications[] = [
                 'id' => 'pr_' . $pr->id,
@@ -200,16 +214,24 @@ class GlobalSearchController extends Controller
                 'module_badge_class' => 'bg-amber-50 text-amber-700 border-amber-200',
                 'icon_bg' => 'bg-amber-50 text-amber-600',
                 'icon_type' => 'cart',
-                'status_label' => 'Dokumen Baru',
                 'status_label' => 'New Document',
                 'status_class' => 'bg-amber-50 text-amber-800 border-amber-200',
                 'title' => 'Purchase Request: ' . ($pr->no_request ?? 'PR-' . $pr->id),
-                'message' => $pr->title ?? 'Dokumen PR telah diterbitkan.',
                 'message' => $pr->title ?? 'Purchase request document has been issued.',
                 'time' => $pr->created_at->diffForHumans(),
+                'sort_at' => $pr->created_at,
                 'url' => route('purchase-requests.show', $pr),
             ];
         }
+
+        // Notifikasi terbaru (berdasarkan waktu dibuat) tampil paling atas,
+        // terlepas dari modul/kategori apa asalnya.
+        usort($notifications, fn ($a, $b) => $b['sort_at'] <=> $a['sort_at']);
+
+        $notifications = array_map(function ($item) {
+            unset($item['sort_at']);
+            return $item;
+        }, array_slice($notifications, 0, 10));
 
         return response()->json([
             'notifications' => $notifications,
