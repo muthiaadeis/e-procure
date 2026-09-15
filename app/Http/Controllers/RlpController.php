@@ -19,7 +19,8 @@ class RlpController extends Controller
             'creator',
             'reviewer',
             'acknowledger',
-            'approver'
+            'approver',
+            'purchaseOrder'
         )->latest()->paginate(10);
 
         return view('rlps.index', compact('rlps'));

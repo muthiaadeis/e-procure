@@ -85,7 +85,19 @@
                                     };
                                 @endphp
                                 <tr class="hover:bg-gray-50/70 transition">
-                                    <td class="px-4 py-3 font-semibold text-gray-800">{{ $po->po_no }}</td>
+                                    <td class="px-4 py-3 font-semibold text-gray-800">
+                                        <a href="{{ route('purchase-orders.show', $po) }}" class="hover:text-indigo-600 transition">
+                                            {{ $po->po_no }}
+                                        </a>
+                                        @if($po->rlp)
+                                            <span class="block text-[11px] text-purple-600 font-normal">RRP: {{ $po->rlp->no_rlp }}</span>
+                                        @endif
+                                        @if($po->purchaseRequest)
+                                            <span class="inline-flex items-center gap-0.5 text-[11px] text-amber-700 font-medium">
+                                                PR: {{ $po->purchaseRequest->no_request }}
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-3 text-gray-600">{{ $po->our_order_date?->format('d-m-Y') ?? '-' }}</td>
                                     <td class="px-4 py-3 text-gray-700 max-w-[220px] truncate" title="{{ $po->subject }}">{{ $po->subject ?? '-' }}</td>
                                     <td class="px-4 py-3 text-gray-600">{{ $po->client ?? '-' }}</td>

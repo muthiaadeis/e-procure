@@ -12,6 +12,7 @@ class PurchaseOrder extends Model
 
     protected $fillable = [
         'po_no',
+        'rlp_id',
         'purchase_request_id',
         'our_reference',
         'supplier_no',
@@ -84,9 +85,14 @@ class PurchaseOrder extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function rlp()
+    {
+        return $this->belongsTo(Rlp::class, 'rlp_id');
+    }
+
     public function purchaseRequest()
     {
-        return $this->belongsTo(PurchaseRequest::class);
+        return $this->hasOne(PurchaseRequest::class, 'purchase_order_id');
     }
 
     protected function isFullySigned(): Attribute

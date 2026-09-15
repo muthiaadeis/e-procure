@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\PurchaseOrder;
-use App\Models\PurchaseRequest;
+use App\Models\Rlp;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -11,7 +12,7 @@ class PurchaseOrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = PurchaseOrder::with(['creator', 'approvals']);
+        $query = PurchaseOrder::with(['creator', 'approvals', 'rlp', 'purchaseRequest']);
 
         $search = trim((string) $request->query('search'));
         if ($search !== '') {
@@ -28,34 +29,64 @@ class PurchaseOrderController extends Controller
         return view('purchase_orders.index', compact('purchaseOrders', 'search'));
     }
 
-        public function create(Request $request)
+    public function create(Request $request)
     {
         $nextPoNo = PurchaseOrder::generateNextPoNo();
 
-        $fromPurchaseRequest = null;
+        $fromRlp = null;
         $prefill = [];
+        $vendors = Vendor::orderBy('vendor_name')->get(['id', 'vendor_name', 'vendor_code', 'vendor_address', 'phone', 'brand']);
 
-        if ($request->filled('from_pr')) {
-            $fromPurchaseRequest = PurchaseRequest::with('items')->find($request->query('from_pr'));
+        if ($request->filled('from_rlp')) {
+            $fromRlp = Rlp::with(['items.selectedVendor.vendor', 'items.vendors.vendor', 'items.jobCode'])->find($request->query('from_rlp'));
 
-            if ($fromPurchaseRequest) {
+            if ($fromRlp) {
+                // Determine selected vendor details across items
+                $selectedVendors = $fromRlp->items->map(fn ($i) => $i->selectedVendor)->filter();
+                $firstSelectedVendor = $selectedVendors->first();
+                $vendorModel = $firstSelectedVendor?->vendor;
+
+                $vendorName = $firstSelectedVendor?->vendor_name ?? ($vendorModel?->vendor_name ?? '');
+                $vendorAddress = $vendorModel?->vendor_address ?? '';
+                $toAddress = $vendorName;
+                if ($vendorAddress) {
+                    $toAddress .= "\n" . $vendorAddress;
+                }
+
+                $itemsPrefill = [];
+                $hasPpn = false;
+                foreach ($fromRlp->items as $item) {
+                    $sel = $item->selectedVendor;
+                    $itemPrice = $sel ? (float) $sel->u_price : (float) $item->part_catalog_u_price;
+                    $itemBrand = $sel?->vendor?->brand ?? '';
+                    if ($sel && $sel->use_ppn) {
+                        $hasPpn = true;
+                    }
+
+                    $itemsPrefill[] = [
+                        'description' => $item->description . ($item->pn ? ' (PN: ' . $item->pn . ')' : ''),
+                        'qty' => (string) (int) round((float) $item->qty),
+                        'uom' => $item->uom,
+                        'brand' => $itemBrand,
+                        'price' => (string) (int) round($itemPrice),
+                    ];
+                }
+
                 $prefill = [
-                    'purchase_request_id' => $fromPurchaseRequest->id,
-                    'subject' => $fromPurchaseRequest->title,
-                    'project_description' => $fromPurchaseRequest->note,
-                    'client' => $fromPurchaseRequest->client,
-                    'items' => $fromPurchaseRequest->items->map(fn ($item) => [
-                    'description' => $item->description,
-                    'qty' => (string) (int) round((float) $item->qty),
-                    'uom' => $item->unit,
-                    'brand' => '',
-                    'price' => (string) (int) round((float) $item->price),
-                ])->all(),
+                    'rlp_id' => $fromRlp->id,
+                    'to_address' => $toAddress,
+                    'attn' => $vendorModel?->brand ?? '',
+                    'supplier_no' => $vendorModel?->vendor_code ?? '',
+                    'contact_number' => $vendorModel?->phone ?? '',
+                    'subject' => 'Purchase Order - RRP ' . $fromRlp->no_rlp,
+                    'project_description' => 'Procurement based on multi-vendor comparison in RRP ' . $fromRlp->no_rlp,
+                    'use_ppn' => $hasPpn,
+                    'items' => $itemsPrefill,
                 ];
             }
         }
 
-        return view('purchase_orders.create', compact('nextPoNo', 'fromPurchaseRequest', 'prefill'));
+        return view('purchase_orders.create', compact('nextPoNo', 'fromRlp', 'prefill', 'vendors'));
     }
 
     public function store(Request $request)
@@ -68,6 +99,7 @@ class PurchaseOrderController extends Controller
 
             $po = PurchaseOrder::create([
                 'po_no' => PurchaseOrder::generateNextPoNo(),
+                'rlp_id' => $validated['rlp_id'] ?? null,
                 'our_reference' => $validated['our_reference'] ?? null,
                 'supplier_no' => $validated['supplier_no'] ?? null,
                 'our_order_date' => $validated['our_order_date'] ?? now(),
@@ -103,7 +135,7 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['items', 'approvals.signer', 'creator', 'purchaseRequest']);
+        $purchaseOrder->load(['items', 'approvals.signer', 'creator', 'rlp', 'purchaseRequest']);
 
         return view('purchase_orders.show', compact('purchaseOrder'));
     }
@@ -212,6 +244,7 @@ class PurchaseOrderController extends Controller
     private function validatePo(Request $request): array
     {
         return $request->validate([
+            'rlp_id' => 'nullable|exists:rlps,id',
             'our_reference' => 'nullable|string|max:255',
             'supplier_no' => 'nullable|string|max:255',
             'our_order_date' => 'nullable|date',

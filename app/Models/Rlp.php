@@ -45,6 +45,16 @@ class Rlp extends Model
         return $this->hasMany(RlpCost::class);
     }
 
+    public function purchaseOrders()
+    {
+        return $this->hasMany(PurchaseOrder::class, 'rlp_id');
+    }
+
+    public function purchaseOrder()
+    {
+        return $this->hasOne(PurchaseOrder::class, 'rlp_id')->latestOfMany();
+    }
+
     // Prepared By
     public function creator()
     {

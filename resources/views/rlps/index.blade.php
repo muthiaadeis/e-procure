@@ -126,11 +126,21 @@
                                         'revenue_ext_price' => number_format($rlp->revenue_ext_price, 0, ',', '.'),
                                         'revenue_is_negative' => $rlp->revenue_ext_price < 0,
                                         'wur_grand_total' => number_format($rlp->wur_grand_total, 0, ',', '.'),
+                                        'has_po' => (bool) $rlp->purchaseOrder,
+                                        'po_no' => $rlp->purchaseOrder->po_no ?? null,
+                                        'po_url' => $rlp->purchaseOrder ? route('purchase-orders.show', $rlp->purchaseOrder) : route('purchase-orders.create', ['from_rlp' => $rlp->id]),
                                     ];
                                 @endphp
                                 <tr class="border-t border-gray-100 hover:bg-gray-50/60">
                                     <td class="px-4 py-4 text-gray-500">{{ $rlps->firstItem() + $loop->index }}</td>
-                                    <td class="px-4 py-4 font-medium text-gray-800">{{ $rlp->no_rlp }}</td>
+                                    <td class="px-4 py-4 font-medium text-gray-800">
+                                        {{ $rlp->no_rlp }}
+                                        @if($rlp->purchaseOrder)
+                                            <span class="inline-flex items-center ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                PO: {{ $rlp->purchaseOrder->po_no }}
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-4 text-gray-600">{{ $rlp->date ? $rlp->date->format('d-m-Y') : '-' }}</td>
                                     <td class="px-4 py-4 text-gray-600">{{ $vendorDisplay }}</td>
                                     <td class="pl-8 pr-6 py-4 text-right font-medium whitespace-nowrap {{ $rlp->revenue_ext_price < 0 ? 'text-red-600' : 'text-emerald-600' }}">
@@ -172,7 +182,25 @@
                                                      x-transition:enter-end="opacity-100 scale-100"
                                                      :style="'top:' + menuTop + 'px; left:' + menuLeft + 'px;'"
                                                      style="display:none;"
-                                                     class="fixed z-50 w-44 rounded-lg border border-gray-100 bg-white shadow-xl py-1.5">
+                                                     class="fixed z-50 w-48 rounded-lg border border-gray-100 bg-white shadow-xl py-1.5">
+                                                    @if($rlp->purchaseOrder)
+                                                        <a href="{{ route('purchase-orders.show', $rlp->purchaseOrder) }}"
+                                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-emerald-700 hover:bg-emerald-50 transition">
+                                                            <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
+                                                            </svg>
+                                                            View PO
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('purchase-orders.create', ['from_rlp' => $rlp->id]) }}"
+                                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 font-medium transition">
+                                                            <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                                            </svg>
+                                                            Generate PO
+                                                        </a>
+                                                    @endif
+
                                                     <a href="{{ route('rlps.edit', $rlp) }}"
                                                        class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                                                         <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,6 +348,28 @@
                             <p class="text-gray-400 text-xs mb-0.5">WUR Grand Total</p>
                             <p class="text-gray-800 font-semibold" x-text="'Rp ' + detailData.wur_grand_total"></p>
                         </div>
+                    </div>
+
+                    <div class="pt-4 mt-2 border-t border-gray-100 flex items-center justify-between">
+                        <template x-if="detailData.has_po">
+                            <a :href="detailData.po_url" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
+                                </svg>
+                                View Linked PO (<span x-text="detailData.po_no"></span>)
+                            </a>
+                        </template>
+                        <template x-if="!detailData.has_po">
+                            <a :href="detailData.po_url" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Generate Purchase Order (PO)
+                            </a>
+                        </template>
+                        <button type="button" @click="detailOpen = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition ml-auto">
+                            Close
+                        </button>
                     </div>
                 </div>
             </div>

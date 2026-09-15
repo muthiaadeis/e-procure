@@ -12,6 +12,7 @@ class PurchaseRequest extends Model
 
     protected $fillable = [
         'no_request',
+        'purchase_order_id',
         'date',
         'title',
         'job_location',
@@ -78,6 +79,11 @@ class PurchaseRequest extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function purchaseOrder()
+    {
+        return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id');
     }
 
     public function purchaseOrders()

@@ -68,27 +68,6 @@
                 </div>
             </a>
 
-            {{-- Purchase Request (PR) --}}
-            <a href="{{ route('purchase-requests.index') }}" class="group block bg-white rounded-xl border border-gray-100 hover:border-amber-200 shadow-sm hover:shadow transition p-5">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="w-10 h-10 rounded-xl bg-amber-50 group-hover:bg-amber-100 flex items-center justify-center text-amber-600 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.708 2.6-7.253a1.125 1.125 0 00-1.11-1.35H5.25M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
-                        </svg>
-                    </span>
-                    <span class="inline-flex items-center text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100/70">
-                        {{ number_format($prThisMonth) }} this month
-                    </span>
-                </div>
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Purchase Request (PR)</p>
-                <div class="flex items-baseline justify-between mt-1">
-                    <p class="text-2xl font-bold text-gray-800">{{ number_format($totalPr) }}</p>
-                    <span class="text-xs text-amber-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                        View <span aria-hidden="true">&rarr;</span>
-                    </span>
-                </div>
-            </a>
-
             {{-- Purchase Order (PO) --}}
             <a href="{{ route('purchase-orders.index') }}" class="group block bg-white rounded-xl border border-gray-100 hover:border-emerald-200 shadow-sm hover:shadow transition p-5">
                 <div class="flex items-center justify-between mb-3">
@@ -105,6 +84,27 @@
                 <div class="flex items-baseline justify-between mt-1">
                     <p class="text-2xl font-bold text-gray-800">{{ number_format($totalPo) }}</p>
                     <span class="text-xs text-emerald-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                        View <span aria-hidden="true">&rarr;</span>
+                    </span>
+                </div>
+            </a>
+
+            {{-- Purchase Request (PR) --}}
+            <a href="{{ route('purchase-requests.index') }}" class="group block bg-white rounded-xl border border-gray-100 hover:border-amber-200 shadow-sm hover:shadow transition p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="w-10 h-10 rounded-xl bg-amber-50 group-hover:bg-amber-100 flex items-center justify-center text-amber-600 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.708 2.6-7.253a1.125 1.125 0 00-1.11-1.35H5.25M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
+                        </svg>
+                    </span>
+                    <span class="inline-flex items-center text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100/70">
+                        {{ number_format($prThisMonth) }} this month
+                    </span>
+                </div>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Purchase Request (PR)</p>
+                <div class="flex items-baseline justify-between mt-1">
+                    <p class="text-2xl font-bold text-gray-800">{{ number_format($totalPr) }}</p>
+                    <span class="text-xs text-amber-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                         View <span aria-hidden="true">&rarr;</span>
                     </span>
                 </div>

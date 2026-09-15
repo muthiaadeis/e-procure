@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +11,7 @@ class PurchaseRequestController extends Controller
 {
     public function index(Request $request)
     {
-        $query = PurchaseRequest::with(['creator', 'approvals']);
+        $query = PurchaseRequest::with(['creator', 'approvals', 'purchaseOrder']);
 
         $search = trim((string) $request->query('search'));
         if ($search !== '') {
@@ -27,11 +28,40 @@ class PurchaseRequestController extends Controller
         return view('purchase_requests.index', compact('purchaseRequests', 'search'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $nextNoRequest = PurchaseRequest::generateNextNoRequest();
 
-        return view('purchase_requests.create', compact('nextNoRequest'));
+        $fromPurchaseOrder = null;
+        $prefill = [];
+
+        if ($request->filled('from_po')) {
+            $fromPurchaseOrder = PurchaseOrder::with('items')->find($request->query('from_po'));
+
+            if ($fromPurchaseOrder) {
+                $vendorName = $fromPurchaseOrder->to_address ? strtok($fromPurchaseOrder->to_address, "\n") : '';
+
+                $prefill = [
+                    'purchase_order_id' => $fromPurchaseOrder->id,
+                    'title' => 'Item Allocation & Documentation for ' . $fromPurchaseOrder->po_no . ($fromPurchaseOrder->subject ? ' - ' . $fromPurchaseOrder->subject : ''),
+                    'client' => $fromPurchaseOrder->client ?? '',
+                    'note' => 'Internal documentation for items ordered in ' . $fromPurchaseOrder->po_no . ($vendorName ? ' from ' . $vendorName : '') . '.' . ($fromPurchaseOrder->project_description ? ' Order details: ' . $fromPurchaseOrder->project_description : ''),
+                    'use_ppn' => $fromPurchaseOrder->use_ppn,
+                    'ppn_percent' => (string) $fromPurchaseOrder->ppn_percent,
+                    'items' => $fromPurchaseOrder->items->map(fn ($item) => [
+                        'description' => $item->description,
+                        'line_table' => '',
+                        'line_sub_table' => '',
+                        'qty' => (string) (int) round((float) $item->qty),
+                        'unit' => $item->uom ?? 'Pcs',
+                        'price' => (string) (int) round((float) $item->price),
+                        'remarks' => '',
+                    ])->all(),
+                ];
+            }
+        }
+
+        return view('purchase_requests.create', compact('nextNoRequest', 'fromPurchaseOrder', 'prefill'));
     }
 
     public function store(Request $request)
@@ -44,6 +74,7 @@ class PurchaseRequestController extends Controller
 
             $pr = PurchaseRequest::create([
                 'no_request' => PurchaseRequest::generateNextNoRequest(),
+                'purchase_order_id' => $validated['purchase_order_id'] ?? null,
                 'date' => now(),
                 'title' => $validated['title'],
                 'job_location' => $validated['job_location'] ?? null,
@@ -74,7 +105,7 @@ class PurchaseRequestController extends Controller
 
     public function show(PurchaseRequest $purchaseRequest)
     {
-        $purchaseRequest->load(['items', 'approvals.signer', 'creator', 'purchaseOrders']);
+        $purchaseRequest->load(['items', 'approvals.signer', 'creator', 'purchaseOrder']);
 
         return view('purchase_requests.show', compact('purchaseRequest'));
     }
@@ -172,6 +203,7 @@ class PurchaseRequestController extends Controller
     private function validatePr(Request $request): array
     {
         return $request->validate([
+            'purchase_order_id' => 'nullable|exists:purchase_orders,id',
             'title' => 'required|string|max:255',
             'job_location' => 'nullable|string|max:255',
             'client' => 'nullable|string|max:255',

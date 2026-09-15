@@ -416,21 +416,11 @@
 
                                 <div class="p-3 rounded-xl bg-purple-50/50 border border-purple-100 flex items-start gap-3">
                                     <span class="w-7 h-7 rounded-lg bg-purple-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                        RLP
+                                        RRP
                                     </span>
                                     <div>
-                                        <h4 class="font-bold text-xs text-purple-900">2. Request for Local Purchase (RLP)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5 leading-relaxed">Expedited local procurement featuring multi-vendor price comparisons, additional expense records, and tiered authorizations.</p>
-                                    </div>
-                                </div>
-
-                                <div class="p-3 rounded-xl bg-amber-50/50 border border-amber-100 flex items-start gap-3">
-                                    <span class="w-7 h-7 rounded-lg bg-amber-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                        PR
-                                    </span>
-                                    <div>
-                                        <h4 class="font-bold text-xs text-amber-900">3. Purchase Request (PR)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5 leading-relaxed">Formal procurement request for operational and capital requirements with structured approval workflows.</p>
+                                        <h4 class="font-bold text-xs text-purple-900">2. Request for Local Purchase (RRP)</h4>
+                                        <p class="text-xs text-gray-600 mt-0.5 leading-relaxed">Multi-vendor price comparison used to evaluate quotations, discounts, and profit/savings margins before choosing the best vendor.</p>
                                     </div>
                                 </div>
 
@@ -439,8 +429,18 @@
                                         PO
                                     </span>
                                     <div>
-                                        <h4 class="font-bold text-xs text-emerald-900">4. Purchase Order (PO)</h4>
-                                        <p class="text-xs text-gray-600 mt-0.5 leading-relaxed">Official purchase order issued to verified vendors with agreed pricing, payment terms, and required sign-offs.</p>
+                                        <h4 class="font-bold text-xs text-emerald-900">3. Purchase Order (PO)</h4>
+                                        <p class="text-xs text-gray-600 mt-0.5 leading-relaxed">Official order issued to the chosen vendor once selected from an RRP comparison, or created directly for single-vendor purchases with no RRP required.</p>
+                                    </div>
+                                </div>
+
+                                <div class="p-3 rounded-xl bg-amber-50/50 border border-amber-100 flex items-start gap-3">
+                                    <span class="w-7 h-7 rounded-lg bg-amber-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                        PR
+                                    </span>
+                                    <div>
+                                        <h4 class="font-bold text-xs text-amber-900">4. Purchase Request (PR)</h4>
+                                        <p class="text-xs text-gray-600 mt-0.5 leading-relaxed">Final internal documentation created after the PO, recording project allocation and who the purchased items are for.</p>
                                     </div>
                                 </div>
                             </div>

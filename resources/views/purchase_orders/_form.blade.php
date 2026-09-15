@@ -33,7 +33,7 @@
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Supplier No</label>
                         <input type="text" name="supplier_no"
-                               value="{{ old('supplier_no', $isEdit ? $purchaseOrder->supplier_no : '') }}"
+                               value="{{ old('supplier_no', $isEdit ? $purchaseOrder->supplier_no : ($prefill['supplier_no'] ?? '')) }}"
                                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                     </div>
                     <div>
@@ -57,14 +57,52 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="border border-gray-200 rounded-xl p-4 space-y-3">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">To :</label>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-sm font-medium text-gray-700">To (Supplier) :</label>
+                    @if(isset($vendors) && $vendors->isNotEmpty())
+                        <div class="text-xs text-indigo-600 flex items-center gap-1" x-data="{
+                            onVendorSelect(event) {
+                                const opt = event.target.selectedOptions[0];
+                                if (!opt || !opt.value) return;
+                                const name = opt.dataset.name || '';
+                                const addr = opt.dataset.address || '';
+                                const code = opt.dataset.code || '';
+                                const phone = opt.dataset.phone || '';
+                                const brand = opt.dataset.brand || '';
+                                
+                                const toEl = document.querySelector('textarea[name=\'to_address\']');
+                                if (toEl) toEl.value = name + (addr ? '\n' + addr : '');
+                                const supEl = document.querySelector('input[name=\'supplier_no\']');
+                                if (supEl && code) supEl.value = code;
+                                const phoneEl = document.querySelector('input[name=\'contact_number\']');
+                                if (phoneEl && phone) phoneEl.value = phone;
+                                const attnEl = document.querySelector('input[name=\'attn\']');
+                                if (attnEl && brand) attnEl.value = brand;
+                            }
+                        }">
+                            <select @change="onVendorSelect($event)" class="text-xs py-1 px-2 border border-gray-200 rounded-md bg-gray-50 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Quick select vendor...</option>
+                                @foreach($vendors as $v)
+                                    <option value="{{ $v->id }}"
+                                            data-name="{{ $v->vendor_name }}"
+                                            data-address="{{ $v->vendor_address }}"
+                                            data-code="{{ $v->vendor_code }}"
+                                            data-phone="{{ $v->phone }}"
+                                            data-brand="{{ $v->brand }}">
+                                        {{ $v->vendor_name }} ({{ $v->vendor_code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+                </div>
                 <textarea name="to_address" rows="2" placeholder="Supplier name &amp; address..."
-                          class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">{{ old('to_address', $isEdit ? $purchaseOrder->to_address : '') }}</textarea>
+                          class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">{{ old('to_address', $isEdit ? $purchaseOrder->to_address : ($prefill['to_address'] ?? '')) }}</textarea>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Attn :</label>
                 <input type="text" name="attn" placeholder="Attention to..."
-                       value="{{ old('attn', $isEdit ? $purchaseOrder->attn : '') }}"
+                       value="{{ old('attn', $isEdit ? $purchaseOrder->attn : ($prefill['attn'] ?? '')) }}"
                        class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
             </div>
         </div>
@@ -94,7 +132,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Contact Number</label>
                     <input type="text" name="contact_number"
-                           value="{{ old('contact_number', $isEdit ? $purchaseOrder->contact_number : '') }}"
+                           value="{{ old('contact_number', $isEdit ? $purchaseOrder->contact_number : ($prefill['contact_number'] ?? '')) }}"
                            class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                 </div>
                 <div>

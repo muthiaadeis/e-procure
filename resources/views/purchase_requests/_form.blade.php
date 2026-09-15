@@ -45,7 +45,7 @@
                     Title <span class="text-red-500">*</span>
                 </label>
                 <input type="text" name="title" required
-                       value="{{ old('title', $isEdit ? $purchaseRequest->title : '') }}"
+                       value="{{ old('title', $isEdit ? $purchaseRequest->title : ($prefill['title'] ?? '')) }}"
                        placeholder="Enter title..."
                        class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
             </div>
@@ -53,7 +53,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Client</label>
                 <input type="text" name="client"
-                       value="{{ old('client', $isEdit ? $purchaseRequest->client : '') }}"
+                       value="{{ old('client', $isEdit ? $purchaseRequest->client : ($prefill['client'] ?? '')) }}"
                        placeholder="Enter client..."
                        class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
             </div>
@@ -223,7 +223,7 @@
         <div class="md:w-7/12">
             <label class="block text-sm font-medium text-gray-700 mb-1.5">Note</label>
             <textarea name="note" rows="6" placeholder="Add additional notes here..."
-                    class="w-full h-[calc(100%-1.75rem)] rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm resize-none">{{ old('note', $isEdit ? $purchaseRequest->note : '') }}</textarea>
+                    class="w-full h-[calc(100%-1.75rem)] rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm resize-none">{{ old('note', $isEdit ? $purchaseRequest->note : ($prefill['note'] ?? '')) }}</textarea>
         </div>
 
         {{-- Kanan: Summary (Nilai angka dibuat menyatu mulai dari kiri) --}}
