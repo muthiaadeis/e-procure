@@ -124,12 +124,6 @@
                                                 </svg>
                                             </a>
                                             @if($po->is_draft)
-                                                <a href="{{ route('purchase-orders.edit', $po) }}" title="Edit"
-                                                   class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
-                                                    </svg>
-                                                </a>
                                                 <form id="delete-po-{{ $po->id }}" action="{{ route('purchase-orders.destroy', $po) }}" method="POST" class="hidden">
                                                     @csrf @method('DELETE')
                                                 </form>

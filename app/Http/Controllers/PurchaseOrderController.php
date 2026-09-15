@@ -142,60 +142,12 @@ class PurchaseOrderController extends Controller
 
     public function edit(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['items', 'approvals']);
-
-        abort_unless($purchaseOrder->is_draft, 403, 'This PO can no longer be edited because the approval process has already started.');
-
-        $itemsForJs = old('items') ?: $purchaseOrder->items->map(fn ($item) => [
-            'description' => $item->description,
-            'qty' => (string) (int) round((float) $item->qty),
-            'uom' => $item->uom,
-            'brand' => $item->brand,
-            'price' => (string) (int) round((float) $item->price),
-        ])->values()->all();
-
-        return view('purchase_orders.edit', compact('purchaseOrder', 'itemsForJs'));
+        abort(403, 'Purchase Orders cannot be edited once created. Please delete and create a new one if changes are needed (only possible before any approval is signed).');
     }
 
     public function update(Request $request, PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load('approvals');
-        abort_unless($purchaseOrder->is_draft, 403, 'This PO can no longer be edited because the approval process has already started.');
-
-        $validated = $this->validatePo($request);
-
-        DB::transaction(function () use ($validated, $purchaseOrder) {
-            [$subtotal, $itemsData] = $this->prepareItems($validated['items']);
-            $ppn = $this->calculatePpn($subtotal, $validated);
-
-            $purchaseOrder->update([
-                'our_reference' => $validated['our_reference'] ?? null,
-                'supplier_no' => $validated['supplier_no'] ?? null,
-                'our_order_date' => $validated['our_order_date'] ?? $purchaseOrder->our_order_date,
-                'revision' => $validated['revision'] ?? null,
-                'to_address' => $validated['to_address'] ?? null,
-                'attn' => $validated['attn'] ?? null,
-                'invoice_address' => $validated['invoice_address'] ?? null,
-                'subject' => $validated['subject'] ?? null,
-                'project_description' => $validated['project_description'] ?? null,
-                'contact_number' => $validated['contact_number'] ?? null,
-                'client' => $validated['client'] ?? null,
-                'final_delivery_address' => $validated['final_delivery_address'] ?? null,
-                'subtotal' => $subtotal,
-                'use_ppn' => $ppn['use_ppn'],
-                'ppn_percent' => $ppn['ppn_percent'],
-                'ppn_amount' => $ppn['ppn_amount'],
-                'grand_total' => $subtotal + $ppn['ppn_amount'],
-            ]);
-
-            $purchaseOrder->items()->delete();
-            foreach ($itemsData as $item) {
-                $purchaseOrder->items()->create($item);
-            }
-        });
-
-        return redirect()->route('purchase-orders.show', $purchaseOrder)
-            ->with('success', 'Purchase Order updated successfully.');
+        abort(403, 'Purchase Orders cannot be edited once created. Please delete and create a new one if changes are needed (only possible before any approval is signed).');
     }
 
     public function destroy(PurchaseOrder $purchaseOrder)

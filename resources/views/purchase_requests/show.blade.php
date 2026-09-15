@@ -10,12 +10,6 @@
                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition">
                     Print
                 </a>
-                @if($purchaseRequest->is_draft)
-                    <a href="{{ route('purchase-requests.edit', $purchaseRequest) }}"
-                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
-                        Edit
-                    </a>
-                @endif
                 @if($purchaseRequest->purchaseOrder)
                     <a href="{{ route('purchase-orders.show', $purchaseRequest->purchaseOrder) }}"
                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-green-50 border border-green-200 text-green-700 text-sm font-semibold rounded-lg hover:bg-green-100 transition">

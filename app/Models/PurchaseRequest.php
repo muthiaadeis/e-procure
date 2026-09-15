@@ -86,11 +86,6 @@ class PurchaseRequest extends Model
         return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id');
     }
 
-    public function purchaseOrders()
-    {
-        return $this->hasMany(PurchaseOrder::class);
-    }
-
     protected function isFullySigned(): Attribute
     {
         return Attribute::make(

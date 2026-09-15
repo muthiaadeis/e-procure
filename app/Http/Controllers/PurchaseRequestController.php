@@ -112,48 +112,12 @@ class PurchaseRequestController extends Controller
 
     public function edit(PurchaseRequest $purchaseRequest)
     {
-        $purchaseRequest->load(['items', 'approvals']);
-
-        abort_unless($purchaseRequest->is_draft, 403, 'This PR can no longer be edited because the approval process has already started.');
-
-        return view('purchase_requests.edit', compact('purchaseRequest'));
+        abort(403, 'Purchase Requests cannot be edited once created. Please delete and create a new one if changes are needed (only possible before any approval is signed).');
     }
 
     public function update(Request $request, PurchaseRequest $purchaseRequest)
     {
-        $purchaseRequest->load('approvals');
-        abort_unless($purchaseRequest->is_draft, 403, 'This PR can no longer be edited because the approval process has already started.');
-
-        $validated = $this->validatePr($request);
-
-        DB::transaction(function () use ($validated, $purchaseRequest) {
-            [$subtotal, $itemsData] = $this->prepareItems($validated['items']);
-            $ppn = $this->calculatePpn($subtotal, $validated);
-
-            $purchaseRequest->update([
-                'title' => $validated['title'],
-                'job_location' => $validated['job_location'] ?? null,
-                'client' => $validated['client'] ?? null,
-                'job_no' => $validated['job_no'] ?? null,
-                'location_project' => $validated['location_project'] ?? null,
-                'note' => $validated['note'] ?? null,
-                'subtotal' => $subtotal,
-                'use_ppn' => $ppn['use_ppn'],
-                'ppn_percent' => $ppn['ppn_percent'],
-                'ppn_amount' => $ppn['ppn_amount'],
-                'grand_total' => $subtotal + $ppn['ppn_amount'],
-            ]);
-
-            $purchaseRequest->items()->delete();
-            foreach ($itemsData as $item) {
-                $purchaseRequest->items()->create($item);
-            }
-            // Kotak approval TIDAK di-reset di sini karena is_draft artinya
-            // memang belum ada satupun yang tanda tangan.
-        });
-
-        return redirect()->route('purchase-requests.show', $purchaseRequest)
-            ->with('success', 'Purchase Request updated successfully.');
+        abort(403, 'Purchase Requests cannot be edited once created. Please delete and create a new one if changes are needed (only possible before any approval is signed).');
     }
 
     public function destroy(PurchaseRequest $purchaseRequest)
