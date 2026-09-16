@@ -175,8 +175,11 @@
 
             {{-- Approvals --}}
             <div class="bg-white shadow-sm rounded-2xl p-6 sm:p-8">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-                    <h3 class="text-sm font-semibold text-gray-800">Approval</h3>
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="text-base font-bold text-gray-800">Approval Workflow</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Sequential digital signature stages for this Purchase Order.</p>
+                    </div>
                     @if(!auth()->user()->canSignApproval())
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70">
                             <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,52 +187,90 @@
                             </svg>
                             Read-only: digital signatures require an authorized Approver account
                         </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                            <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Approver Account Active
+                        </span>
                     @endif
                 </div>
 
-                @foreach($purchaseOrder->approvals->groupBy('sort_order') as $stageApprovals)
-                    <div class="mb-6 last:mb-0">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">{{ $stageApprovals->first()->stage_label }}</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                            @foreach($stageApprovals as $approval)
-                                @php
-                                    $locked = $purchaseOrder->approvals->where('sort_order', '<', $approval->sort_order)->contains(fn($a) => is_null($a->signed_at));
-                                    $canSign = auth()->user() && auth()->user()->canSignApproval($approval->role_label);
-                                @endphp
-                                <div class="border border-gray-200 rounded-xl p-4 text-center flex flex-col items-center">
-                                    <p class="text-xs text-gray-500 mb-2">{{ $approval->role_label }}</p>
+                {{-- All approvals displayed side-by-side (sejajar) in a responsive grid --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+                    @foreach($purchaseOrder->approvals as $approval)
+                        @php
+                            $locked = $purchaseOrder->approvals->where('sort_order', '<', $approval->sort_order)->contains(fn($a) => is_null($a->signed_at));
+                            $canSign = auth()->user() && auth()->user()->canSignApproval($approval->role_label);
+                            $isSigned = $approval->isSigned();
+                        @endphp
+                        <div class="relative flex flex-col justify-between rounded-2xl border transition p-5 {{ $isSigned ? 'bg-emerald-50/20 border-emerald-200 ring-1 ring-emerald-200/50' : ($locked ? 'bg-gray-50/50 border-gray-200' : ($canSign ? 'bg-white border-indigo-300 ring-2 ring-indigo-100 shadow-sm' : 'bg-gray-50/30 border-gray-200')) }}">
+                            {{-- Top Header: Stage Tag + Stage Number --}}
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider {{ $isSigned ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600' }}">
+                                        {{ $approval->stage_label }}
+                                    </span>
+                                    <span class="text-[10px] font-semibold text-gray-400">
+                                        Step {{ $approval->sort_order }}
+                                    </span>
+                                </div>
+                                <h4 class="text-sm font-bold text-gray-800 leading-snug">
+                                    {{ $approval->role_label }}
+                                </h4>
+                            </div>
 
-                                    @if($approval->isSigned())
-                                        <img src="{{ $approval->signature }}" alt="signature" class="h-16 object-contain mb-1">
-                                        <p class="text-sm font-semibold text-gray-800">{{ $approval->signer->name ?? '-' }}</p>
-                                        <p class="text-xs text-gray-400">{{ $approval->signed_at->format('d-m-Y H:i') }}</p>
-                                    @elseif($locked)
-                                        <div class="h-16 flex items-center justify-center text-gray-300 text-xs">Waiting for previous stage</div>
-                                        <button type="button" disabled
-                                                class="mt-2 text-xs font-semibold text-gray-300 border border-gray-200 px-3 py-1.5 rounded-lg cursor-not-allowed">
-                                            Sign
-                                        </button>
-                                    @elseif(!$canSign)
-                                        <div class="h-16 flex items-center justify-center text-gray-400 text-xs">Awaiting approver signature</div>
-                                        <span class="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200/70 px-2.5 py-1 rounded-lg">
-                                            <svg class="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {{-- Center: Signature / Action Canvas Area (Roomy & spacious) --}}
+                            <div class="my-4 py-2 border-y border-dashed border-gray-200 min-h-[110px] flex flex-col items-center justify-center">
+                                @if($isSigned)
+                                    <div class="w-full flex flex-col items-center justify-center">
+                                        <img src="{{ $approval->signature }}" alt="signature" class="h-20 sm:h-22 object-contain filter drop-shadow-sm">
+                                    </div>
+                                @elseif($locked)
+                                    <div class="flex flex-col items-center justify-center text-center text-gray-400 py-3">
+                                        <svg class="w-6 h-6 mb-1 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                        <span class="text-xs font-medium">Waiting for Step {{ $approval->sort_order - 1 }}</span>
+                                    </div>
+                                @elseif(!$canSign)
+                                    <div class="flex flex-col items-center justify-center text-center py-3">
+                                        <span class="text-xs text-gray-400 mb-1.5">Awaiting approver</span>
+                                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200/70 px-2.5 py-1 rounded-lg">
+                                            <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                             </svg>
                                             Approver Only
                                         </span>
-                                    @else
-                                        <div class="h-16 flex items-center justify-center text-gray-300 text-xs">Not signed yet</div>
+                                    </div>
+                                @else
+                                    <div class="w-full flex flex-col items-center justify-center py-2">
+                                        <span class="text-xs text-indigo-600 font-medium mb-2">Ready for signature</span>
                                         <button type="button"
                                                 @click="openSign({{ $approval->id }}, {{ Js::from($approval->role_label) }}, {{ Js::from(route('purchase-orders.sign', [$purchaseOrder, $approval])) }})"
-                                                class="mt-2 text-xs font-semibold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition">
-                                            Sign
+                                                class="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-2.5 px-3.5 rounded-xl shadow-sm transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                            </svg>
+                                            Sign Document
                                         </button>
-                                    @endif
-                                </div>
-                            @endforeach
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Bottom: Signer info & timestamp --}}
+                            <div class="text-center pt-1">
+                                @if($isSigned)
+                                    <p class="text-xs font-bold text-gray-800 truncate">{{ $approval->signer->name ?? '-' }}</p>
+                                    <p class="text-[11px] text-emerald-600 font-medium mt-0.5">{{ $approval->signed_at->format('d-m-Y H:i') }}</p>
+                                @else
+                                    <p class="text-xs font-medium text-gray-400">Pending</p>
+                                @endif
+                            </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
 
             {{-- Vendor Acceptance (diisi/ditandatangani manual oleh supplier di dokumen cetak) --}}
@@ -240,25 +281,47 @@
         </div>
 
         {{-- Signature modal --}}
-        <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-gray-900/40" @click="closeModal()"></div>
-            <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-                <h3 class="font-semibold text-gray-800 mb-1">Digital Signature</h3>
-                <p class="text-sm text-gray-500 mb-4" x-text="approvalLabel"></p>
-
-                <canvas id="signature-canvas" class="w-full h-48 border border-dashed border-gray-300 rounded-lg touch-none"></canvas>
-
-                <div class="flex items-center justify-between mt-4">
-                    <button type="button" @click="clearPad()" class="text-sm font-semibold text-gray-500 hover:text-gray-700">
-                        Clear
+        <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-xs" @click="closeModal()"></div>
+            <div class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 sm:p-8">
+                <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Digital Signature Pad</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Signing as: <strong class="text-indigo-600" x-text="approvalLabel"></strong></p>
+                    </div>
+                    <button type="button" @click="closeModal()" class="text-gray-400 hover:text-gray-600 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
                     </button>
-                    <div class="flex gap-3">
-                        <button type="button" @click="closeModal()" class="text-sm font-semibold text-gray-500 hover:text-gray-700">
+                </div>
+
+                {{-- Spacious Canvas --}}
+                <div class="relative bg-gray-50/50 rounded-xl border border-gray-200 p-2">
+                    <canvas id="signature-canvas" class="w-full h-72 sm:h-80 bg-white rounded-lg touch-none shadow-inner cursor-crosshair"></canvas>
+                    <div class="absolute bottom-6 left-6 right-6 border-b border-gray-300 pointer-events-none flex justify-between items-end pb-1">
+                        <span class="text-[11px] text-gray-400 font-normal">Sign above this line</span>
+                        <span class="text-[11px] text-gray-400 font-normal">✕</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 mt-5">
+                    <button type="button" @click="clearPad()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-red-600 bg-gray-100 hover:bg-red-50 px-3.5 py-2 rounded-lg transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Clear Signature
+                    </button>
+                    <div class="flex gap-2.5">
+                        <button type="button" @click="closeModal()" class="text-xs font-semibold text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg transition">
                             Cancel
                         </button>
                         <button type="button" @click="submitSignature()"
-                                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition">
-                            Sign Document
+                                class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold px-5 py-2.5 rounded-lg shadow-sm transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Save & Sign Document
                         </button>
                     </div>
                 </div>
@@ -291,7 +354,12 @@
                         canvas.width = canvas.offsetWidth * ratio;
                         canvas.height = canvas.offsetHeight * ratio;
                         canvas.getContext('2d').scale(ratio, ratio);
-                        this.pad = new SignaturePad(canvas, { backgroundColor: 'rgb(255,255,255)' });
+                        this.pad = new SignaturePad(canvas, {
+                            backgroundColor: 'rgb(255,255,255)',
+                            minWidth: 1.8,
+                            maxWidth: 3.8,
+                            penColor: 'rgb(15, 23, 42)'
+                        });
                     });
                 },
 
