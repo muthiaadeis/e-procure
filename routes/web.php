@@ -76,8 +76,14 @@ Route::middleware('auth')->group(function () {
 });
 
 // Halaman admin: kelola user & reset password
+// Admin User Management & Password Reset
 Route::middleware(['auth', 'admin', 'force.password.change'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('users', [UserManagementController::class, 'index'])->name('users.index');
+    Route::get('users/create', [UserManagementController::class, 'create'])->name('users.create');
+    Route::post('users', [UserManagementController::class, 'store'])->name('users.store');
+    Route::get('users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
+    Route::put('users/{user}', [UserManagementController::class, 'update'])->name('users.update');
+    Route::delete('users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
     Route::post('users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])
         ->name('users.reset-password');
 });

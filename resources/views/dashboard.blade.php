@@ -4,6 +4,7 @@
             <div>
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">Procurement Dashboard</h1>
                 <p class="text-sm text-gray-500 mt-1">Analytics overview and procurement activity across all modules (MR, RRP, PR, PO).</p>
+                <p class="text-sm text-gray-500 mt-1">Analytics overview and procurement activity across all modules (MR, RRP, PO, PR).</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('vendors.index') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 font-medium hover:bg-gray-50 transition shadow-sm">

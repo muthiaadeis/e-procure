@@ -4,6 +4,7 @@
             <div>
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">Purchase Request</h1>
                 <p class="text-sm text-gray-500 mt-1">Manage purchase requests to vendors.</p>
+                <p class="text-sm text-gray-500 mt-1">Internal documentation detailing recipients and project allocation for ordered goods.</p>
             </div>
             <a href="{{ route('purchase-requests.create') }}"
                class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
@@ -95,6 +96,15 @@
                                 @endphp
                                 <tr class="hover:bg-gray-50/70 transition">
                                     <td class="px-4 py-3 font-semibold text-gray-800">{{ $pr->no_request }}</td>
+                                    <td class="px-4 py-3 font-semibold text-gray-800">
+                                        <div>{{ $pr->no_request }}</div>
+                                        @if($pr->purchaseOrder)
+                                            <a href="{{ route('purchase-orders.show', $pr->purchaseOrder) }}"
+                                               class="inline-flex items-center gap-1 text-[11px] font-normal text-indigo-600 hover:text-indigo-800 transition">
+                                                <span>PO: {{ $pr->purchaseOrder->po_no }}</span>
+                                            </a>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-3 text-gray-600">{{ $pr->date?->format('d-m-Y') ?? '-' }}</td>
                                     <td class="px-4 py-3 text-gray-700 max-w-[220px] truncate" title="{{ $pr->title }}">{{ $pr->title }}</td>
                                     <td class="px-4 py-3 text-gray-600">{{ $pr->client ?? '-' }}</td>
