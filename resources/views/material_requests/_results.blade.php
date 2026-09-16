@@ -23,7 +23,39 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             @forelse($requests as $req)
-                            <tr id="mr-row-{{ $req->id }}" class="transition {{ request('auto_open') && ($req->id == request('auto_open') || $req->no_mr == request('auto_open')) ? 'bg-indigo-50/80 ring-2 ring-indigo-500/50' : 'hover:bg-gray-50' }}">
+                            @php
+                                $detailPayload = [
+                                    'no' => $requests->firstItem() + $loop->index,
+                                    'no_mr' => $req->no_mr ?? '-',
+                                    'date' => $req->date->format('d-m-Y'),
+                                    'charge_to' => $req->charge_to,
+                                    'items' => $req->items->map(fn ($item) => [
+                                        'description' => $item->description,
+                                        'quantity' => $item->quantity,
+                                        'unit' => $item->unit,
+                                        'remarks' => $item->remarks,
+                                    ])->values(),
+                                    'approver_a' => $req->approverA->name ?? '-',
+                                    'is_approved_a' => $req->is_approved_by_a,
+                                    'approved_a_at' => $req->approved_a_at ? $req->approved_a_at->format('d-m-Y') : null,
+                                    'is_rejected_a' => $req->is_rejected_by_a,
+                                    'rejection_a_reason' => $req->rejection_a_reason,
+                                    'approver_c' => $req->approverC->name ?? '-',
+                                    'is_approved_c' => $req->is_approved_by_c,
+                                    'approved_c_at' => $req->approved_c_at ? $req->approved_c_at->format('d-m-Y') : null,
+                                    'is_rejected_c' => $req->is_rejected_by_c,
+                                    'rejection_c_reason' => $req->rejection_c_reason,
+                                    'is_rejected_finance' => $req->is_rejected_by_finance,
+                                    'finance_rejection_reason' => $req->finance_rejection_reason,
+                                    'finance_rejector' => $req->financeRejector->name ?? '-',
+                                    'status' => $req->status,
+                                    'is_overdue' => $req->is_overdue,
+                                    'overdue_reason' => $req->overdue_reason,
+                                ];
+                            @endphp
+                            <tr id="mr-row-{{ $req->id }}"
+                                @click="openDetail({{ \Illuminate\Support\Js::from($detailPayload) }})"
+                                class="cursor-pointer transition {{ request('auto_open') && ($req->id == request('auto_open') || $req->no_mr == request('auto_open')) ? 'bg-indigo-50/80 ring-2 ring-indigo-500/50' : 'hover:bg-gray-50' }}">
                                 <td class="px-4 py-3.5 text-gray-500">{{ $requests->firstItem() + $loop->index }}</td>
                                 <td class="px-4 py-3.5 font-medium text-gray-800 truncate">{{ $req->no_mr ?? '-' }}</td>
                                 <td class="px-4 py-3.5 text-gray-600 whitespace-nowrap">{{ $req->date->format('d-m-Y') }}</td>
@@ -82,37 +114,8 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3.5">
+                                <td class="px-4 py-3.5" @click.stop>
                                     @php
-                                        $detailPayload = [
-                                            'no' => $requests->firstItem() + $loop->index,
-                                            'no_mr' => $req->no_mr ?? '-',
-                                            'date' => $req->date->format('d-m-Y'),
-                                            'charge_to' => $req->charge_to,
-                                            'items' => $req->items->map(fn ($item) => [
-                                                'description' => $item->description,
-                                                'quantity' => $item->quantity,
-                                                'unit' => $item->unit,
-                                                'remarks' => $item->remarks,
-                                            ])->values(),
-                                            'approver_a' => $req->approverA->name ?? '-',
-                                            'is_approved_a' => $req->is_approved_by_a,
-                                            'approved_a_at' => $req->approved_a_at ? $req->approved_a_at->format('d-m-Y') : null,
-                                            'is_rejected_a' => $req->is_rejected_by_a,
-                                            'rejection_a_reason' => $req->rejection_a_reason,
-                                            'approver_c' => $req->approverC->name ?? '-',
-                                            'is_approved_c' => $req->is_approved_by_c,
-                                            'approved_c_at' => $req->approved_c_at ? $req->approved_c_at->format('d-m-Y') : null,
-                                            'is_rejected_c' => $req->is_rejected_by_c,
-                                            'rejection_c_reason' => $req->rejection_c_reason,
-                                            'is_rejected_finance' => $req->is_rejected_by_finance,
-                                            'finance_rejection_reason' => $req->finance_rejection_reason,
-                                            'finance_rejector' => $req->financeRejector->name ?? '-',
-                                            'status' => $req->status,
-                                            'is_overdue' => $req->is_overdue,
-                                            'overdue_reason' => $req->overdue_reason,
-                                        ];
-
                                         $canApproveA = auth()->user()->isApproverA() && ! $req->is_approved_by_a && ! $req->is_rejected_by_a;
                                         $canApproveC = auth()->user()->isApproverC() && $req->is_approved_by_a && ! $req->is_approved_by_c && ! $req->is_rejected_by_c;
                                         $canApprove = $canApproveA || $canApproveC;
@@ -132,16 +135,6 @@
                                         $hasAnyAction = $actionCount > 0;
                                     @endphp
                                     <div class="flex items-center justify-center gap-2" x-data="{ menuOpen: false }">
-    <button type="button"
-            title="Detail"
-            @click="openDetail({{ \Illuminate\Support\Js::from($detailPayload) }})"
-            class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-        </svg>
-    </button>
-
     <a href="{{ route('material-requests.print', $req->id) }}"
    target="_blank"
    title="Print / PDF"

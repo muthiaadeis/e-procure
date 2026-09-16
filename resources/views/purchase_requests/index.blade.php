@@ -94,12 +94,13 @@
                                         default => 'bg-gray-100 text-gray-600',
                                     };
                                 @endphp
-                                <tr class="hover:bg-gray-50/70 transition">
-                                    <td class="px-4 py-3 font-semibold text-gray-800">{{ $pr->no_request }}</td>
+                                <tr @click="window.location.href = '{{ route('purchase-requests.show', $pr) }}'"
+                                    class="hover:bg-gray-50/70 transition cursor-pointer">
                                     <td class="px-4 py-3 font-semibold text-gray-800">
                                         <div>{{ $pr->no_request }}</div>
                                         @if($pr->purchaseOrder)
                                             <a href="{{ route('purchase-orders.show', $pr->purchaseOrder) }}"
+                                               @click.stop
                                                class="inline-flex items-center gap-1 text-[11px] font-normal text-indigo-600 hover:text-indigo-800 transition">
                                                 <span>PO: {{ $pr->purchaseOrder->po_no }}</span>
                                             </a>
@@ -115,15 +116,8 @@
                                             {{ $pr->status }} ({{ $signedCount }}/{{ $totalCount }})
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3" @click.stop>
                                         <div class="flex items-center justify-center gap-1">
-                                            <a href="{{ route('purchase-requests.show', $pr) }}" title="View"
-                                               class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                </svg>
-                                            </a>
                                             <a href="{{ route('purchase-requests.print', $pr) }}" target="_blank" title="Print"
                                                class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
