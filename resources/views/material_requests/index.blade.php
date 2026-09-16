@@ -59,7 +59,7 @@
                             return $r->id == $autoOpenTarget || $r->no_mr == $autoOpenTarget;
                         });
                         if (! $autoOpenReq) {
-                            $autoOpenReq = \App\Models\MaterialRequest::with(['items', 'approverA', 'approverC', 'rejectorA', 'rejectorC', 'financeRejector'])
+                            $autoOpenReq = \App\Models\MaterialRequest::with(['items', 'approverA', 'approverC', 'rejectorA', 'rejectorC', 'financeRejector', 'paidByUser', 'creator'])
                                 ->where('id', $autoOpenTarget)
                                 ->orWhere('no_mr', $autoOpenTarget)
                                 ->first();
@@ -205,6 +205,7 @@
                                 'pending_approval' => 'Pending Approval',
                                 'overdue' => 'Overdue',
                                 'rejected' => 'Rejected',
+                                'done' => 'Done',
                             ];
                             $currentFilterLabel = $filterLabels[request('filter')] ?? 'All MRs';
                         @endphp
@@ -249,15 +250,20 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 @endif
                             </a>
-                            @if(auth()->user()->isInput())
-                                <a href="{{ route('material-requests.index', ['filter' => 'rejected']) }}"
-                                   class="flex items-center justify-between px-3.5 py-2 text-sm transition {{ request('filter') === 'rejected' ? 'text-indigo-600 font-medium bg-indigo-50' : 'text-gray-600 hover:bg-gray-50' }}">
-                                    Rejected
-                                    @if(request('filter') === 'rejected')
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    @endif
-                                </a>
-                            @endif
+                            <a href="{{ route('material-requests.index', ['filter' => 'done']) }}"
+                               class="flex items-center justify-between px-3.5 py-2 text-sm transition {{ request('filter') === 'done' ? 'text-indigo-600 font-medium bg-indigo-50' : 'text-gray-600 hover:bg-gray-50' }}">
+                                Done
+                                @if(request('filter') === 'done')
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                @endif
+                            </a>
+                            <a href="{{ route('material-requests.index', ['filter' => 'rejected']) }}"
+                               class="flex items-center justify-between px-3.5 py-2 text-sm transition {{ request('filter') === 'rejected' ? 'text-indigo-600 font-medium bg-indigo-50' : 'text-gray-600 hover:bg-gray-50' }}">
+                                Rejected
+                                @if(request('filter') === 'rejected')
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                @endif
+                            </a>
                         </div>
                     </div>
                     </div>

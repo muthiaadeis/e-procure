@@ -21,7 +21,7 @@ class MaterialRequestController extends Controller
             });
         }
 
-        if ($filter === 'rejected' && auth()->user()->isInput()) {
+        if ($filter === 'rejected') {
             $query->where(function ($q) {
                 $q->whereNotNull('rejected_a_at')
                     ->orWhereNotNull('rejected_c_at')
@@ -60,6 +60,13 @@ class MaterialRequestController extends Controller
                         ->where('approved_c_at', '<=', $deadlineD);
                 });
             });
+        } elseif ($filter === 'done') {
+            $query->whereNull('rejected_a_at')
+                ->whereNull('rejected_c_at')
+                ->whereNull('finance_rejected_at')
+                ->whereNotNull('approved_a_at')
+                ->whereNotNull('approved_c_at')
+                ->whereNotNull('paid_at');
         }
 
         $requests = $query->latest('date')->paginate(15)->withQueryString();
