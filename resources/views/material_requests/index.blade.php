@@ -95,6 +95,11 @@
                             'status' => $autoOpenReq->status,
                             'is_overdue' => $autoOpenReq->is_overdue,
                             'overdue_reason' => $autoOpenReq->overdue_reason,
+                            'is_paid' => ! is_null($autoOpenReq->paid_at),
+                            'paid_by' => $autoOpenReq->paidByUser->name ?? '-',
+                            'paid_at' => $autoOpenReq->paid_at ? $autoOpenReq->paid_at->format('d-m-Y') : null,
+                            'created_by' => $autoOpenReq->creator->name ?? '-',
+                            'created_at' => $autoOpenReq->created_at ? $autoOpenReq->created_at->format('d-m-Y H:i') : '-',
                         ];
                     @endphp
                     this.$nextTick(() => {

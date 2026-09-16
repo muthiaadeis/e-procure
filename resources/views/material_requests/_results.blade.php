@@ -51,6 +51,11 @@
                                     'status' => $req->status,
                                     'is_overdue' => $req->is_overdue,
                                     'overdue_reason' => $req->overdue_reason,
+                                    'is_paid' => ! is_null($req->paid_at),
+                                    'paid_by' => $req->paidByUser->name ?? '-',
+                                    'paid_at' => $req->paid_at ? $req->paid_at->format('d-m-Y') : null,
+                                    'created_by' => $req->creator->name ?? '-',
+                                    'created_at' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
                                 ];
                             @endphp
                             <tr id="mr-row-{{ $req->id }}"

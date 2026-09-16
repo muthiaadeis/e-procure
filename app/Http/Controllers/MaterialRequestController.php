@@ -9,7 +9,7 @@ class MaterialRequestController extends Controller
 {
     public function index(Request $request)
     {
-        $query = MaterialRequest::with(['items', 'approverA', 'approverC', 'rejectorA', 'rejectorC', 'financeRejector']);
+        $query = MaterialRequest::with(['items', 'approverA', 'approverC', 'rejectorA', 'rejectorC', 'financeRejector', 'paidByUser', 'creator']);
 
         $filter = $request->query('filter');
         $search = trim((string) $request->query('search'));
