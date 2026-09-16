@@ -57,10 +57,10 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="border border-gray-200 rounded-xl p-4 space-y-3">
             <div>
-                <div class="flex items-center justify-between mb-1.5">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                     <label class="block text-sm font-medium text-gray-700">To (Supplier) :</label>
                     @if(isset($vendors) && $vendors->isNotEmpty())
-                        <div class="text-xs text-indigo-600 flex items-center gap-1" x-data="{
+                        <div class="flex items-center gap-1.5" x-data="{
                             onVendorSelect(event) {
                                 const opt = event.target.selectedOptions[0];
                                 if (!opt || !opt.value) return;
@@ -69,7 +69,7 @@
                                 const code = opt.dataset.code || '';
                                 const phone = opt.dataset.phone || '';
                                 const brand = opt.dataset.brand || '';
-                                
+
                                 const toEl = document.querySelector('textarea[name=\'to_address\']');
                                 if (toEl) toEl.value = name + (addr ? '\n' + addr : '');
                                 const supEl = document.querySelector('input[name=\'supplier_no\']');
@@ -80,7 +80,11 @@
                                 if (attnEl && brand) attnEl.value = brand;
                             }
                         }">
-                            <select @change="onVendorSelect($event)" class="text-xs py-1 px-2 border border-gray-200 rounded-md bg-gray-50 focus:ring-indigo-500 focus:border-indigo-500">
+                            <svg class="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            <select @change="onVendorSelect($event)"
+                                    class="text-xs font-medium py-1.5 pl-2.5 pr-8 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs cursor-pointer transition">
                                 <option value="">Quick select vendor...</option>
                                 @foreach($vendors as $v)
                                     <option value="{{ $v->id }}"
