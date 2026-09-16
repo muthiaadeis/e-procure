@@ -199,7 +199,7 @@
                         </button>
                     </div>
 
-                    <div class="relative w-44" x-data="{ filterOpen: false }" @click.outside="filterOpen = false">
+                    <div class="relative w-56" x-data="{ filterOpen: false }" @click.outside="filterOpen = false">
                         @php
                             $filterLabels = [
                                 'pending_approval' => 'Pending Approval',
@@ -212,7 +212,7 @@
                         <button type="button"
                                 @click="filterOpen = !filterOpen"
                                 class="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 shadow-sm hover:border-gray-300 transition">
-                            <span class="flex items-center gap-2">
+                            <span class="flex items-center gap-2 whitespace-nowrap">
                                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4.5h18M6 9h12M9.75 13.5h4.5M11.25 18h1.5"/>
                                 </svg>
