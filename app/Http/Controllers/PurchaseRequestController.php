@@ -141,6 +141,13 @@ class PurchaseRequestController extends Controller
     {
         $approval = $purchaseRequest->approvals()->findOrFail($approvalId);
 
+        $user = auth()->user();
+        abort_unless(
+            $user && $user->canSignApproval($approval->role_label),
+            403,
+            'Only authorized approvers can digitally sign this Purchase Request.'
+        );
+
         abort_if($approval->isSigned(), 403, 'This approval box has already been signed.');
 
         // Tahap sebelumnya (sort_order lebih kecil) harus selesai semua dulu.

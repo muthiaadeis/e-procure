@@ -171,6 +171,13 @@ class PurchaseOrderController extends Controller
     {
         $approval = $purchaseOrder->approvals()->findOrFail($approvalId);
 
+        $user = auth()->user();
+        abort_unless(
+            $user && $user->canSignApproval($approval->role_label),
+            403,
+            'Only authorized approvers can digitally sign this Purchase Order.'
+        );
+
         abort_if($approval->isSigned(), 403, 'This approval box has already been signed.');
 
         $stillLocked = $purchaseOrder->approvals()

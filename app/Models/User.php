@@ -67,7 +67,28 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-    return (bool) $this->is_admin;
+        return (bool) $this->is_admin;
+    }
+
+    // Role Approver: User yang berwenang menandatangani approval
+    public function isApprover(): bool
+    {
+        return (bool) $this->is_approver || in_array($this->role, ['approver_a', 'approver_c'], true);
+    }
+
+    // Cek apakah user bisa menandatangani slot approval digital di PO atau PR
+    public function canSignApproval(?string $roleLabel = null): bool
+    {
+        if ($this->isAdmin() || $this->isApprover()) {
+            return true;
+        }
+
+        // Finance user diizinkan tanda tangan jika slotnya Finance Control
+        if ($this->isFinance() && $roleLabel && str_contains(strtolower($roleLabel), 'finance')) {
+            return true;
+        }
+
+        return false;
     }
 
     protected $hidden = [
