@@ -1,6 +1,5 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Manajemen User</h2>
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">User Management</h1>
@@ -16,14 +15,9 @@
         </div>
     </x-slot>
 
-    <div class="max-w-4xl mx-auto"
     <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6"
          x-data="{
             showPasswordModal: {{ session('generated_password') ? 'true' : 'false' }},
-            password: @js(session('generated_password')),
-            userName: @js(session('generated_password_for')),
-            copied: false,
-            copy() {
             isNewUser: {{ session('is_new_user') ? 'true' : 'false' }},
             password: @js(session('generated_password') ?? ''),
             userName: @js(session('generated_password_for') ?? ''),
@@ -33,19 +27,10 @@
 
             copyPassword() {
                 navigator.clipboard.writeText(this.password);
-                this.copied = true;
-                setTimeout(() => this.copied = false, 2000);
                 this.copiedPassword = true;
                 setTimeout(() => this.copiedPassword = false, 2000);
             },
 
-            showConfirmModal: false,
-            confirmAction: '',
-            confirmUserName: '',
-            openConfirm(action, name) {
-                this.confirmAction = action;
-                this.confirmUserName = name;
-                this.showConfirmModal = true;
             copyAll() {
                 const text = 'e-Procure Login Details\nName: ' + this.userName + '\nEmail: ' + this.userEmail + '\nPassword: ' + this.password + '\nLogin URL: ' + window.location.origin + '/login';
                 navigator.clipboard.writeText(text);
@@ -72,19 +57,6 @@
             }
          }">
 
-        <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @foreach ($users as $user)
         {{-- Success alert --}}
         @if (session('success'))
             <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition
@@ -207,32 +179,12 @@
                 <table class="min-w-full divide-y divide-gray-100 text-sm">
                     <thead class="bg-gray-50/75">
                         <tr>
-                            <td class="px-6 py-4 text-sm text-gray-800">{{ $user->name }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ $user->email }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ $user->role }}</td>
-                            <td class="px-6 py-4 text-sm">
-                                @if ($user->must_change_password)
-                                    <span class="text-xs font-medium text-amber-600">Belum ganti password</span>
-                                @else
-                                    <span class="text-xs font-medium text-green-600">Aktif</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <button type="button"
-                                        @click="openConfirm('{{ route('admin.users.reset-password', $user) }}', '{{ $user->name }}')"
-                                        class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
-                                    Reset Password
-                                </button>
-                            </td>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User Account</th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Workflow Role</th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Privilege</th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Password Status</th>
                             <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($users as $user)
@@ -257,7 +209,7 @@
                                             <p class="font-bold text-gray-800 flex items-center gap-1.5">
                                                 {{ $user->name }}
                                                 @if ($user->id === auth()->id())
-                                                    <span class="px-1.5 py-0.2 rounded text-[10px] bg-gray-100 text-gray-600 font-normal">You</span>
+                                                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600 font-normal">You</span>
                                                 @endif
                                             </p>
                                             <p class="text-xs text-gray-500 font-mono">{{ $user->email }}</p>
@@ -353,8 +305,6 @@
             </div>
         </div>
 
-        {{-- Modal: konfirmasi reset password --}}
-        <div x-show="showConfirmModal" x-cloak
         {{-- Modal: Generated Password & Credentials (Displays after create or reset) --}}
         <div x-show="showPasswordModal" x-cloak
              x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
@@ -424,7 +374,6 @@
              x-transition:enter="ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
              x-transition:leave="ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
              class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4">
-            <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6" @click.outside="showConfirmModal = false">
             <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6" @click.outside="showConfirmReset = false">
                 <div class="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 mx-auto">
                     <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -432,30 +381,19 @@
                     </svg>
                 </div>
 
-                <h3 class="text-lg font-semibold text-gray-800 text-center mt-4">Reset Password?</h3>
-                <p class="text-sm text-gray-500 text-center mt-1">
-                    Password lama untuk <span class="font-medium text-gray-700" x-text="confirmUserName"></span>
-                    akan tidak berlaku lagi dan diganti dengan password baru.
                 <h3 class="text-base font-bold text-gray-800 text-center mt-4">Reset Password?</h3>
                 <p class="text-xs text-gray-500 text-center mt-1">
                     This will invalidate the current password for <strong class="text-gray-700" x-text="resetUserName"></strong> and generate a new temporary password.
                 </p>
 
                 <div class="mt-6 flex gap-3">
-                    <button @click="showConfirmModal = false" type="button"
-                            class="flex-1 py-2.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
-                        Batal
                     <button @click="showConfirmReset = false" type="button"
                             class="flex-1 py-2 text-xs font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
                         Cancel
                     </button>
-
-                    <form :action="confirmAction" method="POST" class="flex-1">
                     <form :action="resetAction" method="POST" class="flex-1">
                         @csrf
                         <button type="submit"
-                                class="w-full py-2.5 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
-                            Ya, Reset
                                 class="w-full py-2 text-xs font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition">
                             Yes, Reset
                         </button>
@@ -464,17 +402,11 @@
             </div>
         </div>
 
-        {{-- Modal: password hasil generate, hanya tampil sekali --}}
-        <div x-show="showPasswordModal" x-cloak
         {{-- Modal: Confirm Delete User --}}
         <div x-show="showConfirmDelete" x-cloak
              x-transition:enter="ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
              x-transition:leave="ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
              class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4">
-            <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6" @click.outside="showPasswordModal = false">
-                <div class="flex items-center justify-center w-12 h-12 rounded-full bg-green-50 mx-auto">
-                    <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6" @click.outside="showConfirmDelete = false">
                 <div class="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mx-auto">
                     <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -482,21 +414,11 @@
                     </svg>
                 </div>
 
-                <h3 class="text-lg font-semibold text-gray-800 text-center mt-4">Password Baru Dibuat</h3>
-                <p class="text-sm text-gray-500 text-center mt-1">
-                    Untuk user: <span class="font-medium text-gray-700" x-text="userName"></span>
                 <h3 class="text-base font-bold text-gray-800 text-center mt-4">Delete User Account?</h3>
                 <p class="text-xs text-gray-500 text-center mt-1">
                     Are you sure you want to remove <strong class="text-gray-700" x-text="deleteUserName"></strong>? This user will immediately lose access to the system.
                 </p>
 
-                <div class="mt-4 flex items-center gap-2">
-                    <input type="text" readonly x-model="password"
-                           class="flex-1 font-mono text-sm rounded-lg border-gray-300 bg-gray-50">
-                    <button @click="copy()" type="button"
-                            class="px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shrink-0">
-                        <span x-show="!copied">Copy</span>
-                        <span x-show="copied" x-cloak>Tersalin!</span>
                 <div class="mt-6 flex gap-3">
                     <button @click="showConfirmDelete = false" type="button"
                             class="flex-1 py-2 text-xs font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
@@ -511,16 +433,6 @@
                         </button>
                     </form>
                 </div>
-
-                <p class="text-xs text-gray-400 mt-3 text-center">
-                    Salin &amp; kirim password ini ke user sekarang juga. Setelah modal ini ditutup,
-                    password tidak akan ditampilkan lagi (harus klik reset ulang kalau lupa).
-                </p>
-
-                <button @click="showPasswordModal = false" type="button"
-                        class="mt-5 w-full text-center text-sm font-medium text-gray-500 hover:text-gray-700">
-                    Tutup
-                </button>
             </div>
         </div>
     </div>
