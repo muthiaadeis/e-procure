@@ -3,7 +3,6 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">Procurement Dashboard</h1>
-                <p class="text-sm text-gray-500 mt-1">Analytics overview and procurement activity across all modules (MR, RRP, PR, PO).</p>
                 <p class="text-sm text-gray-500 mt-1">Analytics overview and procurement activity across all modules (MR, RRP, PO, PR).</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
