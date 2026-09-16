@@ -418,26 +418,12 @@
                     </tr>
                 </template>
             </tbody>
-                                    <tfoot class="bg-gray-50">
-                            <tr x-show="Number(vendor.discount_percent) > 0 || vendor.use_ppn">
-                                <td colspan="3" class="px-3 py-1.5 text-right text-gray-500">Subtotal</td>
-                                <td class="px-3 py-1.5 text-gray-700" x-text="'Rp ' + formatThousands(vendorGrandTotal(vendor))"></td>
-                            </tr>
-                            <tr x-show="Number(vendor.discount_percent) > 0">
-                                <td colspan="3" class="px-3 py-1.5 text-right text-gray-500">
-                                    Discount (<span x-text="vendor.discount_percent"></span>%)
-                                </td>
-                                <td class="px-3 py-1.5 text-red-600" x-text="'- Rp ' + formatThousands(vendorDiscountAmount(vendor))"></td>
-                            </tr>
-                            <tr x-show="vendor.use_ppn">
-                                <td colspan="3" class="px-3 py-1.5 text-right text-gray-500">PPN 11%</td>
-                                <td class="px-3 py-1.5 text-gray-700" x-text="'+ Rp ' + formatThousands(vendorPpnAmount(vendor))"></td>
-                            </tr>
-                            <tr class="border-t border-gray-200">
-                                <td colspan="3" class="px-3 py-3 text-right font-semibold text-gray-700">Grand Total</td>
-                                <td class="px-3 py-3 font-semibold text-gray-900" x-text="'Rp ' + formatThousands(vendorFinalTotal(vendor))"></td>
-                            </tr>
-                        </tfoot>
+            <tfoot class="bg-gray-50">
+                <tr class="border-t border-gray-200">
+                    <td colspan="3" class="px-4 py-3 text-right font-semibold text-gray-700">WUR Grand Total</td>
+                    <td class="px-4 py-3 font-bold text-gray-900" x-text="'Rp ' + formatThousands(wurGrandTotal)"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
