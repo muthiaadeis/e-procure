@@ -257,17 +257,78 @@
                 return this.selectedVendorObj ? this.vendorFinalTotal(this.selectedVendorObj) : 0;
             },
 
-                        // Revenue = harga part catalog dikurang harga final vendor terpilih
-            // (sama kayak rumus di backend RlpController::syncItems).
-            get revenueExtPrice() {
-                if (!this.selectedVendorObj) return 0;
-                return this.partCatalogTotalExt - this.selectedVendorGrandTotal;
+            // Revenue for a specific vendor (calculated directly from its price quotes vs Part Catalog)
+            vendorRevenue(vendor) {
+                return this.partCatalogTotalExt - this.vendorFinalTotal(vendor);
             },
 
-            // Returns null (not 0) when no winner is picked yet, so the UI can show a hint instead of "Rp 0".
+            // Per-item revenue for a specific vendor
+            vendorItemRevenue(vendor, item) {
+                const q = vendor.quotes[item.uid];
+                if (q === '' || q === null || q === undefined) return null;
+                return this.itemPartCatalogExt(item) - this.vendorItemFinalExt(vendor, item);
+            },
+
+            // Percentage margin for a vendor
+            vendorRevenueMargin(vendor) {
+                if (!this.partCatalogTotalExt || this.partCatalogTotalExt <= 0) return 0;
+                return Math.round((this.vendorRevenue(vendor) / this.partCatalogTotalExt) * 100);
+            },
+
+            // Check if vendor has at least one quote filled
+            vendorHasQuotes(vendor) {
+                return this.items.some(i => {
+                    const q = vendor.quotes[i.uid];
+                    return q !== '' && q !== null && q !== undefined && Number(q) > 0;
+                });
+            },
+
+            // Vendor with the highest revenue (best profit comparison before picking)
+            get bestRevenueVendor() {
+                let best = null;
+                let maxRev = -Infinity;
+                this.vendors.forEach(v => {
+                    if (this.vendorHasQuotes(v)) {
+                        const rev = this.vendorRevenue(v);
+                        if (rev > maxRev) {
+                            maxRev = rev;
+                            best = v;
+                        }
+                    }
+                });
+                return best;
+            },
+
+            // Overall Revenue for selected vendor (or best vendor if none selected yet)
+            get revenueExtPrice() {
+                if (this.selectedVendorObj) {
+                    return this.partCatalogTotalExt - this.selectedVendorGrandTotal;
+                }
+                if (this.bestRevenueVendor) {
+                    return this.vendorRevenue(this.bestRevenueVendor);
+                }
+                return 0;
+            },
+
+            // Returns revenue for an item. If a winner is picked, returns from that winner.
+            // If no winner is picked yet, returns from the vendor giving the best overall revenue.
             itemRevenueExt(item) {
-                if (!this.selectedVendorObj) return null;
-                return this.itemPartCatalogExt(item) - this.vendorItemFinalExt(this.selectedVendorObj, item);
+                const targetVendor = this.selectedVendorObj || this.bestRevenueVendor;
+                if (!targetVendor || !this.vendorHasQuotes(targetVendor)) return null;
+                return this.itemPartCatalogExt(item) - this.vendorItemFinalExt(targetVendor, item);
+            },
+
+            // List of vendors with quotes for this item (for comparison breakdown)
+            itemVendorsWithQuotes(item) {
+                return this.vendors.filter(v => {
+                    const q = v.quotes[item.uid];
+                    return q !== '' && q !== null && q !== undefined && Number(q) > 0;
+                }).map(v => ({
+                    uid: v.uid,
+                    name: this.vendorNameById(v.vendor_id) || 'Vendor',
+                    revenue: this.itemPartCatalogExt(item) - this.vendorItemFinalExt(v, item),
+                    isWinner: this.selectedVendorUid === v.uid,
+                }));
             },
 
             // ---------- Step 3: WUR Cost Estimasi (auto, one row per item) ----------

@@ -145,19 +145,33 @@
                     </div>
                 </div>
 
-                {{-- Revenue preview once a winning vendor has been picked in Step 2 below --}}
-                <p class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
-                    <template x-if="itemRevenueExt(item) === null">
-                        <span class="text-gray-400">Revenue for this item will show up here once you pick a winning vendor in Step 2 below.</span>
+                {{-- Revenue preview per item --}}
+                <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                    <template x-if="itemVendorsWithQuotes(item).length === 0">
+                        <span class="text-gray-400">Revenue will calculate automatically once vendor prices are entered in Step 2 below.</span>
                     </template>
-                    <template x-if="itemRevenueExt(item) !== null">
-                        <span>
-                            Revenue for this item:
-                            <span class="font-semibold" :class="itemRevenueExt(item) < 0 ? 'text-red-600' : 'text-emerald-600'"
-                                  x-text="'Rp ' + formatThousands(itemRevenueExt(item))"></span>
-                        </span>
+                    <template x-if="itemVendorsWithQuotes(item).length > 0">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium text-gray-700">
+                                    Revenue preview:
+                                    <span class="font-bold ml-1" :class="itemRevenueExt(item) < 0 ? 'text-red-600' : 'text-emerald-600'"
+                                          x-text="'Rp ' + formatThousands(itemRevenueExt(item))"></span>
+                                    <span class="text-[11px] text-gray-400 font-normal ml-1" x-show="!selectedVendorObj">(Best potential)</span>
+                                    <span class="text-[11px] text-indigo-600 font-semibold ml-1" x-show="selectedVendorObj">(Selected Winner)</span>
+                                </span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 pt-0.5" x-show="itemVendorsWithQuotes(item).length > 1 && !selectedVendorObj">
+                                <template x-for="vq in itemVendorsWithQuotes(item)" :key="vq.uid">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-gray-50 border border-gray-200 text-gray-600">
+                                        <span x-text="vq.name + ':'"></span>
+                                        <strong :class="vq.revenue < 0 ? 'text-red-600' : 'text-emerald-700'" x-text="'Rp ' + formatThousands(vq.revenue)"></strong>
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
                     </template>
-                </p>
+                </div>
 
                 {{-- Carries the globally-selected winning vendor onto every item (backend needs it per item) --}}
                 <template x-if="selectedVendorIndex !== null">
@@ -255,10 +269,21 @@
                                    class="w-full rounded-xl border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm py-3 px-4">
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 shrink-0">
+                    <div class="flex flex-wrap items-center gap-3 shrink-0">
+                        {{-- Vendor Revenue Badge (shows immediately when prices are entered) --}}
+                        <div x-show="vendorHasQuotes(vendor)" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border"
+                             :class="vendorRevenue(vendor) >= 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'">
+                            <span class="text-gray-500 font-normal">Est. Revenue:</span>
+                            <span class="font-bold" x-text="'Rp ' + formatThousands(vendorRevenue(vendor))"></span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                                  :class="vendorRevenue(vendor) >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'"
+                                  x-show="partCatalogTotalExt > 0"
+                                  x-text="vendorRevenueMargin(vendor) + '%'"></span>
+                        </div>
+
                         <button type="button" @click="selectedVendorUid = (selectedVendorUid === vendor.uid ? null : vendor.uid)"
                                 class="inline-flex items-center gap-1.5 px-3 py-3 rounded-xl text-xs font-semibold border transition whitespace-nowrap"
-                                :class="selectedVendorUid === vendor.uid ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'">
+                                :class="selectedVendorUid === vendor.uid ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'">
                             <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
@@ -281,9 +306,9 @@
                             Discount (%) <span class="text-gray-400 font-normal">(optional)</span>
                         </label>
                         <input type="text" inputmode="decimal" x-model="vendor.discount_percent"
-                               @input="vendor.discount_percent = vendor.discount_percent.replace(/[^0-9.]/g, '')"
-                               placeholder="0"
-                               class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                                @input="vendor.discount_percent = vendor.discount_percent.replace(/[^0-9.]/g, '')"
+                                placeholder="0"
+                                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                     </div>
                     <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none pb-2.5">
                         <input type="checkbox" x-model="vendor.use_ppn"
@@ -320,20 +345,50 @@
                                                @input="vendor.quotes[item.uid] = parseThousands($event.target.value)"
                                                placeholder="0"
                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
-                                                                                <input type="hidden" :name="'items[' + iIndex + '][vendors][' + vIndex + '][vendor_id]'" :value="vendor.vendor_id">
+                                        <input type="hidden" :name="'items[' + iIndex + '][vendors][' + vIndex + '][vendor_id]'" :value="vendor.vendor_id">
                                         <input type="hidden" :name="'items[' + iIndex + '][vendors][' + vIndex + '][delivery_estimate]'" :value="vendor.delivery_estimate">
                                         <input type="hidden" :name="'items[' + iIndex + '][vendors][' + vIndex + '][u_price]'" :value="vendor.quotes[item.uid]">
                                         <input type="hidden" :name="'items[' + iIndex + '][vendors][' + vIndex + '][discount_percent]'" :value="vendor.discount_percent">
                                         <input type="hidden" :name="'items[' + iIndex + '][vendors][' + vIndex + '][use_ppn]'" :value="vendor.use_ppn ? 1 : 0">
                                     </td>
-                                    <td class="px-3 py-2 align-top pt-3 font-medium text-gray-700" x-text="'Rp ' + formatThousands(vendorItemExt(vendor, item))"></td>
+                                    <td class="px-3 py-2 align-top pt-3">
+                                        <div class="font-medium text-gray-700" x-text="'Rp ' + formatThousands(vendorItemExt(vendor, item))"></div>
+                                        <template x-if="vendorItemRevenue(vendor, item) !== null">
+                                            <div class="text-[11px] mt-0.5 font-medium" :class="vendorItemRevenue(vendor, item) >= 0 ? 'text-emerald-600' : 'text-red-500'">
+                                                <span class="text-gray-400 font-normal">Rev:</span> Rp <span x-text="formatThousands(vendorItemRevenue(vendor, item))"></span>
+                                            </div>
+                                        </template>
+                                    </td>
                                 </tr>
                             </template>
                         </tbody>
                         <tfoot class="bg-gray-50">
+                            <tr x-show="Number(vendor.discount_percent) > 0 || vendor.use_ppn">
+                                <td colspan="3" class="px-3 py-1.5 text-right text-xs text-gray-500">Subtotal</td>
+                                <td class="px-3 py-1.5 text-xs text-gray-700 font-medium" x-text="'Rp ' + formatThousands(vendorGrandTotal(vendor))"></td>
+                            </tr>
+                            <tr x-show="Number(vendor.discount_percent) > 0">
+                                <td colspan="3" class="px-3 py-1.5 text-right text-xs text-gray-500">
+                                    Discount (<span x-text="vendor.discount_percent"></span>%)
+                                </td>
+                                <td class="px-3 py-1.5 text-xs text-red-600 font-medium" x-text="'- Rp ' + formatThousands(vendorDiscountAmount(vendor))"></td>
+                            </tr>
+                            <tr x-show="vendor.use_ppn">
+                                <td colspan="3" class="px-3 py-1.5 text-right text-xs text-gray-500">PPN 11%</td>
+                                <td class="px-3 py-1.5 text-xs text-gray-700 font-medium" x-text="'+ Rp ' + formatThousands(vendorPpnAmount(vendor))"></td>
+                            </tr>
                             <tr class="border-t border-gray-200">
-                                <td colspan="3" class="px-3 py-3 text-right font-semibold text-gray-700">Grand Total</td>
-                                <td class="px-3 py-3 font-semibold text-gray-900" x-text="'Rp ' + formatThousands(vendorGrandTotal(vendor))"></td>
+                                <td colspan="3" class="px-3 py-2 text-right text-xs font-semibold text-gray-700">Total Vendor Cost</td>
+                                <td class="px-3 py-2 text-xs font-bold text-gray-900" x-text="'Rp ' + formatThousands(vendorFinalTotal(vendor))"></td>
+                            </tr>
+                            <tr class="border-t border-gray-200" :class="vendorRevenue(vendor) >= 0 ? 'bg-emerald-50/70' : 'bg-red-50/70'">
+                                <td colspan="3" class="px-3 py-2.5 text-right text-xs font-bold" :class="vendorRevenue(vendor) >= 0 ? 'text-emerald-900' : 'text-red-900'">
+                                    Estimated Revenue (Profit)
+                                </td>
+                                <td class="px-3 py-2.5 font-bold text-sm" :class="vendorRevenue(vendor) >= 0 ? 'text-emerald-700' : 'text-red-600'">
+                                    <span x-text="'Rp ' + formatThousands(vendorRevenue(vendor))"></span>
+                                    <span class="text-[11px] font-normal block" x-show="partCatalogTotalExt > 0" x-text="'(' + vendorRevenueMargin(vendor) + '% margin)'"></span>
+                                </td>
                             </tr>
                         </tfoot>
                     </table>
@@ -352,18 +407,44 @@
             <p class="text-sm font-semibold text-gray-900">Rp <span x-text="formatThousands(partCatalogTotalExt)"></span></p>
         </div>
         <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-            <p class="text-xs text-gray-500 mb-0.5">Grand Total (Winning Vendor)</p>
-            <p class="text-sm font-semibold text-gray-900">
-                <template x-if="selectedVendorObj"><span>Rp <span x-text="formatThousands(selectedVendorGrandTotal)"></span></span></template>
-                <template x-if="!selectedVendorObj"><span class="text-gray-400 font-normal">Pick a winner above</span></template>
-            </p>
+            <p class="text-xs text-gray-500 mb-0.5">Vendor Cost</p>
+            <div class="text-sm font-semibold text-gray-900">
+                <template x-if="selectedVendorObj">
+                    <span>
+                        Rp <span x-text="formatThousands(selectedVendorGrandTotal)"></span>
+                        <span class="text-xs font-normal text-indigo-600 block text-[11px]" x-text="'(Winning: ' + (vendorNameById(selectedVendorObj.vendor_id) || 'Vendor') + ')'"></span>
+                    </span>
+                </template>
+                <template x-if="!selectedVendorObj && bestRevenueVendor">
+                    <span>
+                        Rp <span x-text="formatThousands(vendorFinalTotal(bestRevenueVendor))"></span>
+                        <span class="text-xs font-normal text-emerald-700 block text-[11px]" x-text="'(Lowest / Best: ' + (vendorNameById(bestRevenueVendor.vendor_id) || 'Vendor') + ')'"></span>
+                    </span>
+                </template>
+                <template x-if="!selectedVendorObj && !bestRevenueVendor">
+                    <span class="text-gray-400 font-normal">Enter prices above</span>
+                </template>
+            </div>
         </div>
         <div class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3">
             <p class="text-xs text-gray-500 mb-0.5">Grand Total (Revenue)</p>
-            <p class="text-sm font-semibold" :class="revenueExtPrice < 0 ? 'text-red-600' : 'text-emerald-600'">
-                <template x-if="selectedVendorObj">Rp <span x-text="formatThousands(revenueExtPrice)"></span></template>
-                <template x-if="!selectedVendorObj"><span class="text-gray-400 font-normal">—</span></template>
-            </p>
+            <div class="text-sm font-semibold" :class="revenueExtPrice < 0 ? 'text-red-600' : 'text-emerald-600'">
+                <template x-if="selectedVendorObj">
+                    <span>
+                        Rp <span x-text="formatThousands(revenueExtPrice)"></span>
+                        <span class="text-xs font-normal text-indigo-600 block text-[11px]">(Winning Vendor)</span>
+                    </span>
+                </template>
+                <template x-if="!selectedVendorObj && bestRevenueVendor">
+                    <span>
+                        Rp <span x-text="formatThousands(revenueExtPrice)"></span>
+                        <span class="text-xs font-normal text-emerald-700 block text-[11px]" x-text="'(Best: ' + (vendorNameById(bestRevenueVendor.vendor_id) || 'Vendor') + ')'"></span>
+                    </span>
+                </template>
+                <template x-if="!selectedVendorObj && !bestRevenueVendor">
+                    <span class="text-gray-400 font-normal">Enter prices above</span>
+                </template>
+            </div>
         </div>
     </div>
 </div>
