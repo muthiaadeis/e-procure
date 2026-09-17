@@ -26,7 +26,6 @@
                     </span>
                     <input type="text" name="no_request"
                            value="{{ old('no_request', $isEdit ? $purchaseRequest->no_request : '') }}" required
-                           placeholder="e.g. PR-2026-08-0001"
                            class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm pl-10">
                 </div>
                 <p class="mt-1.5 text-xs text-gray-400">Enter request number.</p>

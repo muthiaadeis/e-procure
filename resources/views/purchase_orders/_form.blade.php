@@ -19,7 +19,6 @@
                     Purchase Order No <span class="text-red-500">*</span>
                 </label>
                 <input type="text" name="po_no" value="{{ old('po_no', $isEdit ? $purchaseOrder->po_no : '') }}" required
-                       placeholder="e.g. PO-2026-08-0001"
                        class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                 <p class="mt-1.5 text-xs text-gray-400">Enter purchase order number.</p>
             </div>
