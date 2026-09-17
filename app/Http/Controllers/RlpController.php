@@ -119,12 +119,10 @@ class RlpController extends Controller
     }
 
     // Tahap 1: Review By
-    public function review(Rlp $rlp)
     public function review(Request $request, Rlp $rlp)
     {
         $user = auth()->user();
 
-        abort_unless($user->isRlpReviewer(), 403, "You don't have permission to review this RRP.");
         abort_unless($user->isRlpReviewer() || $user->isAdmin() || $user->isApprover(), 403, "You don't have permission to review this RRP.");
         abort_if($rlp->is_reviewed, 403, 'This RRP has already been reviewed.');
 
@@ -138,17 +136,14 @@ class RlpController extends Controller
             'reviewed_signature' => $validated['signature'],
         ]);
 
-        return redirect()->route('rlps.index')->with('success', 'RRP reviewed successfully.');
         return redirect()->route('rlps.index')->with('success', 'RRP reviewed and signed successfully.');
     }
 
     // Tahap 2: Acknowledge By
-    public function acknowledge(Rlp $rlp)
     public function acknowledge(Request $request, Rlp $rlp)
     {
         $user = auth()->user();
 
-        abort_unless($user->isRlpAcknowledger(), 403, "You don't have permission to acknowledge this RRP.");
         abort_unless($user->isRlpAcknowledger() || $user->isAdmin() || $user->isApprover(), 403, "You don't have permission to acknowledge this RRP.");
         abort_unless($rlp->is_reviewed, 403, "This RRP hasn't been reviewed yet.");
         abort_if($rlp->is_acknowledged, 403, 'This RRP has already been acknowledged.');
@@ -163,17 +158,14 @@ class RlpController extends Controller
             'acknowledged_signature' => $validated['signature'],
         ]);
 
-        return redirect()->route('rlps.index')->with('success', 'RRP acknowledged successfully.');
         return redirect()->route('rlps.index')->with('success', 'RRP acknowledged and signed successfully.');
     }
 
     // Tahap 3: Approved By
-    public function approve(Rlp $rlp)
     public function approve(Request $request, Rlp $rlp)
     {
         $user = auth()->user();
 
-        abort_unless($user->isRlpApprover(), 403, "You don't have permission to approve this RRP.");
         abort_unless($user->isRlpApprover() || $user->isAdmin() || $user->isApprover(), 403, "You don't have permission to approve this RRP.");
         abort_unless($rlp->is_acknowledged, 403, "This RRP hasn't been acknowledged yet.");
         abort_if($rlp->is_approved, 403, 'This RRP has already been approved.');
@@ -188,7 +180,6 @@ class RlpController extends Controller
             'approved_signature' => $validated['signature'],
         ]);
 
-        return redirect()->route('rlps.index')->with('success', 'RRP approved successfully.');
         return redirect()->route('rlps.index')->with('success', 'RRP approved and signed successfully.');
     }
 

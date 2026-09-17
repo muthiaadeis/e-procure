@@ -203,13 +203,11 @@ class MaterialRequestController extends Controller
             ->with('success', 'Material Request deleted successfully.');
     }
 
-    public function approve(MaterialRequest $materialRequest)
     public function signPrepared(Request $request, MaterialRequest $materialRequest)
     {
         $user = auth()->user();
         abort_unless($user->id === $materialRequest->created_by || $user->isAdmin(), 403, "Only the creator or an administrator can sign this request.");
 
-        if ($user->isApproverA()) {
         $validated = $request->validate([
             'signature' => 'required|string',
         ]);
@@ -240,11 +238,9 @@ class MaterialRequestController extends Controller
             ]);
 
             return redirect()->route('material-requests.index')
-                ->with('success', 'MR approved successfully (Approval 1).');
                 ->with('success', 'MR approved and signed successfully (Approval 1).');
         }
 
-        if ($user->isApproverC()) {
         if ($user->isApproverC() || ($user->isAdmin() && $materialRequest->is_approved_by_a && ! $materialRequest->is_approved_by_c)) {
             abort_unless($materialRequest->is_approved_by_a, 403, "This MR hasn't been approved at Approval 1 yet.");
             abort_if($materialRequest->is_approved_by_c, 403, 'This MR has already been approved at Approval 2.');
@@ -257,7 +253,6 @@ class MaterialRequestController extends Controller
             ]);
 
             return redirect()->route('material-requests.index')
-                ->with('success', 'MR approved successfully (Approval 2).');
                 ->with('success', 'MR approved and signed successfully (Approval 2).');
         }
 
@@ -272,7 +267,6 @@ class MaterialRequestController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        if ($user->isApproverA()) {
         if ($user->isApproverA() || ($user->isAdmin() && ! $materialRequest->is_approved_by_a)) {
             abort_if($materialRequest->is_approved_by_a, 403, "This MR has already been approved at Approval 1 and can't be rejected.");
             abort_if($materialRequest->is_rejected_by_a, 403, 'This MR has already been rejected at Approval 1.');
@@ -287,7 +281,6 @@ class MaterialRequestController extends Controller
                 ->with('success', 'MR rejected successfully.');
         }
 
-        if ($user->isApproverC()) {
         if ($user->isApproverC() || ($user->isAdmin() && $materialRequest->is_approved_by_a && ! $materialRequest->is_approved_by_c)) {
             abort_unless($materialRequest->is_approved_by_a, 403, "This MR hasn't been approved at Approval 1 yet.");
             abort_if($materialRequest->is_approved_by_c, 403, "This MR has already been approved at Approval 2 and can't be rejected.");
@@ -303,7 +296,6 @@ class MaterialRequestController extends Controller
                 ->with('success', 'MR rejected successfully.');
         }
 
-        if ($user->isFinance()) {
         if ($user->isFinance() || $user->isAdmin()) {
             abort_unless($materialRequest->is_approved, 403, "This MR hasn't finished the approval process yet.");
             abort_if($materialRequest->paid_at, 403, "This MR is already Done and can't be rejected.");
@@ -322,12 +314,10 @@ class MaterialRequestController extends Controller
         abort(403, "You don't have permission to reject this MR.");
     }
 
-    public function markPaid(MaterialRequest $materialRequest)
     public function markPaid(Request $request, MaterialRequest $materialRequest)
     {
         $user = auth()->user();
 
-        abort_unless($user->isFinance(), 403, "You don't have permission to change the payment status.");
         abort_unless($user->isFinance() || $user->isAdmin(), 403, "You don't have permission to change the payment status.");
         abort_unless($materialRequest->is_approved, 403, "This MR hasn't finished the approval process yet.");
         abort_if($materialRequest->is_rejected_by_finance, 403, 'This MR has already been rejected by Finance.');
@@ -343,7 +333,6 @@ class MaterialRequestController extends Controller
         ]);
 
         return redirect()->route('material-requests.index')
-            ->with('success', 'Status changed to Done successfully.');
             ->with('success', 'Status changed to Done and signed successfully.');
     }
 
@@ -352,7 +341,6 @@ class MaterialRequestController extends Controller
     // extra PDF library/dependency is required on the server.
     public function printPdf(MaterialRequest $materialRequest)
     {
-        $materialRequest->load(['items', 'approverA', 'approverC', 'creator']);
         $materialRequest->load(['items', 'approverA', 'approverC', 'creator', 'paidByUser']);
 
         return view('material_requests.print', compact('materialRequest'));
