@@ -5,9 +5,13 @@
     </h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">No RRP</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                No RRP <span class="text-red-500">*</span>
+            </label>
             <input type="text" name="no_rlp" value="{{ old('no_rlp', $rlp->no_rlp ?? '') }}" required
+                   placeholder="e.g. RRP-2026-08-0001"
                    class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            <p class="mt-1.5 text-xs text-gray-400">Enter RRP number.</p>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">Date</label>

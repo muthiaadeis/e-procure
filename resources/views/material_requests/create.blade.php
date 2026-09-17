@@ -52,17 +52,20 @@
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">No MR</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                        No MR <span class="text-red-500">*</span>
+                                    </label>
                                     <div class="relative">
                                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h4M5 3h14a1 1 0 011 1v16l-4-2-3 2-3-2-3 2-3-2V4a1 1 0 011-1z"/>
                                             </svg>
                                         </span>
-                                        <input type="text" value="{{ $nextNoMr }}" readonly tabindex="-1"
-                                               class="w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm text-sm pl-10 text-gray-500 cursor-not-allowed focus:ring-0 focus:border-gray-300">
+                                        <input type="text" name="no_mr" value="{{ old('no_mr') }}" required
+                                               placeholder="e.g. MR-2026-08-0001"
+                                               class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm pl-10">
                                     </div>
-                                    <p class="mt-1.5 text-xs text-gray-400">No MR &amp; date are generated automatically when saved.</p>
+                                    <p class="mt-1.5 text-xs text-gray-400">Enter Material Request number.</p>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Charge To</label>

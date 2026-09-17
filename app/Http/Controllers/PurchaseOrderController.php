@@ -31,8 +31,6 @@ class PurchaseOrderController extends Controller
 
     public function create(Request $request)
     {
-        $nextPoNo = PurchaseOrder::generateNextPoNo();
-
         $fromRlp = null;
         $prefill = [];
         $vendors = Vendor::orderBy('vendor_name')->get(['id', 'vendor_name', 'vendor_code', 'vendor_address', 'phone', 'brand']);
@@ -86,7 +84,7 @@ class PurchaseOrderController extends Controller
             }
         }
 
-        return view('purchase_orders.create', compact('nextPoNo', 'fromRlp', 'prefill', 'vendors'));
+        return view('purchase_orders.create', compact('fromRlp', 'prefill', 'vendors'));
     }
 
     public function store(Request $request)
@@ -98,7 +96,7 @@ class PurchaseOrderController extends Controller
             $ppn = $this->calculatePpn($subtotal, $validated);
 
             $po = PurchaseOrder::create([
-                'po_no' => PurchaseOrder::generateNextPoNo(),
+                'po_no' => $validated['po_no'],
                 'rlp_id' => $validated['rlp_id'] ?? null,
                 'our_reference' => $validated['our_reference'] ?? null,
                 'supplier_no' => $validated['supplier_no'] ?? null,
@@ -203,6 +201,7 @@ class PurchaseOrderController extends Controller
     private function validatePo(Request $request): array
     {
         return $request->validate([
+            'po_no' => 'required|string|max:100|unique:purchase_orders,po_no',
             'rlp_id' => 'nullable|exists:rlps,id',
             'our_reference' => 'nullable|string|max:255',
             'supplier_no' => 'nullable|string|max:255',

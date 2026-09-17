@@ -96,10 +96,7 @@ class MaterialRequestController extends Controller
     {
         abort_unless(auth()->user()->isInput(), 403, "You don't have permission to add a Material Request.");
 
-        // No MR is auto-generated and shown read-only on the form.
-        $nextNoMr = MaterialRequest::generateNextNoMr();
-
-        return view('material_requests.create', compact('nextNoMr'));
+        return view('material_requests.create');
     }
 
     public function store(Request $request)
@@ -107,6 +104,7 @@ class MaterialRequestController extends Controller
         abort_unless(auth()->user()->isInput(), 403, "You don't have permission to add a Material Request.");
 
         $validated = $request->validate([
+            'no_mr' => 'required|string|max:100|unique:material_requests,no_mr',
             'charge_to' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string',
@@ -115,10 +113,8 @@ class MaterialRequestController extends Controller
             'items.*.remarks' => 'required|string',
         ]);
 
-        // No MR is always generated on the server, never trusted from client
-        // input, so it can't be edited/tampered with via the form.
         $materialRequest = MaterialRequest::create([
-            'no_mr' => MaterialRequest::generateNextNoMr(),
+            'no_mr' => $validated['no_mr'],
             'date' => now(),
             'charge_to' => $validated['charge_to'],
             'created_by' => auth()->id(),
@@ -148,6 +144,7 @@ class MaterialRequestController extends Controller
         abort_unless($materialRequest->is_rejected, 403, "MR can only be edited after it's rejected.");
 
         $validated = $request->validate([
+            'no_mr' => 'required|string|max:100|unique:material_requests,no_mr,' . $materialRequest->id,
             'charge_to' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string',
@@ -158,9 +155,8 @@ class MaterialRequestController extends Controller
 
         $wasRejected = $materialRequest->is_rejected;
 
-        // No MR is permanent once created; the date isn't changed on update —
-        // both stay as whatever they were when this MR was first created.
         $updateData = [
+            'no_mr' => $validated['no_mr'],
             'charge_to' => $validated['charge_to'],
         ];
 

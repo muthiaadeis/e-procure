@@ -15,10 +15,13 @@
         <h3 class="text-sm font-semibold text-gray-800 mb-4">Purchase Order Details</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">Purchase Order No</label>
-                <input type="text" value="{{ $isEdit ? $purchaseOrder->po_no : $nextPoNo }}" readonly tabindex="-1"
-                       class="w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm text-sm text-gray-500 cursor-not-allowed focus:ring-0 focus:border-gray-300">
-                <p class="mt-1.5 text-xs text-gray-400">PO No is generated automatically.</p>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    Purchase Order No <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="po_no" value="{{ old('po_no', $isEdit ? $purchaseOrder->po_no : '') }}" required
+                       placeholder="e.g. PO-2026-08-0001"
+                       class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <p class="mt-1.5 text-xs text-gray-400">Enter purchase order number.</p>
             </div>
 
             <div class="border border-gray-200 rounded-xl p-4">

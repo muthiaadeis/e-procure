@@ -30,8 +30,6 @@ class PurchaseRequestController extends Controller
 
     public function create(Request $request)
     {
-        $nextNoRequest = PurchaseRequest::generateNextNoRequest();
-
         $fromPurchaseOrder = null;
         $prefill = [];
 
@@ -61,7 +59,7 @@ class PurchaseRequestController extends Controller
             }
         }
 
-        return view('purchase_requests.create', compact('nextNoRequest', 'fromPurchaseOrder', 'prefill'));
+        return view('purchase_requests.create', compact('fromPurchaseOrder', 'prefill'));
     }
 
     public function store(Request $request)
@@ -73,7 +71,7 @@ class PurchaseRequestController extends Controller
             $ppn = $this->calculatePpn($subtotal, $validated);
 
             $pr = PurchaseRequest::create([
-                'no_request' => PurchaseRequest::generateNextNoRequest(),
+                'no_request' => $validated['no_request'],
                 'purchase_order_id' => $validated['purchase_order_id'] ?? null,
                 'date' => now(),
                 'title' => $validated['title'],
@@ -174,6 +172,7 @@ class PurchaseRequestController extends Controller
     private function validatePr(Request $request): array
     {
         return $request->validate([
+            'no_request' => 'required|string|max:100|unique:purchase_requests,no_request',
             'purchase_order_id' => 'nullable|exists:purchase_orders,id',
             'title' => 'required|string|max:255',
             'job_location' => 'nullable|string|max:255',
