@@ -27,7 +27,6 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::middleware(['auth', 'force.password.change', 'restrict.admin'])->group(function () {
     Route::resource('material-requests', MaterialRequestController::class);
     Route::get('material-requests/{materialRequest}/print', [MaterialRequestController::class, 'printPdf'])
-    ->name('material-requests.print');
         ->name('material-requests.print');
     Route::post('material-requests/{materialRequest}/sign-prepared', [MaterialRequestController::class, 'signPrepared'])
         ->name('material-requests.sign-prepared');
@@ -36,7 +35,6 @@ Route::middleware(['auth', 'force.password.change', 'restrict.admin'])->group(fu
     Route::patch('material-requests/{materialRequest}/approve', [MaterialRequestController::class, 'approve'])
         ->name('material-requests.approve');
     Route::patch('material-requests/{materialRequest}/reject', [MaterialRequestController::class, 'reject'])
-    ->name('material-requests.reject');
         ->name('material-requests.reject');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -44,7 +42,6 @@ Route::middleware(['auth', 'force.password.change', 'restrict.admin'])->group(fu
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('rlps', RlpController::class)->except(['show']);
-    Route::resource('rlps', RlpController::class);
     Route::get('rlps/{rlp}/print', [RlpController::class, 'printPdf'])->name('rlps.print');
     Route::post('rlps/{rlp}/sign-prepared', [RlpController::class, 'signPrepared'])->name('rlps.sign-prepared');
     Route::patch('rlps/{rlp}/review', [RlpController::class, 'review'])->name('rlps.review');
