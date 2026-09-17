@@ -131,6 +131,19 @@
             text-transform: uppercase;
             letter-spacing: .03em;
             margin: 0 0 48px;
+            margin: 0 0 4px;
+        }
+        .signatures .box .sig-space {
+            height: 56px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 4px;
+        }
+        .signatures .box .sig-space img {
+            max-height: 52px;
+            max-width: 100%;
+            object-fit: contain;
         }
         .signatures .box p.name {
             margin: 0;
@@ -272,21 +285,41 @@
         <div class="signatures">
             <div class="box">
                 <p class="role">Prepared By</p>
+                <div class="sig-space">
+                    @if($rlp->created_signature)
+                        <img src="{{ $rlp->created_signature }}" alt="signature">
+                    @endif
+                </div>
                 <p class="name">{{ $rlp->creator->name ?? '-' }}</p>
                 <p class="date">{{ $rlp->date ? $rlp->date->format('d-m-Y') : '-' }}</p>
             </div>
             <div class="box">
                 <p class="role">Review By</p>
+                <div class="sig-space">
+                    @if($rlp->reviewed_signature)
+                        <img src="{{ $rlp->reviewed_signature }}" alt="signature">
+                    @endif
+                </div>
                 <p class="name">{{ $rlp->reviewer->name ?? '-' }}</p>
                 <p class="date">{{ $rlp->reviewed_at?->format('d-m-Y') ?? '-' }}</p>
             </div>
             <div class="box">
                 <p class="role">Acknowledge By</p>
+                <div class="sig-space">
+                    @if($rlp->acknowledged_signature)
+                        <img src="{{ $rlp->acknowledged_signature }}" alt="signature">
+                    @endif
+                </div>
                 <p class="name">{{ $rlp->acknowledger->name ?? '-' }}</p>
                 <p class="date">{{ $rlp->acknowledged_at?->format('d-m-Y') ?? '-' }}</p>
             </div>
             <div class="box">
                 <p class="role">Approved By</p>
+                <div class="sig-space">
+                    @if($rlp->approved_signature)
+                        <img src="{{ $rlp->approved_signature }}" alt="signature">
+                    @endif
+                </div>
                 <p class="name">{{ $rlp->approver->name ?? '-' }}</p>
                 <p class="date">{{ $rlp->approved_at?->format('d-m-Y') ?? '-' }}</p>
             </div>

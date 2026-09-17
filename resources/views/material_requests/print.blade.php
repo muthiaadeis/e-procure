@@ -104,6 +104,19 @@
             text-transform: uppercase;
             letter-spacing: .03em;
             margin: 0 0 48px;
+            margin: 0 0 4px;
+        }
+        .signatures .box .sig-space {
+            height: 56px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 4px;
+        }
+        .signatures .box .sig-space img {
+            max-height: 52px;
+            max-width: 100%;
+            object-fit: contain;
         }
         .signatures .box p.name {
             margin: 0;
@@ -196,22 +209,43 @@
         <div class="signatures">
             <div class="box">
                 <p class="role">Requested By</p>
+                <div class="sig-space">
+                    @if($materialRequest->created_signature)
+                        <img src="{{ $materialRequest->created_signature }}" alt="signature">
+                    @endif
+                </div>
                 <p class="name">{{ $materialRequest->creator->name ?? '-' }}</p>
                 <p class="date">{{ $materialRequest->date->format('d-m-Y') }}</p>
             </div>
             <div class="box">
                 <p class="role">Approval 1</p>
+                <div class="sig-space">
+                    @if($materialRequest->approved_a_signature)
+                        <img src="{{ $materialRequest->approved_a_signature }}" alt="signature">
+                    @endif
+                </div>
                 <p class="name">{{ $materialRequest->approverA->name ?? '-' }}</p>
                 <p class="date">{{ $materialRequest->approved_a_at?->format('d-m-Y') ?? '-' }}</p>
             </div>
             <div class="box">
                 <p class="role">Approval 2</p>
+                <div class="sig-space">
+                    @if($materialRequest->approved_c_signature)
+                        <img src="{{ $materialRequest->approved_c_signature }}" alt="signature">
+                    @endif
+                </div>
                 <p class="name">{{ $materialRequest->approverC->name ?? '-' }}</p>
                 <p class="date">{{ $materialRequest->approved_c_at?->format('d-m-Y') ?? '-' }}</p>
             </div>
             {{-- BARU: kolom Finance --}}
+            {{-- Kolom Finance --}}
             <div class="box">
                 <p class="role">Finance</p>
+                <div class="sig-space">
+                    @if($materialRequest->paid_signature)
+                        <img src="{{ $materialRequest->paid_signature }}" alt="signature">
+                    @endif
+                </div>
                 @if($materialRequest->is_rejected_by_finance)
                     <p class="name">{{ $materialRequest->financeRejector->name ?? '-' }}</p>
                     <p class="date">Rejected · {{ $materialRequest->finance_rejected_at?->format('d-m-Y') ?? '-' }}</p>

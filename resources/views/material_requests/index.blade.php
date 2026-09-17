@@ -38,6 +38,45 @@
                 this.confirmOpen = false;
                 document.getElementById(this.confirmFormId).submit();
             },
+            signModalOpen: false,
+            signLabel: '',
+            signPad: null,
+            openSign(id, label, action, method = 'PATCH') {
+                this.signLabel = label;
+                this.signModalOpen = true;
+                const form = document.getElementById('mr-sign-form');
+                form.action = action;
+                document.getElementById('mr-sign-method-input').value = method;
+                this.$nextTick(() => {
+                    const canvas = document.getElementById('mr-signature-canvas');
+                    if (!canvas) return;
+                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    canvas.width = canvas.offsetWidth * ratio;
+                    canvas.height = canvas.offsetHeight * ratio;
+                    canvas.getContext('2d').scale(ratio, ratio);
+                    this.signPad = new SignaturePad(canvas, {
+                        backgroundColor: 'rgb(255,255,255)',
+                        minWidth: 1.8,
+                        maxWidth: 3.8,
+                        penColor: 'rgb(15, 23, 42)'
+                    });
+                });
+            },
+            clearSignPad() {
+                if (this.signPad) this.signPad.clear();
+            },
+            closeSignModal() {
+                this.signModalOpen = false;
+                this.signPad = null;
+            },
+            submitSignature() {
+                if (!this.signPad || this.signPad.isEmpty()) {
+                    alert('Please sign in the box first.');
+                    return;
+                }
+                document.getElementById('mr-signature-data-input').value = this.signPad.toDataURL('image/png');
+                document.getElementById('mr-sign-form').submit();
+            },
             detailOpen: false,
             detailData: {},
             openDetail(data) {
@@ -313,6 +352,7 @@
                  @keydown.escape.window="detailOpen = false"
                  @click.outside="detailOpen = false"
                  class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl sm:max-w-4xl p-6 sm:p-7">
 
                 <div class="flex items-center justify-between mb-1">
                     <h3 class="text-lg font-semibold text-gray-800">Material Request Detail</h3>
@@ -352,6 +392,7 @@
                 <div>
                     <p class="text-gray-400 text-xs mb-1.5">Material Items</p>
                     <div class="border border-gray-100 rounded-lg divide-y divide-gray-100 max-h-56 overflow-y-auto">
+                    <div class="border border-gray-100 rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
                         <template x-for="(item, index) in detailData.items" :key="index">
                             <div class="p-3">
                                 <p class="text-gray-800 font-medium text-sm" x-text="(index + 1) + '. ' + item.description"></p>
@@ -381,6 +422,11 @@
                         x-show="detailData.is_rejected_a"
                         x-text="'✗ Rejected: ' + detailData.rejection_a_reason"></p>
                         <p class="text-xs text-gray-400 mt-0.5" x-show="!detailData.is_approved_a && !detailData.is_rejected_a">Awaiting approval</p>
+                {{-- Approval Workflow Grid (4 Cards) --}}
+                <div class="pt-4 border-t border-gray-100">
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700">Approval Workflow</h4>
+                        <span class="text-[10px] text-gray-400">Sequential digital signatures</span>
                     </div>
                     <div>
                         <p class="text-gray-400 text-xs mb-0.5">Approval 2</p>
@@ -402,24 +448,207 @@
                         <div>
                             <p class="text-gray-800 font-medium text-xs" x-text="'Rejected by ' + detailData.finance_rejector"></p>
                             <p class="text-xs text-red-600 mt-0.5" x-text="'✗ Reason: ' + detailData.finance_rejection_reason"></p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        {{-- Card 1: Requested By --}}
+                        <div class="relative flex flex-col justify-between rounded-xl border p-2.5 transition"
+                             :class="detailData.created_signature ? 'bg-emerald-50/15 border-emerald-200 ring-1 ring-emerald-200/40' : 'bg-gray-50/20 border-gray-200'">
+                            <div>
+                                <div class="flex items-center justify-between gap-1 mb-1">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider"
+                                          :class="detailData.created_signature ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'">
+                                        Prepared
+                                    </span>
+                                    <span class="text-[8px] font-medium text-gray-400">Step 1</span>
+                                </div>
+                                <h5 class="text-[11px] font-bold text-gray-800 truncate" title="Requested By">Requested By</h5>
+                            </div>
+
+                            <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[64px] flex flex-col items-center justify-center">
+                                <template x-if="detailData.created_signature">
+                                    <img :src="detailData.created_signature" alt="signature" class="h-11 object-contain filter drop-shadow-xs">
+                                </template>
+                                <template x-if="!detailData.created_signature && detailData.can_sign_prepared">
+                                    <button type="button"
+                                            @click="openSign(detailData.id, 'Requested By (' + detailData.no_mr + ')', detailData.sign_prepared_url, 'POST')"
+                                            class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1 px-2 rounded shadow-xs transition">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        Sign
+                                    </button>
+                                </template>
+                                <template x-if="!detailData.created_signature && !detailData.can_sign_prepared">
+                                    <span class="text-[9px] text-gray-400">Created</span>
+                                </template>
+                            </div>
+
+                            <div class="text-center">
+                                <p class="text-[10px] font-semibold text-gray-800 truncate" x-text="detailData.created_by"></p>
+                                <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-text="detailData.date"></p>
+                            </div>
                         </div>
                     </template>
                     <template x-if="!detailData.is_rejected_finance && detailData.is_paid">
                         <div>
                             <p class="text-gray-800 font-medium" x-text="detailData.paid_by"></p>
                             <p class="text-xs text-green-600 mt-0.5" x-text="'✓ Paid ' + detailData.paid_at"></p>
+
+                        {{-- Card 2: Approval 1 --}}
+                        <div class="relative flex flex-col justify-between rounded-xl border p-2.5 transition"
+                             :class="detailData.is_rejected_a ? 'bg-red-50/20 border-red-200' : (detailData.approved_a_signature ? 'bg-emerald-50/15 border-emerald-200 ring-1 ring-emerald-200/40' : (detailData.can_sign_a ? 'bg-white border-indigo-300 ring-1 ring-indigo-200 shadow-xs' : 'bg-gray-50/20 border-gray-200'))">
+                            <div>
+                                <div class="flex items-center justify-between gap-1 mb-1">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider"
+                                          :class="detailData.is_rejected_a ? 'bg-red-100 text-red-800' : (detailData.approved_a_signature ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600')">
+                                        Review
+                                    </span>
+                                    <span class="text-[8px] font-medium text-gray-400">Step 2</span>
+                                </div>
+                                <h5 class="text-[11px] font-bold text-gray-800 truncate" title="Approval 1">Approval 1</h5>
+                            </div>
+
+                            <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[64px] flex flex-col items-center justify-center">
+                                <template x-if="detailData.approved_a_signature">
+                                    <img :src="detailData.approved_a_signature" alt="signature" class="h-11 object-contain filter drop-shadow-xs">
+                                </template>
+                                <template x-if="!detailData.approved_a_signature && detailData.is_rejected_a">
+                                    <div class="text-center px-1">
+                                        <span class="text-[9px] font-bold text-red-600 block">Rejected</span>
+                                        <span class="text-[8px] text-red-500 line-clamp-2" x-text="detailData.rejection_a_reason"></span>
+                                    </div>
+                                </template>
+                                <template x-if="!detailData.approved_a_signature && !detailData.is_rejected_a && detailData.can_sign_a">
+                                    <button type="button"
+                                            @click="openSign(detailData.id, 'Approval 1 (' + detailData.no_mr + ')', detailData.approve_url, 'PATCH')"
+                                            class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1 px-2 rounded shadow-xs transition">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        Sign
+                                    </button>
+                                </template>
+                                <template x-if="!detailData.approved_a_signature && !detailData.is_rejected_a && !detailData.can_sign_a">
+                                    <span class="text-[9px] text-gray-400" x-text="detailData.is_approved_a ? 'Approved' : 'Pending'"></span>
+                                </template>
+                            </div>
+
+                            <div class="text-center">
+                                <p class="text-[10px] font-semibold text-gray-800 truncate" x-text="detailData.approver_a || 'Approver 1'"></p>
+                                <p class="text-[9px] text-emerald-600 font-medium mt-0.5 leading-none" x-show="detailData.approved_a_at" x-text="detailData.approved_a_at"></p>
+                                <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-show="!detailData.approved_a_at">Awaiting</p>
+                            </div>
                         </div>
                     </template>
                     <template x-if="!detailData.is_rejected_finance && !detailData.is_paid">
                         <p class="text-xs text-gray-400 mt-0.5">Awaiting payment</p>
                     </template>
+
+                        {{-- Card 3: Approval 2 --}}
+                        <div class="relative flex flex-col justify-between rounded-xl border p-2.5 transition"
+                             :class="detailData.is_rejected_c ? 'bg-red-50/20 border-red-200' : (detailData.approved_c_signature ? 'bg-emerald-50/15 border-emerald-200 ring-1 ring-emerald-200/40' : (detailData.can_sign_c ? 'bg-white border-indigo-300 ring-1 ring-indigo-200 shadow-xs' : 'bg-gray-50/20 border-gray-200'))">
+                            <div>
+                                <div class="flex items-center justify-between gap-1 mb-1">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider"
+                                          :class="detailData.is_rejected_c ? 'bg-red-100 text-red-800' : (detailData.approved_c_signature ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600')">
+                                        Approve
+                                    </span>
+                                    <span class="text-[8px] font-medium text-gray-400">Step 3</span>
+                                </div>
+                                <h5 class="text-[11px] font-bold text-gray-800 truncate" title="Approval 2">Approval 2</h5>
+                            </div>
+
+                            <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[64px] flex flex-col items-center justify-center">
+                                <template x-if="detailData.approved_c_signature">
+                                    <img :src="detailData.approved_c_signature" alt="signature" class="h-11 object-contain filter drop-shadow-xs">
+                                </template>
+                                <template x-if="!detailData.approved_c_signature && detailData.is_rejected_c">
+                                    <div class="text-center px-1">
+                                        <span class="text-[9px] font-bold text-red-600 block">Rejected</span>
+                                        <span class="text-[8px] text-red-500 line-clamp-2" x-text="detailData.rejection_c_reason"></span>
+                                    </div>
+                                </template>
+                                <template x-if="!detailData.approved_c_signature && !detailData.is_rejected_c && !detailData.is_approved_a">
+                                    <span class="text-[9px] text-gray-400">Locked (Step 2)</span>
+                                </template>
+                                <template x-if="!detailData.approved_c_signature && !detailData.is_rejected_c && detailData.is_approved_a && detailData.can_sign_c">
+                                    <button type="button"
+                                            @click="openSign(detailData.id, 'Approval 2 (' + detailData.no_mr + ')', detailData.approve_url, 'PATCH')"
+                                            class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1 px-2 rounded shadow-xs transition">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        Sign
+                                    </button>
+                                </template>
+                                <template x-if="!detailData.approved_c_signature && !detailData.is_rejected_c && detailData.is_approved_a && !detailData.can_sign_c">
+                                    <span class="text-[9px] text-gray-400" x-text="detailData.is_approved_c ? 'Approved' : 'Pending'"></span>
+                                </template>
+                            </div>
+
+                            <div class="text-center">
+                                <p class="text-[10px] font-semibold text-gray-800 truncate" x-text="detailData.approver_c || 'Approver 2'"></p>
+                                <p class="text-[9px] text-emerald-600 font-medium mt-0.5 leading-none" x-show="detailData.approved_c_at" x-text="detailData.approved_c_at"></p>
+                                <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-show="!detailData.approved_c_at">Awaiting</p>
+                            </div>
+                        </div>
+
+                        {{-- Card 4: Finance --}}
+                        <div class="relative flex flex-col justify-between rounded-xl border p-2.5 transition"
+                             :class="detailData.is_rejected_finance ? 'bg-red-50/20 border-red-200' : (detailData.paid_signature ? 'bg-emerald-50/15 border-emerald-200 ring-1 ring-emerald-200/40' : (detailData.can_sign_finance ? 'bg-white border-indigo-300 ring-1 ring-indigo-200 shadow-xs' : 'bg-gray-50/20 border-gray-200'))">
+                            <div>
+                                <div class="flex items-center justify-between gap-1 mb-1">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider"
+                                          :class="detailData.is_rejected_finance ? 'bg-red-100 text-red-800' : (detailData.paid_signature ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600')">
+                                        Payment
+                                    </span>
+                                    <span class="text-[8px] font-medium text-gray-400">Step 4</span>
+                                </div>
+                                <h5 class="text-[11px] font-bold text-gray-800 truncate" title="Finance">Finance</h5>
+                            </div>
+
+                            <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[64px] flex flex-col items-center justify-center">
+                                <template x-if="detailData.paid_signature">
+                                    <img :src="detailData.paid_signature" alt="signature" class="h-11 object-contain filter drop-shadow-xs">
+                                </template>
+                                <template x-if="!detailData.paid_signature && detailData.is_rejected_finance">
+                                    <div class="text-center px-1">
+                                        <span class="text-[9px] font-bold text-red-600 block">Rejected</span>
+                                        <span class="text-[8px] text-red-500 line-clamp-2" x-text="detailData.finance_rejection_reason"></span>
+                                    </div>
+                                </template>
+                                <template x-if="!detailData.paid_signature && !detailData.is_rejected_finance && !detailData.is_approved_c">
+                                    <span class="text-[9px] text-gray-400">Locked (Step 3)</span>
+                                </template>
+                                <template x-if="!detailData.paid_signature && !detailData.is_rejected_finance && detailData.is_approved_c && detailData.can_sign_finance">
+                                    <button type="button"
+                                            @click="openSign(detailData.id, 'Finance Payment (' + detailData.no_mr + ')', detailData.mark_paid_url, 'PATCH')"
+                                            class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-green-600 hover:bg-green-700 active:bg-green-800 py-1 px-2 rounded shadow-xs transition">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        Sign
+                                    </button>
+                                </template>
+                                <template x-if="!detailData.paid_signature && !detailData.is_rejected_finance && detailData.is_approved_c && !detailData.can_sign_finance">
+                                    <span class="text-[9px] text-gray-400" x-text="detailData.is_paid ? 'Paid' : 'Pending'"></span>
+                                </template>
+                            </div>
+
+                            <div class="text-center">
+                                <p class="text-[10px] font-semibold text-gray-800 truncate" x-text="detailData.paid_by || 'Finance'"></p>
+                                <p class="text-[9px] text-emerald-600 font-medium mt-0.5 leading-none" x-show="detailData.paid_at" x-text="detailData.paid_at"></p>
+                                <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-show="!detailData.paid_at">Awaiting</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
                 <div class="mt-6 pt-4 border-t border-gray-100">
+                <div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+                    <a :href="detailData.print_url" target="_blank"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg text-xs font-semibold shadow-xs transition">
+                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.318 2.226c.079.554-.36 1.052-.92 1.052H6.94c-.56 0-.998-.498-.92-1.052L6.34 18m11.318 0h1.093c1.036 0 1.875-.84 1.875-1.875V9.375c0-1.036-.84-1.875-1.875-1.875H4.875C3.839 7.5 3 8.34 3 9.375v6.75c0 1.035.84 1.875 1.875 1.875H6.34m10.94 0H6.34m9.94-11.25V4.875c0-1.036-.84-1.875-1.875-1.875H8.625C7.59 3 6.75 3.84 6.75 4.875v2.625"/>
+                        </svg>
+                        Print / PDF
+                    </a>
                     <button type="button"
                             @click="detailOpen = false"
                             class="w-full px-4 py-2 rounded-lg text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 active:bg-gray-800 transition">
+                            class="px-5 py-2 rounded-lg text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition">
                         Close
                     </button>
                 </div>
@@ -552,5 +781,62 @@
                 </div>
             </div>
         </div>
+
+        {{-- Digital Signature Modal --}}
+        <div x-show="signModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-xs" @click="closeSignModal()"></div>
+            <div class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 sm:p-8">
+                <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Digital Signature Pad</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Signing as: <strong class="text-indigo-600" x-text="signLabel"></strong></p>
+                    </div>
+                    <button type="button" @click="closeSignModal()" class="text-gray-400 hover:text-gray-600 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Spacious Canvas --}}
+                <div class="relative bg-gray-50/50 rounded-xl border border-gray-200 p-2">
+                    <canvas id="mr-signature-canvas" class="w-full h-64 sm:h-72 bg-white rounded-lg touch-none shadow-inner cursor-crosshair"></canvas>
+                    <div class="absolute bottom-6 left-6 right-6 border-b border-gray-300 pointer-events-none flex justify-between items-end pb-1">
+                        <span class="text-[11px] text-gray-400 font-normal">Sign above this line</span>
+                        <span class="text-[11px] text-gray-400 font-normal">✕</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 mt-5">
+                    <button type="button" @click="clearSignPad()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-red-600 bg-gray-100 hover:bg-red-50 px-3.5 py-2 rounded-lg transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Clear Signature
+                    </button>
+                    <div class="flex gap-2.5">
+                        <button type="button" @click="closeSignModal()" class="text-xs font-semibold text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg transition">
+                            Cancel
+                        </button>
+                        <button type="button" @click="submitSignature()"
+                                class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold px-5 py-2.5 rounded-lg shadow-sm transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Save & Sign Document
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Hidden shared submit form for the signature --}}
+        <form id="mr-sign-form" method="POST" action="">
+            @csrf
+            <input type="hidden" name="_method" id="mr-sign-method-input" value="PATCH">
+            <input type="hidden" name="signature" id="mr-signature-data-input">
+        </form>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 </x-app-layout>

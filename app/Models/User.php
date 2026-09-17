@@ -74,6 +74,7 @@ class User extends Authenticatable
     public function isApprover(): bool
     {
         return (bool) $this->is_approver || in_array($this->role, ['approver_a', 'approver_c'], true);
+        return (bool) $this->is_approver || in_array($this->role, ['approver_a', 'approver_c', 'rlp_reviewer', 'rlp_acknowledger', 'rlp_approver'], true);
     }
 
     // Cek apakah user bisa menandatangani slot approval digital di PO atau PR

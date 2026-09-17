@@ -17,12 +17,16 @@ class Rlp extends Model
         'revenue_ext_price',
         'wur_grand_total',
         'created_by',
+        'created_signature',
         'reviewed_by',
         'reviewed_at',
+        'reviewed_signature',
         'acknowledged_by',
         'acknowledged_at',
+        'acknowledged_signature',
         'approved_by',
         'approved_at',
+        'approved_signature',
     ];
 
     protected $casts = [

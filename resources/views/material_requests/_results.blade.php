@@ -56,6 +56,18 @@
                                     'paid_at' => $req->paid_at ? $req->paid_at->format('d-m-Y') : null,
                                     'created_by' => $req->creator->name ?? '-',
                                     'created_at' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
+                                    'created_signature' => $req->created_signature,
+                                    'approved_a_signature' => $req->approved_a_signature,
+                                    'approved_c_signature' => $req->approved_c_signature,
+                                    'paid_signature' => $req->paid_signature,
+                                    'can_sign_a' => (auth()->user()->isApproverA() || auth()->user()->isAdmin()) && ! $req->is_approved_by_a && ! $req->is_rejected_by_a,
+                                    'can_sign_c' => (auth()->user()->isApproverC() || auth()->user()->isAdmin()) && $req->is_approved_by_a && ! $req->is_approved_by_c && ! $req->is_rejected_by_c,
+                                    'can_sign_finance' => (auth()->user()->isFinance() || auth()->user()->isAdmin()) && $req->is_approved && ! $req->paid_at && ! $req->is_rejected_by_finance,
+                                    'can_sign_prepared' => (auth()->user()->id === $req->created_by || auth()->user()->isAdmin()) && ! $req->created_signature,
+                                    'approve_url' => route('material-requests.approve', $req),
+                                    'mark_paid_url' => route('material-requests.mark-paid', $req),
+                                    'sign_prepared_url' => route('material-requests.sign-prepared', $req),
+                                    'print_url' => route('material-requests.print', $req),
                                 ];
                             @endphp
                             <tr id="mr-row-{{ $req->id }}"
@@ -167,9 +179,11 @@
                         'Yes, Approve',
                         'approve-form-{{ $req->id }}'
                     )"
+                    @click="openSign({{ $req->id }}, '{{ $canApproveA ? 'Approval 1' : 'Approval 2' }} ({{ addslashes($req->no_mr ?? $req->charge_to) }})', '{{ route('material-requests.approve', $req->id) }}', 'PATCH')"
                     class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75l2.25 2.25L15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                 </svg>
             </button>
         @elseif($canMarkPaid)
@@ -188,9 +202,11 @@
                         'Yes, Mark Paid',
                         'mark-paid-form-{{ $req->id }}'
                     )"
+                    @click="openSign({{ $req->id }}, 'Finance Payment ({{ addslashes($req->no_mr ?? $req->charge_to) }})', '{{ route('material-requests.mark-paid', $req->id) }}', 'PATCH')"
                     class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                 </svg>
             </button>
         @elseif($canEdit)
@@ -269,11 +285,14 @@
                             'Yes, Approve',
                             'approve-form-{{ $req->id }}'
                         )"
+                        @click="menuOpen = false; openSign({{ $req->id }}, '{{ $canApproveA ? 'Approval 1' : 'Approval 2' }} ({{ addslashes($req->no_mr ?? $req->charge_to) }})', '{{ route('material-requests.approve', $req->id) }}', 'PATCH')"
                         class="w-full flex items-center gap-2 px-4 py-2 text-sm text-indigo-600 hover:bg-indigo-50 transition">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75l2.25 2.25L15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                     </svg>
                     {{ $approveLabel }}
+                    Sign & {{ $approveLabel }}
                 </button>
             @endif
 
@@ -313,11 +332,14 @@
                             'Yes, Mark Paid',
                             'mark-paid-form-{{ $req->id }}'
                         )"
+                        @click="menuOpen = false; openSign({{ $req->id }}, 'Finance Payment ({{ addslashes($req->no_mr ?? $req->charge_to) }})', '{{ route('material-requests.mark-paid', $req->id) }}', 'PATCH')"
                         class="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50 transition">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                     </svg>
                     Mark Paid
+                    Sign & Mark Paid
                 </button>
             @endif
 

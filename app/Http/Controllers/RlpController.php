@@ -97,54 +97,99 @@ class RlpController extends Controller
         return view('rlps.print', compact('rlp'));
     }
 
+    public function show(Rlp $rlp)
+    {
+        return redirect()->route('rlps.index', ['auto_open' => $rlp->id]);
+    }
+
+    public function signPrepared(Request $request, Rlp $rlp)
+    {
+        $user = auth()->user();
+        abort_unless($user->id === $rlp->created_by || $user->isAdmin() || $user->isApprover(), 403, "Only the creator or an administrator can sign this request.");
+
+        $validated = $request->validate([
+            'signature' => 'required|string',
+        ]);
+
+        $rlp->update([
+            'created_signature' => $validated['signature'],
+        ]);
+
+        return back()->with('success', 'Signature recorded successfully.');
+    }
+
     // Tahap 1: Review By
     public function review(Rlp $rlp)
+    public function review(Request $request, Rlp $rlp)
     {
         $user = auth()->user();
 
         abort_unless($user->isRlpReviewer(), 403, "You don't have permission to review this RRP.");
+        abort_unless($user->isRlpReviewer() || $user->isAdmin() || $user->isApprover(), 403, "You don't have permission to review this RRP.");
         abort_if($rlp->is_reviewed, 403, 'This RRP has already been reviewed.');
+
+        $validated = $request->validate([
+            'signature' => 'required|string',
+        ]);
 
         $rlp->update([
             'reviewed_by' => $user->id,
             'reviewed_at' => now(),
+            'reviewed_signature' => $validated['signature'],
         ]);
 
         return redirect()->route('rlps.index')->with('success', 'RRP reviewed successfully.');
+        return redirect()->route('rlps.index')->with('success', 'RRP reviewed and signed successfully.');
     }
 
     // Tahap 2: Acknowledge By
     public function acknowledge(Rlp $rlp)
+    public function acknowledge(Request $request, Rlp $rlp)
     {
         $user = auth()->user();
 
         abort_unless($user->isRlpAcknowledger(), 403, "You don't have permission to acknowledge this RRP.");
+        abort_unless($user->isRlpAcknowledger() || $user->isAdmin() || $user->isApprover(), 403, "You don't have permission to acknowledge this RRP.");
         abort_unless($rlp->is_reviewed, 403, "This RRP hasn't been reviewed yet.");
         abort_if($rlp->is_acknowledged, 403, 'This RRP has already been acknowledged.');
+
+        $validated = $request->validate([
+            'signature' => 'required|string',
+        ]);
 
         $rlp->update([
             'acknowledged_by' => $user->id,
             'acknowledged_at' => now(),
+            'acknowledged_signature' => $validated['signature'],
         ]);
 
         return redirect()->route('rlps.index')->with('success', 'RRP acknowledged successfully.');
+        return redirect()->route('rlps.index')->with('success', 'RRP acknowledged and signed successfully.');
     }
 
     // Tahap 3: Approved By
     public function approve(Rlp $rlp)
+    public function approve(Request $request, Rlp $rlp)
     {
         $user = auth()->user();
 
         abort_unless($user->isRlpApprover(), 403, "You don't have permission to approve this RRP.");
+        abort_unless($user->isRlpApprover() || $user->isAdmin() || $user->isApprover(), 403, "You don't have permission to approve this RRP.");
         abort_unless($rlp->is_acknowledged, 403, "This RRP hasn't been acknowledged yet.");
         abort_if($rlp->is_approved, 403, 'This RRP has already been approved.');
+
+        $validated = $request->validate([
+            'signature' => 'required|string',
+        ]);
 
         $rlp->update([
             'approved_by' => $user->id,
             'approved_at' => now(),
+            'approved_signature' => $validated['signature'],
         ]);
 
         return redirect()->route('rlps.index')->with('success', 'RRP approved successfully.');
+        return redirect()->route('rlps.index')->with('success', 'RRP approved and signed successfully.');
     }
 
     private function validateRlp(Request $request, $ignoreId = null): array
