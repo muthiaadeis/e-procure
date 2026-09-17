@@ -2,8 +2,8 @@
     <x-slot name="header">
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="font-bold text-2xl text-gray-800 leading-tight">Local Purchase</h1>
-            <p class="text-sm text-gray-500 mt-1">Manage Request for Retail Purchase (RRP) and vendor comparisons.</p>
+            <h1 class="font-bold text-2xl text-gray-800 leading-tight">Local Purchase (RRP)</h1>
+            <p class="text-sm text-gray-500 mt-1">Manage Request for Retail Purchase and multi-vendor comparisons.</p>
         </div>
         <a href="{{ route('rlps.create') }}"
                class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">

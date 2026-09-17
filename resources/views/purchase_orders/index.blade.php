@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Purchase Order</h1>
+                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Purchase Order (PO)</h1>
                 <p class="text-sm text-gray-500 mt-1">Manage purchase orders to suppliers.</p>
             </div>
             <a href="{{ route('purchase-orders.create') }}"

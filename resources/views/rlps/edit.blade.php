@@ -55,9 +55,17 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Edit RRP — {{ $rlp->no_rlp }}
-        </h2>
+        <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Edit Local Purchase (RRP) — {{ $rlp->no_rlp }}</h1>
+                <p class="text-sm text-gray-500 mt-1">Update quotation and vendor comparison details.</p>
+            </div>
+            <nav class="text-sm text-gray-400 mt-1.5">
+                <a href="{{ route('rlps.index') }}" class="hover:text-indigo-600 transition">RRP</a>
+                <span class="mx-1.5">/</span>
+                <span class="text-indigo-600 font-medium">Edit</span>
+            </nav>
+        </div>
     </x-slot>
 
     <div class="py-8">

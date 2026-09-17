@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
-                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Edit Purchase Request</h1>
+                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Edit Purchase Request (PR)</h1>
                 <p class="text-sm text-gray-500 mt-1">{{ $purchaseRequest->no_request }}</p>
             </div>
             <nav class="text-sm text-gray-400 mt-1.5">

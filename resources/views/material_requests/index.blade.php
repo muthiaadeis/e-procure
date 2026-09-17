@@ -1,7 +1,5 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="font-bold text-2xl text-gray-800 leading-tight">Material Request</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage and track your material requests.</p>
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">Material Request (MR)</h1>
@@ -281,16 +279,6 @@
                             </a>
                         </div>
                     </div>
-                    </div>
-                    @if(auth()->user()->isInput())
-                        <a href="{{ route('material-requests.create') }}"
-                           class="inline-flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            Add MR
-                        </a>
-                    @endif
                 </div>
                 <div id="mr-results">
                     @include('material_requests._results', ['requests' => $requests, 'search' => $search])

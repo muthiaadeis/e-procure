@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
-                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Add Purchase Request</h1>
+                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Add Purchase Request (PR)</h1>
                 <p class="text-sm text-gray-500 mt-1">
                     @if ($fromPurchaseOrder)
                         Documenting item allocation for PO <span class="font-semibold text-indigo-600">{{ $fromPurchaseOrder->po_no }}</span> — specify internal project, client, and recipient details.

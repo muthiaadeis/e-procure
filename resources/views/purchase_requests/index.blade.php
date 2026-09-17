@@ -2,8 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Purchase Request</h1>
-                <p class="text-sm text-gray-500 mt-1">Manage purchase requests to vendors.</p>
+                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Purchase Request (PR)</h1>
                 <p class="text-sm text-gray-500 mt-1">Internal documentation detailing recipients and project allocation for ordered goods.</p>
             </div>
             <a href="{{ route('purchase-requests.create') }}"
