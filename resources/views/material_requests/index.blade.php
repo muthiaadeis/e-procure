@@ -2,6 +2,21 @@
     <x-slot name="header">
         <h1 class="font-bold text-2xl text-gray-800 leading-tight">Material Request</h1>
         <p class="text-sm text-gray-500 mt-1">Manage and track your material requests.</p>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Material Request (MR)</h1>
+                <p class="text-sm text-gray-500 mt-1">Manage and track your material requests.</p>
+            </div>
+            @if(auth()->user()->isInput())
+                <a href="{{ route('material-requests.create') }}"
+                   class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add MR
+                </a>
+            @endif
+        </div>
     </x-slot>
 
     <div class="py-8" x-data="{
