@@ -126,17 +126,21 @@
                                                             class="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
                                                     </td>
                                                     <td class="px-3 py-2.5">
-                                                        <div class="relative" x-data="{ open: false, menuTop: 0, menuLeft: 0, menuWidth: 0 }" @click.outside="open = false" @scroll.window="open = false">
-                                                            <button type="button"
-                                                                    @click="
-                                                                        open = !open;
-                                                                        if (open) {
-                                                                            const rect = $el.getBoundingClientRect();
-                                                                            menuTop = rect.bottom + 6;
-                                                                            menuLeft = rect.left;
-                                                                            menuWidth = rect.width;
-                                                                        }
-                                                                    "
+                                                        <div class="relative"
+                                                             x-data="{
+                                                                open: false, menuTop: 0, menuLeft: 0, menuWidth: 0,
+                                                                updatePosition() {
+                                                                    const rect = $refs.unitTrigger.getBoundingClientRect();
+                                                                    this.menuTop = rect.bottom + 6;
+                                                                    this.menuLeft = rect.left;
+                                                                    this.menuWidth = rect.width;
+                                                                }
+                                                             }"
+                                                             @click.outside="open = false"
+                                                             @scroll.window.capture="if (open) updatePosition()"
+                                                             @resize.window="if (open) updatePosition()">
+                                                            <button type="button" x-ref="unitTrigger"
+                                                                    @click="open = !open; if (open) updatePosition()"
                                                                     class="w-full flex items-center justify-between gap-1 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-left hover:border-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
                                                                 <span class="truncate" :class="item.unit ? 'text-gray-700' : 'text-gray-400'"
                                                                       x-text="item.unit || 'Select'"></span>
@@ -145,7 +149,7 @@
                                                                 </svg>
                                                             </button>
 
-                                                            {{-- position: fixed, bukan absolute, biar gak kepotong overflow-x-auto punya wrapper tabel --}}
+                                                            {{-- position: fixed + reposisi mengikuti scroll, bukan langsung ketutup, biar gak kepotong overflow-x-auto punya wrapper tabel --}}
                                                             <div x-show="open" x-cloak
                                                                  x-transition:enter="transition ease-out duration-100"
                                                                  x-transition:enter-start="opacity-0 scale-95"
