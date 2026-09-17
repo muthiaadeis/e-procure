@@ -228,6 +228,7 @@ class MaterialRequestController extends Controller
         ]);
 
         if ($user->isApproverA() || ($user->isAdmin() && ! $materialRequest->is_approved_by_a)) {
+            abort_unless($materialRequest->created_signature, 403, "This MR hasn't been signed by the preparer yet.");
             abort_if($materialRequest->is_approved_by_a, 403, 'This MR has already been approved at Approval 1.');
             abort_if($materialRequest->is_rejected_by_a, 403, 'This MR has already been rejected at Approval 1.');
 
@@ -268,6 +269,7 @@ class MaterialRequestController extends Controller
         ]);
 
         if ($user->isApproverA() || ($user->isAdmin() && ! $materialRequest->is_approved_by_a)) {
+            abort_unless($materialRequest->created_signature, 403, "This MR hasn't been signed by the preparer yet.");
             abort_if($materialRequest->is_approved_by_a, 403, "This MR has already been approved at Approval 1 and can't be rejected.");
             abort_if($materialRequest->is_rejected_by_a, 403, 'This MR has already been rejected at Approval 1.');
 

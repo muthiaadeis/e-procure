@@ -60,7 +60,7 @@
                                     'approved_a_signature' => $req->approved_a_signature,
                                     'approved_c_signature' => $req->approved_c_signature,
                                     'paid_signature' => $req->paid_signature,
-                                    'can_sign_a' => (auth()->user()->isApproverA() || auth()->user()->isAdmin()) && ! $req->is_approved_by_a && ! $req->is_rejected_by_a,
+                                    'can_sign_a' => (auth()->user()->isApproverA() || auth()->user()->isAdmin()) && $req->created_signature && ! $req->is_approved_by_a && ! $req->is_rejected_by_a,
                                     'can_sign_c' => (auth()->user()->isApproverC() || auth()->user()->isAdmin()) && $req->is_approved_by_a && ! $req->is_approved_by_c && ! $req->is_rejected_by_c,
                                     'can_sign_finance' => (auth()->user()->isFinance() || auth()->user()->isAdmin()) && $req->is_approved && ! $req->paid_at && ! $req->is_rejected_by_finance,
                                     'can_sign_prepared' => (auth()->user()->id === $req->created_by || auth()->user()->isAdmin()) && ! $req->created_signature,

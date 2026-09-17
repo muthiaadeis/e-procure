@@ -144,7 +144,7 @@
                             'reviewed_by' => $autoOpenRlp->reviewer->name ?? null,
                             'reviewed_at' => $autoOpenRlp->reviewed_at ? $autoOpenRlp->reviewed_at->format('d-m-Y H:i') : null,
                             'reviewed_signature' => $autoOpenRlp->reviewed_signature,
-                            'can_sign_review' => auth()->check() && (auth()->user()->isRlpReviewer() || auth()->user()->isAdmin() || auth()->user()->isApprover()) && ! $autoOpenRlp->is_reviewed,
+                            'can_sign_review' => auth()->check() && (auth()->user()->isRlpReviewer() || auth()->user()->isAdmin() || auth()->user()->isApprover()) && $autoOpenRlp->created_signature && ! $autoOpenRlp->is_reviewed,
                             'review_url' => route('rlps.review', $autoOpenRlp),
                             'is_acknowledged' => $autoOpenRlp->is_acknowledged,
                             'acknowledged_by' => $autoOpenRlp->acknowledger->name ?? null,
@@ -221,7 +221,7 @@
                                     $allVendorNames = $rlp->items->flatMap(fn ($i) => $i->vendors->pluck('vendor_name'))->filter()->unique();
 
                                     $canSignPrepared = auth()->check() && (auth()->id() === $rlp->created_by || auth()->user()->isAdmin() || auth()->user()->isApprover());
-                                    $canSignReview = auth()->check() && (auth()->user()->isRlpReviewer() || auth()->user()->isAdmin() || auth()->user()->isApprover()) && ! $rlp->is_reviewed;
+                                    $canSignReview = auth()->check() && (auth()->user()->isRlpReviewer() || auth()->user()->isAdmin() || auth()->user()->isApprover()) && $rlp->created_signature && ! $rlp->is_reviewed;
                                     $canSignAcknowledge = auth()->check() && (auth()->user()->isRlpAcknowledger() || auth()->user()->isAdmin() || auth()->user()->isApprover()) && $rlp->is_reviewed && ! $rlp->is_acknowledged;
                                     $canSignApprove = auth()->check() && (auth()->user()->isRlpApprover() || auth()->user()->isAdmin() || auth()->user()->isApprover()) && $rlp->is_acknowledged && ! $rlp->is_approved;
 

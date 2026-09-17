@@ -124,6 +124,7 @@ class RlpController extends Controller
         $user = auth()->user();
 
         abort_unless($user->isRlpReviewer() || $user->isAdmin() || $user->isApprover(), 403, "You don't have permission to review this RRP.");
+        abort_unless($rlp->created_signature, 403, "This RRP hasn't been signed by the preparer yet.");
         abort_if($rlp->is_reviewed, 403, 'This RRP has already been reviewed.');
 
         $validated = $request->validate([
