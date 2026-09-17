@@ -126,33 +126,13 @@
                                                             class="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
                                                     </td>
                                                     <td class="px-3 py-2.5">
-                                                        <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-                                                            <button type="button" @click="open = !open"
-                                                                    class="w-full flex items-center justify-between gap-1 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-left hover:border-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
-                                                                <span class="truncate" :class="item.unit ? 'text-gray-700' : 'text-gray-400'"
-                                                                      x-text="item.unit || 'Select'"></span>
-                                                                <svg class="w-3.5 h-3.5 text-gray-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                                                </svg>
-                                                            </button>
-                                                            <div x-show="open" x-cloak
-                                                                 x-transition:enter="transition ease-out duration-100"
-                                                                 x-transition:enter-start="opacity-0 scale-95"
-                                                                 x-transition:enter-end="opacity-100 scale-100"
-                                                                 class="absolute z-20 mt-1.5 w-36 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg py-1">
-                                                                <template x-for="opt in ['Pcs','Unit','Set','Box','Roll','Meter','Kg','Liter','Sheet','Rod']" :key="opt">
-                                                                    <button type="button" @click="item.unit = opt; open = false"
-                                                                            class="w-full flex items-center justify-between gap-2 text-left px-3 py-2 text-sm transition"
-                                                                            :class="item.unit === opt ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-700 hover:bg-gray-50'">
-                                                                        <span x-text="opt"></span>
-                                                                        <svg x-show="item.unit === opt" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                                        </svg>
-                                                                    </button>
-                                                                </template>
-                                                            </div>
-                                                            <input type="hidden" :name="'items[' + index + '][unit]'" x-model="item.unit" required>
-                                                        </div>
+                                                        <select :name="'items[' + index + '][unit]'" x-model="item.unit" required
+                                                                class="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 hover:border-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
+                                                            <option value="" disabled>Select</option>
+                                                            <template x-for="opt in ['Pcs','Unit','Set','Box','Roll','Meter','Kg','Liter','Sheet','Rod']" :key="opt">
+                                                                <option :value="opt" x-text="opt"></option>
+                                                            </template>
+                                                        </select>
                                                     </td>
                                                     <td class="px-4 py-2.5">
                                                         <input type="text" :name="'items[' + index + '][remarks]'" required
