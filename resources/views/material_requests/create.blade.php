@@ -14,7 +14,9 @@
     </x-slot>
 
     <div class="py-8" x-data="{
-            items: [{ description: '', quantity: '', unit: '', remarks: '' }],
+            items: {{ Illuminate\Support\Js::from(
+                old('items', [['description' => '', 'quantity' => '', 'unit' => '', 'remarks' => '']])
+            ) }},
             addItem() {
                 this.items.push({ description: '', quantity: '', unit: '', remarks: '' });
                 $nextTick(() => {
