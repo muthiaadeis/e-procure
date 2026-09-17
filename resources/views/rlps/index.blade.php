@@ -400,7 +400,6 @@
                                                     @endif
 
                                                     <a href="{{ route('rlps.edit', $rlp) }}"
-                                                       class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                                                        class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
                                                         <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -414,7 +413,6 @@
                                                     </form>
                                                     <button type="button"
                                                             @click="rowOpen = false; openConfirm('Delete RRP {{ $rlp->no_rlp }}? This action cannot be undone.', 'delete-rlp-{{ $rlp->id }}')"
-                                                            class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition">
                                                             class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
                                                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -422,14 +420,12 @@
                                                         Delete
                                                     </button>
                                                     <a href="{{ route('rlps.print', $rlp) }}" target="_blank"
-                                                        class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                                                         class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
                                                             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-12 0h12v6H6v-6z"/>
                                                             </svg>
                                                             Print
                                                         </a>
-                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
@@ -476,7 +472,6 @@
                  x-transition:leave-end="opacity-0 scale-95 translate-y-2"
                  @keydown.escape.window="detailOpen = false"
                  @click.outside="detailOpen = false"
-                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 my-8">
                  class="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl sm:max-w-4xl p-6 sm:p-7 my-8">
 
                 <div class="flex items-center justify-between mb-1">
@@ -502,7 +497,6 @@
                 </div>
                 <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
                     <p class="text-xs text-gray-400" x-show="detailData.created_by">
-                        Created by <span class="text-gray-600 font-medium" x-text="detailData.created_by"></span>
                         Created by <span class="text-gray-600 font-medium" x-text="detailData.created_by"></span> &middot; <span x-text="detailData.date"></span>
                     </p>
                     <p class="text-xs text-gray-400 ml-auto">
@@ -562,11 +556,6 @@
                         </div>
                     </div>
 
-                    <div class="pt-4 mt-2 border-t border-gray-100 flex items-center justify-between">
-                        <template x-if="detailData.has_po">
-                            <a :href="detailData.po_url" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
                     {{-- Approval Workflow Grid (4 Cards) --}}
                     <div class="pt-4 border-t border-gray-100">
                         <div class="flex items-center justify-between gap-2 mb-3">
@@ -741,18 +730,8 @@
                                 <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.318 2.226c.079.554-.36 1.052-.92 1.052H6.94c-.56 0-.998-.498-.92-1.052L6.34 18m11.318 0h1.093c1.036 0 1.875-.84 1.875-1.875V9.375c0-1.036-.84-1.875-1.875-1.875H4.875C3.839 7.5 3 8.34 3 9.375v6.75c0 1.035.84 1.875 1.875 1.875H6.34m10.94 0H6.34m9.94-11.25V4.875c0-1.036-.84-1.875-1.875-1.875H8.625C7.59 3 6.75 3.84 6.75 4.875v2.625"/>
                                 </svg>
-                                View Linked PO (<span x-text="detailData.po_no"></span>)
                                 Print / PDF
                             </a>
-                        </template>
-                        <template x-if="!detailData.has_po">
-                            <a :href="detailData.po_url" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                </svg>
-                                Generate Purchase Order (PO)
-                            </a>
-                        </template>
                             <template x-if="detailData.has_po">
                                 <a :href="detailData.po_url" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

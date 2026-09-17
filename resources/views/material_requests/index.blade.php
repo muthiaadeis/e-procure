@@ -319,6 +319,7 @@
                         </div>
                     </div>
                 </div>
+                </div>
                 <div id="mr-results">
                     @include('material_requests._results', ['requests' => $requests, 'search' => $search])
                 </div>
@@ -351,7 +352,6 @@
                  x-transition:leave-end="opacity-0 scale-95 translate-y-2"
                  @keydown.escape.window="detailOpen = false"
                  @click.outside="detailOpen = false"
-                 class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
                  class="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl sm:max-w-4xl p-6 sm:p-7">
 
                 <div class="flex items-center justify-between mb-1">
@@ -391,7 +391,6 @@
 
                 <div>
                     <p class="text-gray-400 text-xs mb-1.5">Material Items</p>
-                    <div class="border border-gray-100 rounded-lg divide-y divide-gray-100 max-h-56 overflow-y-auto">
                     <div class="border border-gray-100 rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
                         <template x-for="(item, index) in detailData.items" :key="index">
                             <div class="p-3">
@@ -411,10 +410,10 @@
                     <p class="text-xs text-gray-400 mt-0.5" x-text="detailData.created_at"></p>
                 </div>
 
-                <div class="pt-3 border-t border-gray-100 grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-4 mb-1">
                     <div>
                         <p class="text-gray-400 text-xs mb-0.5">Approval 1</p>
-                        <p class="text-gray-800 font-medium" x-text="detailData.approver_a"></p>
+                        <p class="text-gray-800 font-medium" x-text="detailData.approver_a || 'Approver 1'"></p>
                         <p class="text-xs text-green-600 mt-0.5"
                         x-show="detailData.is_approved_a"
                         x-text="'✓ Approved ' + detailData.approved_a_at"></p>
@@ -422,15 +421,10 @@
                         x-show="detailData.is_rejected_a"
                         x-text="'✗ Rejected: ' + detailData.rejection_a_reason"></p>
                         <p class="text-xs text-gray-400 mt-0.5" x-show="!detailData.is_approved_a && !detailData.is_rejected_a">Awaiting approval</p>
-                {{-- Approval Workflow Grid (4 Cards) --}}
-                <div class="pt-4 border-t border-gray-100">
-                    <div class="flex items-center justify-between gap-2 mb-3">
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700">Approval Workflow</h4>
-                        <span class="text-[10px] text-gray-400">Sequential digital signatures</span>
                     </div>
                     <div>
                         <p class="text-gray-400 text-xs mb-0.5">Approval 2</p>
-                        <p class="text-gray-800 font-medium" x-text="detailData.approver_c"></p>
+                        <p class="text-gray-800 font-medium" x-text="detailData.approver_c || 'Approver 2'"></p>
                         <p class="text-xs text-green-600 mt-0.5"
                         x-show="detailData.is_approved_c"
                         x-text="'✓ Approved ' + detailData.approved_c_at"></p>
@@ -448,6 +442,25 @@
                         <div>
                             <p class="text-gray-800 font-medium text-xs" x-text="'Rejected by ' + detailData.finance_rejector"></p>
                             <p class="text-xs text-red-600 mt-0.5" x-text="'✗ Reason: ' + detailData.finance_rejection_reason"></p>
+                        </div>
+                    </template>
+                    <template x-if="!detailData.is_rejected_finance && detailData.is_paid">
+                        <div>
+                            <p class="text-gray-800 font-medium" x-text="detailData.paid_by"></p>
+                            <p class="text-xs text-green-600 mt-0.5" x-text="'✓ Paid ' + detailData.paid_at"></p>
+                        </div>
+                    </template>
+                    <template x-if="!detailData.is_rejected_finance && !detailData.is_paid">
+                        <p class="text-xs text-gray-400 mt-0.5">Awaiting payment</p>
+                    </template>
+                </div>
+
+                {{-- Approval Workflow Grid (4 Cards) --}}
+                <div class="pt-4 border-t border-gray-100">
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700">Approval Workflow</h4>
+                        <span class="text-[10px] text-gray-400">Sequential digital signatures</span>
+                    </div>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                         {{-- Card 1: Requested By --}}
                         <div class="relative flex flex-col justify-between rounded-xl border p-2.5 transition"
@@ -485,11 +498,6 @@
                                 <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-text="detailData.date"></p>
                             </div>
                         </div>
-                    </template>
-                    <template x-if="!detailData.is_rejected_finance && detailData.is_paid">
-                        <div>
-                            <p class="text-gray-800 font-medium" x-text="detailData.paid_by"></p>
-                            <p class="text-xs text-green-600 mt-0.5" x-text="'✓ Paid ' + detailData.paid_at"></p>
 
                         {{-- Card 2: Approval 1 --}}
                         <div class="relative flex flex-col justify-between rounded-xl border p-2.5 transition"
@@ -534,10 +542,6 @@
                                 <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-show="!detailData.approved_a_at">Awaiting</p>
                             </div>
                         </div>
-                    </template>
-                    <template x-if="!detailData.is_rejected_finance && !detailData.is_paid">
-                        <p class="text-xs text-gray-400 mt-0.5">Awaiting payment</p>
-                    </template>
 
                         {{-- Card 3: Approval 2 --}}
                         <div class="relative flex flex-col justify-between rounded-xl border p-2.5 transition"
@@ -636,7 +640,6 @@
                 </div>
             </div>
 
-                <div class="mt-6 pt-4 border-t border-gray-100">
                 <div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
                     <a :href="detailData.print_url" target="_blank"
                        class="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg text-xs font-semibold shadow-xs transition">
@@ -647,7 +650,6 @@
                     </a>
                     <button type="button"
                             @click="detailOpen = false"
-                            class="w-full px-4 py-2 rounded-lg text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 active:bg-gray-800 transition">
                             class="px-5 py-2 rounded-lg text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition">
                         Close
                     </button>
