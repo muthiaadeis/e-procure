@@ -131,7 +131,11 @@
                                                                 open: false, menuTop: 0, menuLeft: 0, menuWidth: 0,
                                                                 updatePosition() {
                                                                     const rect = $refs.unitTrigger.getBoundingClientRect();
-                                                                    this.menuTop = rect.bottom + 6;
+                                                                    const menuHeight = 230; // perkiraan max-h-56 + padding
+                                                                    const spaceBelow = window.innerHeight - rect.bottom;
+                                                                    this.menuTop = (spaceBelow < menuHeight && rect.top > menuHeight)
+                                                                        ? rect.top - menuHeight - 6
+                                                                        : rect.bottom + 6;
                                                                     this.menuLeft = rect.left;
                                                                     this.menuWidth = rect.width;
                                                                 }
