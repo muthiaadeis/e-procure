@@ -53,25 +53,35 @@
                 this.signModalOpen = true;
 
                 this.$nextTick(() => {
-                    const canvas = document.getElementById('rlp-signature-canvas');
-                    if (!canvas) return;
+                    const setupPad = () => {
+                        const canvas = document.getElementById('rlp-signature-canvas');
+                        if (!canvas) return;
+                        if (!canvas.offsetWidth || !canvas.offsetHeight) {
+                            // modal belum selesai digambar browser, coba lagi di frame berikutnya
+                            requestAnimationFrame(setupPad);
+                            return;
+                        }
 
-                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                    canvas.width = canvas.offsetWidth * ratio;
-                    canvas.height = canvas.offsetHeight * ratio;
-                    const ctx = canvas.getContext('2d');
-                    ctx.scale(ratio, ratio);
+                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                        canvas.width = canvas.offsetWidth * ratio;
+                        canvas.height = canvas.offsetHeight * ratio;
+                        const ctx = canvas.getContext('2d');
+                        ctx.scale(ratio, ratio);
 
-                    if (this.signPad) {
-                        this.signPad.clear();
-                    } else if (window.SignaturePad) {
-                        this.signPad = new SignaturePad(canvas, {
-                            backgroundColor: 'rgb(255, 255, 255)',
-                            penColor: 'rgb(17, 24, 39)',
-                            minWidth: 1.2,
-                            maxWidth: 3.2,
-                        });
-                    }
+                        if (this.signPad) {
+                            this.signPad.off();
+                            this.signPad = null;
+                        }
+                        if (window.SignaturePad) {
+                            this.signPad = new SignaturePad(canvas, {
+                                backgroundColor: 'rgb(255, 255, 255)',
+                                penColor: 'rgb(17, 24, 39)',
+                                minWidth: 1.2,
+                                maxWidth: 3.2,
+                            });
+                        }
+                    };
+                    setupPad();
                 });
             },
             clearSignPad() {

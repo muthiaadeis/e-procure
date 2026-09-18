@@ -50,18 +50,32 @@
                 form.action = action;
                 document.getElementById('mr-sign-method-input').value = method;
                 this.$nextTick(() => {
-                    const canvas = document.getElementById('mr-signature-canvas');
-                    if (!canvas) return;
-                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                    canvas.width = canvas.offsetWidth * ratio;
-                    canvas.height = canvas.offsetHeight * ratio;
-                    canvas.getContext('2d').scale(ratio, ratio);
-                    this.signPad = new SignaturePad(canvas, {
-                        backgroundColor: 'rgb(255,255,255)',
-                        minWidth: 1.8,
-                        maxWidth: 3.8,
-                        penColor: 'rgb(15, 23, 42)'
-                    });
+                    const setupPad = () => {
+                        const canvas = document.getElementById('mr-signature-canvas');
+                        if (!canvas) return;
+                        if (!canvas.offsetWidth || !canvas.offsetHeight) {
+                            // modal belum selesai digambar browser, coba lagi di frame berikutnya
+                            requestAnimationFrame(setupPad);
+                            return;
+                        }
+                        if (this.signPad) {
+                            this.signPad.off();
+                            this.signPad = null;
+                        }
+                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                        canvas.width = canvas.offsetWidth * ratio;
+                        canvas.height = canvas.offsetHeight * ratio;
+                        canvas.getContext('2d').scale(ratio, ratio);
+                        if (window.SignaturePad) {
+                            this.signPad = new SignaturePad(canvas, {
+                                backgroundColor: 'rgb(255,255,255)',
+                                minWidth: 1.8,
+                                maxWidth: 3.8,
+                                penColor: 'rgb(15, 23, 42)'
+                            });
+                        }
+                    };
+                    setupPad();
                 });
             },
             clearSignPad() {
