@@ -225,7 +225,7 @@
                     @endif
                 </div>
                 <p class="name">{{ $materialRequest->approverA->name ?? '-' }}</p>
-                <p class="date">{{ $materialRequest->approved_a_at?->format('d-m-Y') ?? '-' }}</p>
+                <p class="date">{{ $materialRequest->approved_a_at?->format('d-m-Y H:i') ?? '-' }}</p>
             </div>
             <div class="box">
                 <p class="role">Approval 2</p>
@@ -235,7 +235,7 @@
                     @endif
                 </div>
                 <p class="name">{{ $materialRequest->approverC->name ?? '-' }}</p>
-                <p class="date">{{ $materialRequest->approved_c_at?->format('d-m-Y') ?? '-' }}</p>
+                <p class="date">{{ $materialRequest->approved_c_at?->format('d-m-Y H:i') ?? '-' }}</p>
             </div>
             {{-- BARU: kolom Finance --}}
             {{-- Kolom Finance --}}
@@ -248,10 +248,10 @@
                 </div>
                 @if($materialRequest->is_rejected_by_finance)
                     <p class="name">{{ $materialRequest->financeRejector->name ?? '-' }}</p>
-                    <p class="date">Rejected · {{ $materialRequest->finance_rejected_at?->format('d-m-Y') ?? '-' }}</p>
+                    <p class="date">Rejected · {{ $materialRequest->finance_rejected_at?->format('d-m-Y H:i') ?? '-' }}</p>
                 @elseif($materialRequest->paid_at)
                     <p class="name">{{ $materialRequest->paidByUser->name ?? '-' }}</p>
-                    <p class="date">{{ $materialRequest->paid_at->format('d-m-Y') }}</p>
+                    <p class="date">{{ $materialRequest->paid_at->format('d-m-Y H:i') }}</p>
                 @else
                     <p class="name">&nbsp;</p>
                     <p class="date">Pending</p>

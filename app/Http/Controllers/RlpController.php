@@ -38,11 +38,18 @@ class RlpController extends Controller
     {
         $validated = $this->validateRlp($request);
 
-        $rlp = DB::transaction(function () use ($validated) {
+        // Ttd Prepared By wajib diisi bareng form, biar RRP gak bisa kesimpan
+        // dulu baru nanti nyusul ttd (gampang kelupaan kalau dipisah).
+        $request->validate([
+            'signature' => 'required|string',
+        ]);
+
+        $rlp = DB::transaction(function () use ($validated, $request) {
             $rlp = Rlp::create([
                 'no_rlp' => $validated['no_rlp'],
                 'date' => now(), // tanggal otomatis, bukan input manual
                 'created_by' => auth()->id(),
+                'created_signature' => $request->input('signature'),
             ]);
 
             $this->syncItems($rlp, $validated['items']);
@@ -51,7 +58,7 @@ class RlpController extends Controller
             return $rlp;
         });
 
-        return redirect()->route('rlps.index', ['auto_open' => $rlp->id, 'auto_sign' => 1])->with('success', 'RRP added successfully.');
+        return redirect()->route('rlps.index', ['auto_open' => $rlp->id])->with('success', 'RRP added successfully.');
     }
 
     public function edit(Rlp $rlp)

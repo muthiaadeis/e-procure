@@ -340,6 +340,37 @@
                 return this.items.reduce((sum, i) => sum + this.itemWurTotal(i), 0);
             },
 
+            // ---------- Prepared By signature (create only) ----------
+            signPad: null,
+            initSignPad() {
+                this.$nextTick(() => {
+                    const setup = () => {
+                        const canvas = document.getElementById('rlp-prepared-signature-canvas');
+                        if (!canvas) return; // gak ada canvas di halaman edit, itu normal
+                        if (!canvas.offsetWidth || !canvas.offsetHeight) {
+                            requestAnimationFrame(setup);
+                            return;
+                        }
+                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                        canvas.width = canvas.offsetWidth * ratio;
+                        canvas.height = canvas.offsetHeight * ratio;
+                        canvas.getContext('2d').scale(ratio, ratio);
+                        if (window.SignaturePad) {
+                            this.signPad = new SignaturePad(canvas, {
+                                backgroundColor: 'rgb(255,255,255)',
+                                minWidth: 1.8,
+                                maxWidth: 3.8,
+                                penColor: 'rgb(15, 23, 42)'
+                            });
+                        }
+                    };
+                    setup();
+                });
+            },
+            clearSignPad() {
+                if (this.signPad) this.signPad.clear();
+            },
+
             // ---------- Submit ----------
             handleSubmit(event) {
                 if (!this.itemsReady) {
@@ -360,6 +391,18 @@
                 if (this.selectedVendorUid === null || this.selectedVendorUid === undefined) {
                     alert('Please pick the winning vendor (click "Pick as Winner" on one vendor form).');
                     event.preventDefault();
+                    return;
+                }
+                // Ttd Prepared By cuma wajib pas bikin RRP baru (di halaman edit gak
+                // ada canvas-nya sama sekali, jadi signPad bakal null).
+                const signatureInput = document.getElementById('rlp-create-signature-input');
+                if (signatureInput) {
+                    if (!this.signPad || this.signPad.isEmpty()) {
+                        alert('Please sign as Prepared By first before saving.');
+                        event.preventDefault();
+                        return;
+                    }
+                    signatureInput.value = this.signPad.toDataURL('image/png');
                 }
             },
         };

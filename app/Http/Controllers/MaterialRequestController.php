@@ -111,6 +111,9 @@ class MaterialRequestController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit' => 'required|string|max:50',
             'items.*.remarks' => 'required|string',
+            // Ttd Prepared By wajib diisi bareng form, biar MR gak bisa kesimpan
+            // dulu baru nanti nyusul ttd (gampang kelupaan kalau dipisah).
+            'signature' => 'required|string',
         ]);
 
         $materialRequest = MaterialRequest::create([
@@ -118,13 +121,14 @@ class MaterialRequestController extends Controller
             'date' => now(),
             'charge_to' => $validated['charge_to'],
             'created_by' => auth()->id(),
+            'created_signature' => $validated['signature'],
         ]);
 
         foreach ($validated['items'] as $item) {
             $materialRequest->items()->create($item);
         }
 
-        return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id, 'auto_sign' => 1])
+        return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
             ->with('success', 'Material Request added successfully.');
     }
 

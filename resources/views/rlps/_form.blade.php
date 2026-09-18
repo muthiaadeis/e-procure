@@ -512,6 +512,34 @@
     </div>
 </div>
 
+@unless(isset($rlp))
+    {{-- Prepared By signature — required right here, before the RRP can be saved,
+         so it can't end up saved without the preparer's signature. --}}
+    <div class="pt-6 mt-8 border-t border-gray-100">
+        <h3 class="text-sm font-semibold text-gray-800 mb-1">
+            Prepared By — Digital Signature <span class="text-red-500">*</span>
+        </h3>
+        <p class="text-xs text-gray-400 mb-4">Sign below to confirm you're preparing this RRP. Required before saving.</p>
+        <div class="relative bg-gray-50/50 rounded-xl border border-gray-200 p-2">
+            <canvas id="rlp-prepared-signature-canvas" class="w-full h-56 sm:h-64 bg-white rounded-lg touch-none shadow-inner cursor-crosshair"></canvas>
+            <div class="absolute bottom-6 left-6 right-6 border-b border-gray-300 pointer-events-none flex justify-between items-end pb-1">
+                <span class="text-[11px] text-gray-400 font-normal">Sign above this line</span>
+                <span class="text-[11px] text-gray-400 font-normal">✕</span>
+            </div>
+        </div>
+        <div class="mt-2.5">
+            <button type="button" @click="clearSignPad()"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-red-600 bg-gray-100 hover:bg-red-50 px-3.5 py-2 rounded-lg transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Clear Signature
+            </button>
+        </div>
+        <input type="hidden" name="signature" id="rlp-create-signature-input">
+    </div>
+@endunless
+
 <div class="flex justify-end gap-3 pt-6 mt-8 border-t border-gray-100">
     <a href="{{ route('rlps.index') }}"
        class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50 transition">

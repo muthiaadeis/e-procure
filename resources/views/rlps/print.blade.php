@@ -301,7 +301,7 @@
                     @endif
                 </div>
                 <p class="name">{{ $rlp->reviewer->name ?? '-' }}</p>
-                <p class="date">{{ $rlp->reviewed_at?->format('d-m-Y') ?? '-' }}</p>
+                <p class="date">{{ $rlp->reviewed_at?->format('d-m-Y H:i') ?? '-' }}</p>
             </div>
             <div class="box">
                 <p class="role">Acknowledge By</p>
@@ -311,7 +311,7 @@
                     @endif
                 </div>
                 <p class="name">{{ $rlp->acknowledger->name ?? '-' }}</p>
-                <p class="date">{{ $rlp->acknowledged_at?->format('d-m-Y') ?? '-' }}</p>
+                <p class="date">{{ $rlp->acknowledged_at?->format('d-m-Y H:i') ?? '-' }}</p>
             </div>
             <div class="box">
                 <p class="role">Approved By</p>
@@ -321,7 +321,7 @@
                     @endif
                 </div>
                 <p class="name">{{ $rlp->approver->name ?? '-' }}</p>
-                <p class="date">{{ $rlp->approved_at?->format('d-m-Y') ?? '-' }}</p>
+                <p class="date">{{ $rlp->approved_at?->format('d-m-Y H:i') ?? '-' }}</p>
             </div>
         </div>
 

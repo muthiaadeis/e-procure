@@ -28,8 +28,48 @@
                 if (this.items.length > 1) {
                     this.items.splice(index, 1);
                 }
+            },
+            signPad: null,
+            initSignPad() {
+                this.$nextTick(() => {
+                    const setup = () => {
+                        const canvas = document.getElementById('mr-prepared-signature-canvas');
+                        if (!canvas) return;
+                        if (!canvas.offsetWidth || !canvas.offsetHeight) {
+                            requestAnimationFrame(setup);
+                            return;
+                        }
+                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                        canvas.width = canvas.offsetWidth * ratio;
+                        canvas.height = canvas.offsetHeight * ratio;
+                        canvas.getContext('2d').scale(ratio, ratio);
+                        if (window.SignaturePad) {
+                            this.signPad = new SignaturePad(canvas, {
+                                backgroundColor: 'rgb(255,255,255)',
+                                minWidth: 1.8,
+                                maxWidth: 3.8,
+                                penColor: 'rgb(15, 23, 42)'
+                            });
+                        }
+                    };
+                    setup();
+                });
+            },
+            clearSignPad() {
+                if (this.signPad) this.signPad.clear();
+            },
+            submitForm(event) {
+                // Wajib ttd (Prepared By) dulu sebelum MR bisa disimpan, biar gak
+                // ada MR yang kesimpan tapi belum ditandatangani (gampang kelupaan
+                // kalau ttd-nya dipisah jadi langkah setelah simpan).
+                if (!this.signPad || this.signPad.isEmpty()) {
+                    event.preventDefault();
+                    alert('Please sign as Prepared By first before saving.');
+                    return;
+                }
+                document.getElementById('mr-create-signature-input').value = this.signPad.toDataURL('image/png');
             }
-        }">
+        }" x-init="initSignPad()">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-sm rounded-2xl overflow-hidden">
 
@@ -43,7 +83,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('material-requests.store') }}" method="POST">
+                <form action="{{ route('material-requests.store') }}" method="POST" @submit="submitForm($event)">
                     @csrf
 
                     <div class="p-6 sm:p-8 space-y-8">
@@ -207,6 +247,32 @@
                                 Fill in the material details above. Click "Add Item" to add a new row.
                             </p>
                         </div>
+
+                        {{-- Prepared By signature — required right here, before the MR can be saved,
+                             so it can't end up saved without the preparer's signature. --}}
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800 mb-1">
+                                Prepared By — Digital Signature <span class="text-red-500">*</span>
+                            </h3>
+                            <p class="text-xs text-gray-400 mb-4">Sign below to confirm you're preparing this Material Request. Required before saving.</p>
+                            <div class="relative bg-gray-50/50 rounded-xl border border-gray-200 p-2">
+                                <canvas id="mr-prepared-signature-canvas" class="w-full h-56 sm:h-64 bg-white rounded-lg touch-none shadow-inner cursor-crosshair"></canvas>
+                                <div class="absolute bottom-6 left-6 right-6 border-b border-gray-300 pointer-events-none flex justify-between items-end pb-1">
+                                    <span class="text-[11px] text-gray-400 font-normal">Sign above this line</span>
+                                    <span class="text-[11px] text-gray-400 font-normal">✕</span>
+                                </div>
+                            </div>
+                            <div class="mt-2.5">
+                                <button type="button" @click="clearSignPad()"
+                                        class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-red-600 bg-gray-100 hover:bg-red-50 px-3.5 py-2 rounded-lg transition">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    Clear Signature
+                                </button>
+                            </div>
+                            <input type="hidden" name="signature" id="mr-create-signature-input">
+                        </div>
                     </div>
 
                     <div class="flex items-center justify-end gap-5 px-6 sm:px-8 py-5 bg-gray-50 border-t border-gray-100">
@@ -224,4 +290,6 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 </x-app-layout>

@@ -69,7 +69,7 @@ class MaterialRequest extends Model
         'rejected_a_at' => 'datetime',
         'approved_c_at' => 'datetime',
         'rejected_c_at' => 'datetime',
-        'paid_at' => 'date',
+        'paid_at' => 'datetime',
         'finance_rejected_at' => 'datetime',
     ];
 

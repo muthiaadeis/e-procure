@@ -22,7 +22,7 @@
                     vendors: {{ json_encode(old('vendors', [])) }},
                     items: {{ json_encode(old('items', [])) }},
                     costs: {{ json_encode(old('costs', [])) }}
-                 })">
+                 })" x-init="initSignPad()">
 
                 @if($errors->any())
                     <div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg text-sm">
@@ -42,5 +42,6 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     @include('rlps._script')
 </x-app-layout>

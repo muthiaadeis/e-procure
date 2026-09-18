@@ -37,12 +37,12 @@
                                     ])->values(),
                                     'approver_a' => $req->approverA->name ?? '-',
                                     'is_approved_a' => $req->is_approved_by_a,
-                                    'approved_a_at' => $req->approved_a_at ? $req->approved_a_at->format('d-m-Y') : null,
+                                    'approved_a_at' => $req->approved_a_at ? $req->approved_a_at->format('d-m-Y H:i') : null,
                                     'is_rejected_a' => $req->is_rejected_by_a,
                                     'rejection_a_reason' => $req->rejection_a_reason,
                                     'approver_c' => $req->approverC->name ?? '-',
                                     'is_approved_c' => $req->is_approved_by_c,
-                                    'approved_c_at' => $req->approved_c_at ? $req->approved_c_at->format('d-m-Y') : null,
+                                    'approved_c_at' => $req->approved_c_at ? $req->approved_c_at->format('d-m-Y H:i') : null,
                                     'is_rejected_c' => $req->is_rejected_by_c,
                                     'rejection_c_reason' => $req->rejection_c_reason,
                                     'is_rejected_finance' => $req->is_rejected_by_finance,
@@ -53,7 +53,7 @@
                                     'overdue_reason' => $req->overdue_reason,
                                     'is_paid' => ! is_null($req->paid_at),
                                     'paid_by' => $req->paidByUser->name ?? '-',
-                                    'paid_at' => $req->paid_at ? $req->paid_at->format('d-m-Y') : null,
+                                    'paid_at' => $req->paid_at ? $req->paid_at->format('d-m-Y H:i') : null,
                                     'created_by' => $req->creator->name ?? '-',
                                     'created_at' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
                                     'created_signature' => $req->created_signature,
@@ -82,7 +82,7 @@
                                         <div class="flex items-center gap-1.5 text-xs">
                                             <span class="text-gray-400 font-medium w-14 shrink-0">Appr. 1</span>
                                             @if($req->is_rejected_by_a)
-                                                <span class="text-red-600 font-medium whitespace-nowrap">✗ Rejected · {{ $req->rejected_a_at->format('d-m-Y') }}</span>
+                                                <span class="text-red-600 font-medium whitespace-nowrap">✗ Rejected · {{ $req->rejected_a_at->format('d-m-Y H:i') }}</span>
                                             @elseif($req->is_approved_by_a)
                                                 <span class="text-green-600 font-medium truncate">✓ {{ $req->approverA->name ?? '-' }}</span>
                                             @else
@@ -92,7 +92,7 @@
                                         <div class="flex items-center gap-1.5 text-xs">
                                             <span class="text-gray-400 font-medium w-14 shrink-0">Appr. 2</span>
                                             @if($req->is_rejected_by_c)
-                                                <span class="text-red-600 font-medium whitespace-nowrap">✗ Rejected · {{ $req->rejected_c_at->format('d-m-Y') }}</span>
+                                                <span class="text-red-600 font-medium whitespace-nowrap">✗ Rejected · {{ $req->rejected_c_at->format('d-m-Y H:i') }}</span>
                                             @elseif($req->is_approved_by_c)
                                                 <span class="text-green-600 font-medium truncate">✓ {{ $req->approverC->name ?? '-' }}</span>
                                             @else
