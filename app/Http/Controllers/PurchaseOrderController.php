@@ -170,8 +170,9 @@ class PurchaseOrderController extends Controller
         $approval = $purchaseOrder->approvals()->findOrFail($approvalId);
 
         $user = auth()->user();
+        $canSignPrepared = $approval->stage === 'prepared' && $user && $user->id === $purchaseOrder->created_by;
         abort_unless(
-            $user && $user->canSignApproval($approval->role_label),
+            $user && ($user->canSignApproval($approval->role_label) || $canSignPrepared),
             403,
             'Only authorized approvers can digitally sign this Purchase Order.'
         );

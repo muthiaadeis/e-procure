@@ -202,7 +202,7 @@
                     @foreach($purchaseOrder->approvals as $approval)
                         @php
                             $locked = $purchaseOrder->approvals->where('sort_order', '<', $approval->sort_order)->contains(fn($a) => is_null($a->signed_at));
-                            $canSign = auth()->user() && auth()->user()->canSignApproval($approval->role_label);
+                            $canSign = auth()->user() && (auth()->user()->canSignApproval($approval->role_label) || ($approval->stage === 'prepared' && auth()->id() === $purchaseOrder->created_by));
                             $isSigned = $approval->isSigned();
                         @endphp
                         <div class="relative flex flex-col justify-between rounded-xl border transition p-3.5 {{ $isSigned ? 'bg-emerald-50/15 border-emerald-200 ring-1 ring-emerald-200/40' : ($locked ? 'bg-gray-50/40 border-gray-200' : ($canSign ? 'bg-white border-indigo-300 ring-1 ring-indigo-200 shadow-xs' : 'bg-gray-50/20 border-gray-200')) }}">
