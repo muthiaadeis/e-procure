@@ -823,7 +823,7 @@
                     <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
                     </svg>
-                    <span>Data sudah tersimpan. Mohon tanda tangani dulu sebagai Requested By sebelum melanjutkan.</span>
+                    <span>Your data has been saved. Please sign as Requested By before continuing.</span>
                 </div>
 
                 {{-- Spacious Canvas --}}
