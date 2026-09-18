@@ -475,7 +475,7 @@
                  x-transition:leave="ease-in duration-150"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 @click="detailOpen = false"
+                 @click="if (!signModalOpen) detailOpen = false"
                  class="fixed inset-0 bg-gray-900/50"></div>
 
             <div class="relative min-h-full flex items-center justify-center">
@@ -486,8 +486,8 @@
                  x-transition:leave="ease-in duration-150"
                  x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                  x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-                 @keydown.escape.window="detailOpen = false"
-                 @click.outside="detailOpen = false"
+                 @keydown.escape.window="if (!signModalOpen) detailOpen = false"
+                 @click.outside="if (!signModalOpen) detailOpen = false"
                  class="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl sm:max-w-4xl p-6 sm:p-7 my-8">
 
                 <div class="flex items-center justify-between mb-1">
