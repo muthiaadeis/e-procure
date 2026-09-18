@@ -306,17 +306,31 @@
                     document.getElementById('sign-form').action = action;
 
                     this.$nextTick(() => {
-                        const canvas = document.getElementById('signature-canvas');
-                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                        canvas.width = canvas.offsetWidth * ratio;
-                        canvas.height = canvas.offsetHeight * ratio;
-                        canvas.getContext('2d').scale(ratio, ratio);
-                        this.pad = new SignaturePad(canvas, {
-                            backgroundColor: 'rgb(255,255,255)',
-                            minWidth: 1.8,
-                            maxWidth: 3.8,
-                            penColor: 'rgb(15, 23, 42)'
-                        });
+                        const setupPad = () => {
+                            const canvas = document.getElementById('signature-canvas');
+                            if (!canvas) return;
+                            if (!canvas.offsetWidth || !canvas.offsetHeight) {
+                                requestAnimationFrame(setupPad);
+                                return;
+                            }
+                            if (this.pad) {
+                                this.pad.off();
+                                this.pad = null;
+                            }
+                            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                            canvas.width = canvas.offsetWidth * ratio;
+                            canvas.height = canvas.offsetHeight * ratio;
+                            canvas.getContext('2d').scale(ratio, ratio);
+                            if (window.SignaturePad) {
+                                this.pad = new SignaturePad(canvas, {
+                                    backgroundColor: 'rgb(255,255,255)',
+                                    minWidth: 1.8,
+                                    maxWidth: 3.8,
+                                    penColor: 'rgb(15, 23, 42)'
+                                });
+                            }
+                        };
+                        setupPad();
                     });
                 },
 
