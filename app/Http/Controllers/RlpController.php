@@ -38,7 +38,7 @@ class RlpController extends Controller
     {
         $validated = $this->validateRlp($request);
 
-        DB::transaction(function () use ($validated) {
+        $rlp = DB::transaction(function () use ($validated) {
             $rlp = Rlp::create([
                 'no_rlp' => $validated['no_rlp'],
                 'date' => now(), // tanggal otomatis, bukan input manual
@@ -47,9 +47,11 @@ class RlpController extends Controller
 
             $this->syncItems($rlp, $validated['items']);
             $this->syncCosts($rlp, $validated['costs'] ?? []);
+
+            return $rlp;
         });
 
-        return redirect()->route('rlps.index')->with('success', 'RRP added successfully.');
+        return redirect()->route('rlps.index', ['auto_open' => $rlp->id, 'auto_sign' => 1])->with('success', 'RRP added successfully.');
     }
 
     public function edit(Rlp $rlp)

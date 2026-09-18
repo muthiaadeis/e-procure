@@ -43,8 +43,10 @@
             signModalOpen: false,
             signLabel: '',
             signPad: null,
-            openSign(id, label, actionUrl, method = 'PATCH') {
+            signRequired: false,
+            openSign(id, label, actionUrl, method = 'PATCH', required = false) {
                 this.signLabel = label;
+                this.signRequired = required;
                 const form = document.getElementById('rlp-sign-form');
                 form.action = actionUrl;
                 document.getElementById('rlp-sign-method-input').value = method;
@@ -78,6 +80,7 @@
                 }
             },
             closeSignModal() {
+                if (this.signRequired) return; // wajib ttd dulu, gak boleh ditutup
                 this.signModalOpen = false;
                 this.clearSignPad();
             },
@@ -163,6 +166,9 @@
                     @endphp
                     this.$nextTick(() => {
                         this.openDetail({{ \Illuminate\Support\Js::from($autoPayload) }});
+                        @if(request('auto_sign') && $autoOpenRlp->created_signature === null)
+                            this.openSign({{ \Illuminate\Support\Js::from($autoPayload['id']) }}, 'Prepared By (' + {{ \Illuminate\Support\Js::from($autoPayload['no_rlp']) }} + ')', {{ \Illuminate\Support\Js::from($autoPayload['sign_prepared_url']) }}, 'POST', true);
+                        @endif
                     });
                 @endif
             }
@@ -790,11 +796,18 @@
                         <h3 class="text-lg font-bold text-gray-900">Digital Signature Pad</h3>
                         <p class="text-xs text-gray-500 mt-0.5">Signing as: <strong class="text-indigo-600" x-text="signLabel"></strong></p>
                     </div>
-                    <button type="button" @click="closeSignModal()" class="text-gray-400 hover:text-gray-600 transition">
+                    <button type="button" x-show="!signRequired" @click="closeSignModal()" class="text-gray-400 hover:text-gray-600 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
+                </div>
+
+                <div x-show="signRequired" x-cloak class="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg px-3 py-2.5 mb-4">
+                    <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                    </svg>
+                    <span>Data sudah tersimpan. Mohon tanda tangani dulu sebagai Prepared By sebelum melanjutkan.</span>
                 </div>
 
                 {{-- Spacious Canvas --}}
@@ -814,7 +827,7 @@
                         Clear Signature
                     </button>
                     <div class="flex gap-2.5">
-                        <button type="button" @click="closeSignModal()" class="text-xs font-semibold text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg transition">
+                        <button type="button" x-show="!signRequired" @click="closeSignModal()" class="text-xs font-semibold text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg transition">
                             Cancel
                         </button>
                         <button type="button" @click="submitSignature()"

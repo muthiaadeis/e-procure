@@ -41,9 +41,11 @@
             signModalOpen: false,
             signLabel: '',
             signPad: null,
-            openSign(id, label, action, method = 'PATCH') {
+            signRequired: false,
+            openSign(id, label, action, method = 'PATCH', required = false) {
                 this.signLabel = label;
                 this.signModalOpen = true;
+                this.signRequired = required;
                 const form = document.getElementById('mr-sign-form');
                 form.action = action;
                 document.getElementById('mr-sign-method-input').value = method;
@@ -66,6 +68,7 @@
                 if (this.signPad) this.signPad.clear();
             },
             closeSignModal() {
+                if (this.signRequired) return; // wajib ttd dulu, gak boleh ditutup
                 this.signModalOpen = false;
                 this.signPad = null;
             },
@@ -121,6 +124,7 @@
                 @if(isset($autoOpenReq) && $autoOpenReq)
                     @php
                         $autoPayload = [
+                            'id' => $autoOpenReq->id,
                             'no' => 1,
                             'no_mr' => $autoOpenReq->no_mr ?? '-',
                             'date' => $autoOpenReq->date ? $autoOpenReq->date->format('d-m-Y') : '-',
@@ -152,6 +156,18 @@
                             'paid_at' => $autoOpenReq->paid_at ? $autoOpenReq->paid_at->format('d-m-Y') : null,
                             'created_by' => $autoOpenReq->creator->name ?? '-',
                             'created_at' => $autoOpenReq->created_at ? $autoOpenReq->created_at->format('d-m-Y H:i') : '-',
+                            'created_signature' => $autoOpenReq->created_signature,
+                            'approved_a_signature' => $autoOpenReq->approved_a_signature,
+                            'approved_c_signature' => $autoOpenReq->approved_c_signature,
+                            'paid_signature' => $autoOpenReq->paid_signature,
+                            'can_sign_a' => auth()->check() && (auth()->user()->isApproverA() || auth()->user()->isAdmin()) && $autoOpenReq->created_signature && ! $autoOpenReq->is_approved_by_a && ! $autoOpenReq->is_rejected_by_a,
+                            'can_sign_c' => auth()->check() && (auth()->user()->isApproverC() || auth()->user()->isAdmin()) && $autoOpenReq->is_approved_by_a && ! $autoOpenReq->is_approved_by_c && ! $autoOpenReq->is_rejected_by_c,
+                            'can_sign_finance' => auth()->check() && (auth()->user()->isFinance() || auth()->user()->isAdmin()) && $autoOpenReq->is_approved && ! $autoOpenReq->paid_at && ! $autoOpenReq->is_rejected_by_finance,
+                            'can_sign_prepared' => auth()->check() && (auth()->id() === $autoOpenReq->created_by || auth()->user()->isAdmin()) && ! $autoOpenReq->created_signature,
+                            'approve_url' => route('material-requests.approve', $autoOpenReq),
+                            'mark_paid_url' => route('material-requests.mark-paid', $autoOpenReq),
+                            'sign_prepared_url' => route('material-requests.sign-prepared', $autoOpenReq),
+                            'print_url' => route('material-requests.print', $autoOpenReq),
                         ];
                     @endphp
                     this.$nextTick(() => {
@@ -160,6 +176,9 @@
                         if (targetRow) {
                             targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
+                        @if(request('auto_sign') && $autoOpenReq->created_signature === null)
+                            this.openSign({{ \Illuminate\Support\Js::from($autoPayload['id']) }}, 'Requested By (' + {{ \Illuminate\Support\Js::from($autoPayload['no_mr']) }} + ')', {{ \Illuminate\Support\Js::from($autoPayload['sign_prepared_url']) }}, 'POST', true);
+                        @endif
                     });
                 @endif
             }
@@ -793,11 +812,18 @@
                         <h3 class="text-lg font-bold text-gray-900">Digital Signature Pad</h3>
                         <p class="text-xs text-gray-500 mt-0.5">Signing as: <strong class="text-indigo-600" x-text="signLabel"></strong></p>
                     </div>
-                    <button type="button" @click="closeSignModal()" class="text-gray-400 hover:text-gray-600 transition">
+                    <button type="button" x-show="!signRequired" @click="closeSignModal()" class="text-gray-400 hover:text-gray-600 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
+                </div>
+
+                <div x-show="signRequired" x-cloak class="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg px-3 py-2.5 mb-4">
+                    <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                    </svg>
+                    <span>Data sudah tersimpan. Mohon tanda tangani dulu sebagai Requested By sebelum melanjutkan.</span>
                 </div>
 
                 {{-- Spacious Canvas --}}
@@ -817,7 +843,7 @@
                         Clear Signature
                     </button>
                     <div class="flex gap-2.5">
-                        <button type="button" @click="closeSignModal()" class="text-xs font-semibold text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg transition">
+                        <button type="button" x-show="!signRequired" @click="closeSignModal()" class="text-xs font-semibold text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg transition">
                             Cancel
                         </button>
                         <button type="button" @click="submitSignature()"

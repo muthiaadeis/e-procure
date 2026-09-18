@@ -124,7 +124,7 @@ class MaterialRequestController extends Controller
             $materialRequest->items()->create($item);
         }
 
-        return redirect()->route('material-requests.index')
+        return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id, 'auto_sign' => 1])
             ->with('success', 'Material Request added successfully.');
     }
 
