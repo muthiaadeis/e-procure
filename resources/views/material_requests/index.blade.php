@@ -189,7 +189,17 @@
                         const targetRow = document.getElementById('mr-row-{{ $autoOpenReq->id }}');
                         if (targetRow) {
                             targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            // highlight biru cuma sebentar, abis itu fade balik normal
+                            setTimeout(() => {
+                                targetRow.classList.remove('bg-indigo-50/80', 'ring-2', 'ring-indigo-500/50');
+                                targetRow.classList.add('hover:bg-gray-50');
+                            }, 2500);
                         }
+                        // bersihin auto_open/auto_sign dari URL biar refresh gak nge-biru-in lagi
+                        const cleanUrl = new URL(window.location.href);
+                        cleanUrl.searchParams.delete('auto_open');
+                        cleanUrl.searchParams.delete('auto_sign');
+                        window.history.replaceState({}, '', cleanUrl);
                         @if(request('auto_sign') && $autoOpenReq->created_signature === null)
                             this.openSign({{ \Illuminate\Support\Js::from($autoPayload['id']) }}, 'Requested By (' + {{ \Illuminate\Support\Js::from($autoPayload['no_mr']) }} + ')', {{ \Illuminate\Support\Js::from($autoPayload['sign_prepared_url']) }}, 'POST', true);
                         @endif
