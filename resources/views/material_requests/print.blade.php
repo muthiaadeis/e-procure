@@ -215,7 +215,7 @@
                     @endif
                 </div>
                 <p class="name">{{ $materialRequest->creator->name ?? '-' }}</p>
-                <p class="date">{{ $materialRequest->date->format('d-m-Y') }}</p>
+                <p class="date">{{ $materialRequest->created_at ? $materialRequest->created_at->format('d-m-Y H:i') : '-' }}</p>
             </div>
             <div class="box">
                 <p class="role">Approval 1</p>

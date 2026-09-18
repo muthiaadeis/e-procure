@@ -291,7 +291,7 @@
                     @endif
                 </div>
                 <p class="name">{{ $rlp->creator->name ?? '-' }}</p>
-                <p class="date">{{ $rlp->date ? $rlp->date->format('d-m-Y') : '-' }}</p>
+                <p class="date">{{ $rlp->created_at ? $rlp->created_at->format('d-m-Y H:i') : '-' }}</p>
             </div>
             <div class="box">
                 <p class="role">Review By</p>

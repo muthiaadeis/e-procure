@@ -111,6 +111,7 @@
                             'id' => $autoOpenRlp->id,
                             'no_rlp' => $autoOpenRlp->no_rlp,
                             'date' => $autoOpenRlp->date ? $autoOpenRlp->date->format('d-m-Y') : '-',
+                            'created_at' => $autoOpenRlp->created_at ? $autoOpenRlp->created_at->format('d-m-Y H:i') : '-',
                             'status' => $autoOpenRlp->status,
                             'items_count' => $autoOpenRlp->items->count(),
                             'vendors_count' => $autoVendorNames->count(),
@@ -245,6 +246,7 @@
                                         'id' => $rlp->id,
                                         'no_rlp' => $rlp->no_rlp,
                                         'date' => $rlp->date ? $rlp->date->format('d-m-Y') : '-',
+                                        'created_at' => $rlp->created_at ? $rlp->created_at->format('d-m-Y H:i') : '-',
                                         'created_by' => $rlp->creator->name ?? null,
                                         'status' => $rlp->status,
                                         'created_by' => $rlp->creator->name ?? 'Staff',
@@ -611,7 +613,7 @@
 
                                 <div class="text-center">
                                     <p class="text-[10px] font-semibold text-gray-800 truncate" x-text="detailData.created_by"></p>
-                                    <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-text="detailData.date"></p>
+                                    <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-text="detailData.created_at"></p>
                                 </div>
                             </div>
 

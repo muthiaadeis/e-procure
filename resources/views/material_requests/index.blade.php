@@ -528,7 +528,7 @@
 
                             <div class="text-center">
                                 <p class="text-[10px] font-semibold text-gray-800 truncate" x-text="detailData.created_by"></p>
-                                <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-text="detailData.date"></p>
+                                <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-text="detailData.created_at"></p>
                             </div>
                         </div>
 
