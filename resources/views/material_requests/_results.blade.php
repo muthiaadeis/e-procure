@@ -25,6 +25,7 @@
                             @forelse($requests as $req)
                             @php
                                 $detailPayload = [
+                                    'id' => $req->id,
                                     'no' => $requests->firstItem() + $loop->index,
                                     'no_mr' => $req->no_mr ?? '-',
                                     'date' => $req->date->format('d-m-Y'),

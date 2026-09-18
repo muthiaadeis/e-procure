@@ -86,13 +86,58 @@
                 this.signModalOpen = false;
                 this.signPad = null;
             },
+            signSubmitting: false,
             submitSignature() {
                 if (!this.signPad || this.signPad.isEmpty()) {
                     alert('Please sign in the box first.');
                     return;
                 }
+                if (this.signSubmitting) return;
+                this.signSubmitting = true;
+
+                const form = document.getElementById('mr-sign-form');
                 document.getElementById('mr-signature-data-input').value = this.signPad.toDataURL('image/png');
-                document.getElementById('mr-sign-form').submit();
+                const formData = new FormData(form);
+
+                // Dikirim via fetch (bukan form.submit()) biar halaman gak reload
+                // sama sekali — jadi modal detail yang lagi kebuka gak ikut ketutup.
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: formData,
+                })
+                    .then(async (res) => {
+                        const body = await res.json().catch(() => null);
+                        if (!res.ok || !body || !body.success) {
+                            throw new Error((body && body.message) || 'Failed to save signature.');
+                        }
+                        return body;
+                    })
+                    .then((body) => {
+                        // Modal detail TETAP kebuka, cuma datanya di-refresh di tempat.
+                        this.detailData = body.data;
+                        this.signModalOpen = false;
+                        this.signRequired = false;
+                        this.signPad = null;
+                        this.showToast(body.message);
+                        window.dispatchEvent(new CustomEvent('mr-list-refresh'));
+                    })
+                    .catch((err) => {
+                        alert(err.message || 'Failed to save signature. Please check your connection.');
+                    })
+                    .finally(() => {
+                        this.signSubmitting = false;
+                    });
+            },
+            toastMessage: null,
+            toastTimer: null,
+            showToast(message) {
+                this.toastMessage = message;
+                clearTimeout(this.toastTimer);
+                this.toastTimer = setTimeout(() => { this.toastMessage = null; }, 3500);
             },
             detailOpen: false,
             detailData: {},
@@ -207,6 +252,30 @@
                 @endif
             }
         }">
+        {{-- Toast buat notifikasi hasil sign/approve yang dikirim via AJAX (mr-sign-form),
+             karena gak ada reload halaman jadi session('success') gak kepake di sini. --}}
+        <div x-show="toastMessage"
+             x-cloak
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-2"
+             class="fixed top-5 right-5 z-[60] flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 text-green-800 rounded-lg text-sm shadow-lg max-w-sm">
+            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </span>
+            <span class="flex-1 font-medium" x-text="toastMessage"></span>
+            <button type="button" @click="toastMessage = null" class="flex-shrink-0 text-green-500 hover:text-green-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
             @if(session('success'))
@@ -268,6 +337,11 @@
                             clearSearch() {
                                 this.q = '';
                                 this.fetchResults();
+                            },
+                            init() {
+                                // Biar baris di tabel ikut ke-update abis ttd/approve/reject,
+                                // tanpa perlu reload halaman.
+                                window.addEventListener('mr-list-refresh', () => this.fetchResults());
                             }
                          }">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">

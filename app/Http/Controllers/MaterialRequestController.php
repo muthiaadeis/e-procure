@@ -220,8 +220,18 @@ class MaterialRequestController extends Controller
             'created_signature' => $validated['signature'],
         ]);
 
+        $message = 'Signature recorded successfully.';
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => $this->detailPayload($materialRequest),
+            ]);
+        }
+
         return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
-            ->with('success', 'Signature recorded successfully.');
+            ->with('success', $message);
     }
 
     public function approve(Request $request, MaterialRequest $materialRequest)
@@ -243,8 +253,18 @@ class MaterialRequestController extends Controller
                 'approved_a_signature' => $validated['signature'],
             ]);
 
+            $message = 'MR approved and signed successfully (Approval 1).';
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'data' => $this->detailPayload($materialRequest),
+                ]);
+            }
+
             return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
-                ->with('success', 'MR approved and signed successfully (Approval 1).');
+                ->with('success', $message);
         }
 
         if ($user->isApproverC() || ($user->isAdmin() && $materialRequest->is_approved_by_a && ! $materialRequest->is_approved_by_c)) {
@@ -258,8 +278,18 @@ class MaterialRequestController extends Controller
                 'approved_c_signature' => $validated['signature'],
             ]);
 
+            $message = 'MR approved and signed successfully (Approval 2).';
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'data' => $this->detailPayload($materialRequest),
+                ]);
+            }
+
             return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
-                ->with('success', 'MR approved and signed successfully (Approval 2).');
+                ->with('success', $message);
         }
 
         abort(403, "You don't have permission to approve.");
@@ -339,8 +369,73 @@ class MaterialRequestController extends Controller
             'paid_signature' => $validated['signature'],
         ]);
 
+        $message = 'Status changed to Done and signed successfully.';
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => $this->detailPayload($materialRequest),
+            ]);
+        }
+
         return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
-            ->with('success', 'Status changed to Done and signed successfully.');
+            ->with('success', $message);
+    }
+
+    // Bentuk data detail yang persis sama dengan yang dipakai tabel (lihat
+    // material_requests/_results.blade.php) supaya modal bisa di-refresh
+    // lewat AJAX tanpa reload halaman (dan tanpa modal ke-close sendiri).
+    private function detailPayload(MaterialRequest $materialRequest): array
+    {
+        $materialRequest->loadMissing(['items', 'approverA', 'approverC', 'financeRejector', 'paidByUser', 'creator']);
+        $user = auth()->user();
+
+        return [
+            'id' => $materialRequest->id,
+            'no_mr' => $materialRequest->no_mr ?? '-',
+            'date' => $materialRequest->date->format('d-m-Y'),
+            'charge_to' => $materialRequest->charge_to,
+            'items' => $materialRequest->items->map(fn ($item) => [
+                'description' => $item->description,
+                'quantity' => $item->quantity,
+                'unit' => $item->unit,
+                'remarks' => $item->remarks,
+            ])->values(),
+            'approver_a' => $materialRequest->approverA->name ?? '-',
+            'is_approved_a' => $materialRequest->is_approved_by_a,
+            'approved_a_at' => $materialRequest->approved_a_at ? $materialRequest->approved_a_at->format('d-m-Y H:i') : null,
+            'is_rejected_a' => $materialRequest->is_rejected_by_a,
+            'rejection_a_reason' => $materialRequest->rejection_a_reason,
+            'approver_c' => $materialRequest->approverC->name ?? '-',
+            'is_approved_c' => $materialRequest->is_approved_by_c,
+            'approved_c_at' => $materialRequest->approved_c_at ? $materialRequest->approved_c_at->format('d-m-Y H:i') : null,
+            'is_rejected_c' => $materialRequest->is_rejected_by_c,
+            'rejection_c_reason' => $materialRequest->rejection_c_reason,
+            'is_rejected_finance' => $materialRequest->is_rejected_by_finance,
+            'finance_rejection_reason' => $materialRequest->finance_rejection_reason,
+            'finance_rejector' => $materialRequest->financeRejector->name ?? '-',
+            'status' => $materialRequest->status,
+            'is_overdue' => $materialRequest->is_overdue,
+            'overdue_reason' => $materialRequest->overdue_reason,
+            'is_paid' => ! is_null($materialRequest->paid_at),
+            'paid_by' => $materialRequest->paidByUser->name ?? '-',
+            'paid_at' => $materialRequest->paid_at ? $materialRequest->paid_at->format('d-m-Y H:i') : null,
+            'created_by' => $materialRequest->creator->name ?? '-',
+            'created_at' => $materialRequest->created_at ? $materialRequest->created_at->format('d-m-Y H:i') : '-',
+            'created_signature' => $materialRequest->created_signature,
+            'approved_a_signature' => $materialRequest->approved_a_signature,
+            'approved_c_signature' => $materialRequest->approved_c_signature,
+            'paid_signature' => $materialRequest->paid_signature,
+            'can_sign_a' => ($user->isApproverA() || $user->isAdmin()) && $materialRequest->created_signature && ! $materialRequest->is_approved_by_a && ! $materialRequest->is_rejected_by_a,
+            'can_sign_c' => ($user->isApproverC() || $user->isAdmin()) && $materialRequest->is_approved_by_a && ! $materialRequest->is_approved_by_c && ! $materialRequest->is_rejected_by_c,
+            'can_sign_finance' => ($user->isFinance() || $user->isAdmin()) && $materialRequest->is_approved && ! $materialRequest->paid_at && ! $materialRequest->is_rejected_by_finance,
+            'can_sign_prepared' => ($user->id === $materialRequest->created_by || $user->isAdmin()) && ! $materialRequest->created_signature,
+            'approve_url' => route('material-requests.approve', $materialRequest),
+            'mark_paid_url' => route('material-requests.mark-paid', $materialRequest),
+            'sign_prepared_url' => route('material-requests.sign-prepared', $materialRequest),
+            'print_url' => route('material-requests.print', $materialRequest),
+        ];
     }
 
     // Printable A4 view of a single MR. Opens in a new tab; the user hits
