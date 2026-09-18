@@ -124,7 +124,8 @@ class RlpController extends Controller
             'created_signature' => $validated['signature'],
         ]);
 
-        return back()->with('success', 'Signature recorded successfully.');
+        return redirect()->route('rlps.index', ['auto_open' => $rlp->id])
+            ->with('success', 'Signature recorded successfully.');
     }
 
     // Tahap 1: Review By
@@ -146,7 +147,7 @@ class RlpController extends Controller
             'reviewed_signature' => $validated['signature'],
         ]);
 
-        return redirect()->route('rlps.index')->with('success', 'RRP reviewed and signed successfully.');
+        return redirect()->route('rlps.index', ['auto_open' => $rlp->id])->with('success', 'RRP reviewed and signed successfully.');
     }
 
     // Tahap 2: Acknowledge By
@@ -168,7 +169,7 @@ class RlpController extends Controller
             'acknowledged_signature' => $validated['signature'],
         ]);
 
-        return redirect()->route('rlps.index')->with('success', 'RRP acknowledged and signed successfully.');
+        return redirect()->route('rlps.index', ['auto_open' => $rlp->id])->with('success', 'RRP acknowledged and signed successfully.');
     }
 
     // Tahap 3: Approved By
@@ -190,7 +191,7 @@ class RlpController extends Controller
             'approved_signature' => $validated['signature'],
         ]);
 
-        return redirect()->route('rlps.index')->with('success', 'RRP approved and signed successfully.');
+        return redirect()->route('rlps.index', ['auto_open' => $rlp->id])->with('success', 'RRP approved and signed successfully.');
     }
 
     private function validateRlp(Request $request, $ignoreId = null): array

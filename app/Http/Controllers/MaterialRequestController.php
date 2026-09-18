@@ -220,7 +220,8 @@ class MaterialRequestController extends Controller
             'created_signature' => $validated['signature'],
         ]);
 
-        return back()->with('success', 'Signature recorded successfully.');
+        return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
+            ->with('success', 'Signature recorded successfully.');
     }
 
     public function approve(Request $request, MaterialRequest $materialRequest)
@@ -242,7 +243,7 @@ class MaterialRequestController extends Controller
                 'approved_a_signature' => $validated['signature'],
             ]);
 
-            return redirect()->route('material-requests.index')
+            return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
                 ->with('success', 'MR approved and signed successfully (Approval 1).');
         }
 
@@ -257,7 +258,7 @@ class MaterialRequestController extends Controller
                 'approved_c_signature' => $validated['signature'],
             ]);
 
-            return redirect()->route('material-requests.index')
+            return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
                 ->with('success', 'MR approved and signed successfully (Approval 2).');
         }
 
@@ -283,7 +284,7 @@ class MaterialRequestController extends Controller
                 'rejection_a_reason' => $validated['reason'],
             ]);
 
-            return redirect()->route('material-requests.index')
+            return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
                 ->with('success', 'MR rejected successfully.');
         }
 
@@ -298,7 +299,7 @@ class MaterialRequestController extends Controller
                 'rejection_c_reason' => $validated['reason'],
             ]);
 
-            return redirect()->route('material-requests.index')
+            return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
                 ->with('success', 'MR rejected successfully.');
         }
 
@@ -313,7 +314,7 @@ class MaterialRequestController extends Controller
                 'finance_rejection_reason' => $validated['reason'],
             ]);
 
-            return redirect()->route('material-requests.index')
+            return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
                 ->with('success', 'MR rejected successfully.');
         }
 
@@ -338,7 +339,7 @@ class MaterialRequestController extends Controller
             'paid_signature' => $validated['signature'],
         ]);
 
-        return redirect()->route('material-requests.index')
+        return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
             ->with('success', 'Status changed to Done and signed successfully.');
     }
 
