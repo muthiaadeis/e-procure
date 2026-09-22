@@ -4,11 +4,16 @@ RUN apt-get update && apt-get install -y \
     nginx supervisor unzip git curl libpng-dev libonig-dev libxml2-dev libzip-dev zip \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
 WORKDIR /var/www/html
 COPY . .
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+RUN npm install && npm run build
 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
