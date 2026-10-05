@@ -31,6 +31,30 @@
 
     // Notification state
     notificationOpen: false,
+    notificationPinned: false,
+    notificationTimer: null,
+    // Hover = 'ngintip' (panel muncul sementara). Klik = dikunci, tetap terbuka.
+    openNotifications() {
+        if (this.notificationTimer) clearTimeout(this.notificationTimer);
+        this.notificationOpen = true;
+    },
+    closeNotifications() {
+        if (this.notificationPinned) return;
+        if (this.notificationTimer) clearTimeout(this.notificationTimer);
+        this.notificationTimer = setTimeout(() => {
+            if (!this.notificationPinned) this.notificationOpen = false;
+        }, 300);
+    },
+    toggleNotifications() {
+        if (this.notificationTimer) clearTimeout(this.notificationTimer);
+        this.notificationPinned = !this.notificationPinned;
+        this.notificationOpen = this.notificationPinned;
+    },
+    closeNotificationsNow() {
+        if (this.notificationTimer) clearTimeout(this.notificationTimer);
+        this.notificationPinned = false;
+        this.notificationOpen = false;
+    },
     notifications: [],
     readNotificationIds: (function() {
         try {
@@ -129,7 +153,7 @@
                @input.debounce.250ms="performSearch()"
                @focus="if(searchQuery.trim().length >= 2) searchOpen = true"
                @keydown.escape="searchOpen = false"
-               placeholder="Search documents (MR, RRP, PR, PO, Vendor)..."
+               placeholder="Cari dokumen (MR, RRP, PR, PO, Vendor)..."
                class="w-full bg-gray-50 border-gray-200 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 rounded-lg text-sm pl-10 pr-16 py-2 placeholder:text-gray-400 transition shadow-sm">
 
         {{-- Right Controls: Clear or Shortcut Key --}}
@@ -201,8 +225,13 @@
     <div class="flex items-center gap-1 ml-auto shrink-0">
 
         {{-- 2. Notification Bell with Dropdown Panel --}}
-        <div class="relative" @click.outside="notificationOpen = false">
-            <button @click="notificationOpen = !notificationOpen"
+        <div class="relative"
+             @mouseenter="openNotifications()"
+             @mouseleave="closeNotifications()"
+             @keydown.escape.window="closeNotificationsNow()"
+             @click.outside="closeNotificationsNow()">
+            <button @click="toggleNotifications()"
+                    :class="notificationPinned ? '!bg-indigo-50 !text-indigo-600' : ''"
                     type="button"
                     title="Notifications"
                     class="relative w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition">
@@ -229,16 +258,16 @@
 
                 <div class="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between bg-gray-50/75">
                     <div class="flex items-center gap-2">
-                        <h4 class="font-bold text-sm text-gray-800">Document Notifications</h4>
+                        <h4 class="font-bold text-sm text-gray-800">Notifikasi Dokumen</h4>
                         <span x-show="unreadCount > 0"
                               x-cloak
                               class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[11px] font-bold border border-red-100"
-                              x-text="unreadCount + ' Action Required'">
+                              x-text="unreadCount + ' Perlu Tindakan'">
                         </span>
                         <span x-show="unreadCount === 0 && notifications.length > 0"
                               x-cloak
                               class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-medium border border-emerald-100">
-                            All Read
+                            Semua Sudah Dibaca
                         </span>
                     </div>
                     <button x-show="unreadCount > 0"
@@ -246,7 +275,7 @@
                             @click="markAllAsRead()"
                             type="button"
                             class="text-xs text-indigo-600 hover:text-indigo-700 font-medium transition">
-                        Mark all as read
+                        Tandai semua dibaca
                     </button>
                 </div>
 
@@ -312,8 +341,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                         </div>
-                        <p class="text-xs font-semibold text-gray-700">All Caught Up!</p>
-                        <p class="text-xs text-gray-400 mt-0.5">No pending documents or approvals requiring attention.</p>
+                        <p class="text-xs font-semibold text-gray-700">Tidak Ada Notifikasi Baru</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Semua dokumen dan persetujuan telah ditinjau.</p>
                     </div>
                 </div>
             </div>
@@ -369,7 +398,7 @@
                                     </svg>
                                 </span>
                                 <div>
-                                    <h3 class="font-bold text-gray-800 text-base">Help Center & System Guide</h3>
+                                    <h3 class="font-bold text-gray-800 text-base">Pusat Bantuan & Panduan Sistem</h3>
                                     <p class="text-xs text-gray-500">e-Procurement Management System</p>
                                 </div>
                             </div>
@@ -385,17 +414,17 @@
                             <button @click="helpTab = 'workflow'"
                                     :class="helpTab === 'workflow' ? 'text-indigo-600 border-indigo-600' : 'text-gray-500 border-transparent hover:text-gray-700'"
                                     class="pb-2.5 border-b-2 transition">
-                                Document Workflow
+                                Alur Dokumen
                             </button>
                             <button @click="helpTab = 'shortcuts'"
                                     :class="helpTab === 'shortcuts' ? 'text-indigo-600 border-indigo-600' : 'text-gray-500 border-transparent hover:text-gray-700'"
                                     class="pb-2.5 border-b-2 transition">
-                                Keyboard Shortcuts
+                                Pintasan Keyboard
                             </button>
                             <button @click="helpTab = 'support'"
                                     :class="helpTab === 'support' ? 'text-indigo-600 border-indigo-600' : 'text-gray-500 border-transparent hover:text-gray-700'"
                                     class="pb-2.5 border-b-2 transition">
-                                Support & Help
+                                Bantuan & Kontak
                             </button>
                         </div>
 
@@ -445,7 +474,7 @@
                                 </div>
                             </div>
 
-                            {{-- Tab 2: Keyboard Shortcuts --}}
+                            {{-- Tab 2: Pintasan Keyboard --}}
                             <div x-show="helpTab === 'shortcuts'" class="space-y-3">
                                 <div class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 border border-gray-100 text-xs">
                                     <span class="font-medium text-gray-700">Focus Quick Document Search</span>
@@ -457,7 +486,7 @@
                                 </div>
 
                                 <div class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 border border-gray-100 text-xs">
-                                    <span class="font-medium text-gray-700">Close Modal / Search Dropdown</span>
+                                    <span class="font-medium text-gray-700">Tutup Modal / Pencarian</span>
                                     <kbd class="px-2 py-1 bg-white border border-gray-200 rounded font-mono font-semibold shadow-xs">Esc</kbd>
                                 </div>
                             </div>
@@ -495,7 +524,7 @@
                         {{-- Modal Footer --}}
                         <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex justify-end shrink-0">
                             <button @click="helpOpen = false" type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
-                                Got It, Close
+                                Mengerti, Tutup
                             </button>
                         </div>
                     </div>
@@ -519,18 +548,17 @@
 
             <x-slot name="content">
                 <x-dropdown-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
+                    Profil Saya
                 </x-dropdown-link>
 
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <x-dropdown-link :href="route('logout')"
                             onclick="event.preventDefault(); this.closest('form').submit();">
-                        {{ __('Log Out') }}
+                        Keluar
                     </x-dropdown-link>
                 </form>
             </x-slot>
         </x-dropdown>
     </div>
 </header>
-

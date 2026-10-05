@@ -134,16 +134,17 @@
             margin: 0 0 4px;
         }
         .signatures .box .sig-space {
-            height: 56px;
+            height: 72px;
             display: flex;
             align-items: flex-end;
             justify-content: center;
             margin-bottom: 4px;
         }
         .signatures .box .sig-space img {
-            max-height: 52px;
-            max-width: 100%;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
+            object-position: center bottom;
         }
         .signatures .box p.name {
             margin: 0;
@@ -171,8 +172,8 @@
 </head>
 <body>
     <div class="toolbar">
-        <button type="button" onclick="window.close()">Close</button>
-        <button type="button" class="primary" onclick="window.print()">Print / Save as PDF</button>
+        <button type="button" onclick="window.close()">Tutup</button>
+        <button type="button" class="primary" onclick="window.print()">Cetak / Simpan PDF</button>
     </div>
 
     <div class="sheet">
@@ -327,5 +328,54 @@
 
         <p class="footer-note">Generated from {{ config('app.name', 'e-Procure') }} RRP Management on {{ now()->format('d-m-Y H:i') }}.</p>
     </div>
+<script>
+    // Auto-fit tanda tangan: potong margin kosong di sekitar goresan, lalu
+    // CSS (object-fit: contain) yang bikin gambarnya pas mengisi kotak —
+    // kegedean otomatis mengecil, kekecilan otomatis membesar.
+    (function () {
+        function trimSignature(img) {
+            if (img.dataset.trimmed) return;
+            img.dataset.trimmed = '1';
+            try {
+                var w = img.naturalWidth, h = img.naturalHeight;
+                if (!w || !h) return;
+                var c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                var ctx = c.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(img, 0, 0);
+                var d = ctx.getImageData(0, 0, w, h).data;
+                var minX = w, minY = h, maxX = -1, maxY = -1;
+                for (var y = 0; y < h; y++) {
+                    for (var x = 0; x < w; x++) {
+                        var i = (y * w + x) * 4;
+                        if (d[i + 3] > 30 && (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000 < 235) {
+                            if (x < minX) minX = x;
+                            if (x > maxX) maxX = x;
+                            if (y < minY) minY = y;
+                            if (y > maxY) maxY = y;
+                        }
+                    }
+                }
+                if (maxX < 0) return;
+                var pad = Math.round(Math.max(maxX - minX, maxY - minY) * 0.03) + 2;
+                var cx = Math.max(0, minX - pad), cy = Math.max(0, minY - pad);
+                var cw = Math.min(w - cx, (maxX - minX) + pad * 2);
+                var ch = Math.min(h - cy, (maxY - minY) + pad * 2);
+                var o = document.createElement('canvas');
+                o.width = cw; o.height = ch;
+                o.getContext('2d').drawImage(img, cx, cy, cw, ch, 0, 0, cw, ch);
+                img.src = o.toDataURL('image/png');
+            } catch (e) { /* kalau gagal (mis. cross-origin), tampilkan gambar apa adanya */ }
+        }
+        function run() {
+            document.querySelectorAll('.signatures .sig-space img').forEach(function (img) {
+                if (img.complete && img.naturalWidth) trimSignature(img);
+                else img.addEventListener('load', function () { trimSignature(img); }, { once: true });
+            });
+        }
+        if (document.readyState === 'complete') run();
+        else window.addEventListener('load', run);
+    })();
+    </script>
 </body>
 </html>

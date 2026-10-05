@@ -3,14 +3,14 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">Purchase Request (PR)</h1>
-                <p class="text-sm text-gray-500 mt-1">Internal documentation detailing recipients and project allocation for ordered goods.</p>
+                <p class="text-sm text-gray-500 mt-1">Dokumentasi internal rincian alokasi barang dan proyek yang dipesan.</p>
             </div>
             <a href="{{ route('purchase-requests.create') }}"
                class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                Add PR
+                Tambah PR
             </a>
         </div>
     </x-slot>
@@ -30,6 +30,8 @@
             }
         }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
+            <x-draft-list form="purchase-requests" />
 
             @if(session('success'))
                 <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" x-transition
@@ -57,10 +59,10 @@
                             </svg>
                         </span>
                         <input type="text" name="search" value="{{ $search ?? '' }}"
-                               placeholder="Search request no, title, client, or job no..."
+                               placeholder="Cari no request, judul, klien, atau no job..."
                                class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm text-sm w-full sm:w-80 pl-10 py-2">
                     </div>
-                    <button type="submit" class="text-sm font-semibold text-gray-600 hover:text-indigo-600 px-3 py-2">Search</button>
+                    <button type="submit" class="text-sm font-semibold text-gray-600 hover:text-indigo-600 px-3 py-2">Cari</button>
                     @if(!empty($search))
                         <a href="{{ route('purchase-requests.index') }}" class="text-sm text-gray-400 hover:text-gray-600">Reset</a>
                     @endif
@@ -69,17 +71,27 @@
 
             <div class="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
+                    <table class="w-full text-sm" style="table-layout:fixed; min-width:1080px;">
+                        <colgroup>
+                            <col style="width:220px">
+                            <col style="width:104px">
+                            <col>
+                            <col>
+                            <col style="width:110px">
+                            <col style="width:146px">
+                            <col style="width:150px">
+                            <col style="width:88px">
+                        </colgroup>
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Request No</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Date</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Title</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Client</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Job No</th>
-                                <th class="px-4 py-3 text-right font-medium text-gray-600">Grand Total</th>
-                                <th class="px-4 py-3 text-center font-medium text-gray-600">Status</th>
-                                <th class="px-4 py-3 text-center font-medium text-gray-600 w-40">Action</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Request No</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Date</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Title</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Client</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Job No</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-center">Grand Total</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-center">Status</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -95,27 +107,27 @@
                                 @endphp
                                 <tr @click="window.location.href = '{{ route('purchase-requests.show', $pr) }}'"
                                     class="hover:bg-gray-50/70 transition cursor-pointer">
-                                    <td class="px-4 py-3 font-semibold text-gray-800">
+                                    <td class="px-3 py-3 font-semibold text-gray-800 whitespace-nowrap">
                                         <div>{{ $pr->no_request }}</div>
                                         @if($pr->purchaseOrder)
                                             <a href="{{ route('purchase-orders.show', $pr->purchaseOrder) }}"
                                                @click.stop
-                                               class="inline-flex items-center gap-1 text-[11px] font-normal text-indigo-600 hover:text-indigo-800 transition">
+                                               class="flex max-w-full items-center gap-1 text-[11px] font-normal text-indigo-600 hover:text-indigo-800 transition truncate">
                                                 <span>PO: {{ $pr->purchaseOrder->po_no }}</span>
                                             </a>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3 text-gray-600">{{ $pr->date?->format('d-m-Y') ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-gray-700 max-w-[220px] truncate" title="{{ $pr->title }}">{{ $pr->title }}</td>
-                                    <td class="px-4 py-3 text-gray-600">{{ $pr->client ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-gray-600">{{ $pr->job_no ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-right text-gray-700">Rp {{ number_format((float) $pr->grand_total, 0, ',', '.') }}</td>
-                                    <td class="px-4 py-3 text-center">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ $statusColor }}">
+                                    <td class="px-3 py-3 text-gray-600 whitespace-nowrap">{{ $pr->date?->format('d-m-Y') ?? '-' }}</td>
+                                    <td class="px-3 py-3 text-gray-700"><div title="{{ $pr->title }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">{{ $pr->title }}</div></td>
+                                    <td class="px-3 py-3 text-gray-600"><div title="{{ $pr->client }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">{{ $pr->client ?? '-' }}</div></td>
+                                    <td class="px-3 py-3 text-gray-600 whitespace-nowrap truncate" title="{{ $pr->job_no }}">{{ $pr->job_no ?? '-' }}</td>
+                                    <td class="px-3 py-3 text-center text-gray-700 whitespace-nowrap tabular-nums">Rp {{ number_format((float) $pr->grand_total, 0, ',', '.') }}</td>
+                                    <td class="px-3 py-3 text-center whitespace-nowrap">
+                                        <span class="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-semibold {{ $statusColor }}">
                                             {{ $pr->status }} ({{ $signedCount }}/{{ $totalCount }})
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3" @click.stop>
+                                    <td class="px-2 py-3" @click.stop>
                                         <div class="flex items-center justify-center gap-1">
                                             <a href="{{ route('purchase-requests.print', $pr) }}" target="_blank" title="Print"
                                                class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
@@ -159,11 +171,11 @@
              x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
             <div class="absolute inset-0 bg-gray-900/40" @click="confirmOpen = false"></div>
             <div class="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
-                <h3 class="font-semibold text-gray-800 mb-2">Confirm</h3>
+                <h3 class="font-semibold text-gray-800 mb-2">Konfirmasi</h3>
                 <p class="text-sm text-gray-600 mb-6" x-text="confirmMessage"></p>
                 <div class="flex justify-end gap-3">
-                    <button type="button" @click="confirmOpen = false" class="text-sm font-semibold text-gray-500 hover:text-gray-700">Cancel</button>
-                    <button type="button" @click="submitConfirm()" class="text-sm font-semibold bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Delete</button>
+                    <button type="button" @click="confirmOpen = false" class="text-sm font-semibold text-gray-500 hover:text-gray-700">Batal</button>
+                    <button type="button" @click="submitConfirm()" class="text-sm font-semibold bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Hapus</button>
                 </div>
             </div>
         </div>

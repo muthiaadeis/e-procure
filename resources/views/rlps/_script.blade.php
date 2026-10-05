@@ -342,7 +342,15 @@
 
             // ---------- Prepared By signature (create only) ----------
             signPad: null,
+            signMode: 'upload',
+            uploadedSignature: '',
+            rememberSignature: true,
             initSignPad() {
+                const saved = localStorage.getItem('eprocure_saved_signature');
+                if (saved) {
+                    this.uploadedSignature = saved;
+                }
+
                 this.$nextTick(() => {
                     const setup = () => {
                         const canvas = document.getElementById('rlp-prepared-signature-canvas');
@@ -350,6 +358,10 @@
                         if (!canvas.offsetWidth || !canvas.offsetHeight) {
                             requestAnimationFrame(setup);
                             return;
+                        }
+                        if (this.signPad) {
+                            this.signPad.off();
+                            this.signPad = null;
                         }
                         const ratio = Math.max(window.devicePixelRatio || 1, 1);
                         canvas.width = canvas.offsetWidth * ratio;
@@ -366,6 +378,93 @@
                     };
                     setup();
                 });
+            },
+            handleSigFile(event) {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file (PNG, JPG, JPEG, WEBP).');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = img.naturalWidth || img.width;
+                        tempCanvas.height = img.naturalHeight || img.height;
+                        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+                        tempCtx.drawImage(img, 0, 0);
+
+                        const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                        const data = imgData.data;
+                        const w = tempCanvas.width;
+                        const h = tempCanvas.height;
+
+                        let minX = w, minY = h, maxX = 0, maxY = 0;
+                        let foundInk = false;
+
+                        for (let y = 0; y < h; y++) {
+                            for (let x = 0; x < w; x++) {
+                                const i = (y * w + x) * 4;
+                                const r = data[i];
+                                const g = data[i + 1];
+                                const b = data[i + 2];
+                                const a = data[i + 3];
+
+                                if (a > 30) {
+                                    const lum = (r * 299 + g * 587 + b * 114) / 1000;
+                                    if (lum < 235) {
+                                        foundInk = true;
+                                        if (x < minX) minX = x;
+                                        if (x > maxX) maxX = x;
+                                        if (y < minY) minY = y;
+                                        if (y > maxY) maxY = y;
+                                    }
+                                }
+                            }
+                        }
+
+                        const pad = 12;
+                        let cropX = 0, cropY = 0, cropW = w, cropH = h;
+                        if (foundInk && maxX >= minX && maxY >= minY) {
+                            cropX = Math.max(0, minX - pad);
+                            cropY = Math.max(0, minY - pad);
+                            cropW = Math.min(w - cropX, (maxX - minX) + pad * 2);
+                            cropH = Math.min(h - cropY, (maxY - minY) + pad * 2);
+                        }
+
+                        const maxDim = 800;
+                        let targetW = cropW;
+                        let targetH = cropH;
+                        if (targetW > maxDim || targetH > maxDim) {
+                            const ratio = Math.min(maxDim / targetW, maxDim / targetH);
+                            targetW = Math.round(targetW * ratio);
+                            targetH = Math.round(targetH * ratio);
+                        }
+
+                        const finalCanvas = document.createElement('canvas');
+                        finalCanvas.width = targetW;
+                        finalCanvas.height = targetH;
+                        const finalCtx = finalCanvas.getContext('2d', { willReadFrequently: true });
+                        finalCtx.drawImage(tempCanvas, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
+
+                        const fData = finalCtx.getImageData(0, 0, targetW, targetH);
+                        const fd = fData.data;
+                        for (let i = 0; i < fd.length; i += 4) {
+                            const lum = (fd[i] * 299 + fd[i + 1] * 587 + fd[i + 2] * 114) / 1000;
+                            if (lum > 220) {
+                                const fade = Math.min(1, Math.max(0, (lum - 220) / 25));
+                                fd[i + 3] = Math.round(fd[i + 3] * (1 - fade));
+                            }
+                        }
+                        finalCtx.putImageData(fData, 0, 0);
+
+                        this.uploadedSignature = finalCanvas.toDataURL('image/png');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
             },
             clearSignPad() {
                 if (this.signPad) this.signPad.clear();
@@ -397,14 +496,31 @@
                 // ada canvas-nya sama sekali, jadi signPad bakal null).
                 const signatureInput = document.getElementById('rlp-create-signature-input');
                 if (signatureInput) {
-                    if (!this.signPad || this.signPad.isEmpty()) {
-                        alert('Please sign as Prepared By first before saving.');
-                        event.preventDefault();
-                        return;
+                    let signatureData = '';
+                    if (this.signMode === 'upload') {
+                        if (!this.uploadedSignature) {
+                            alert('Please choose or upload a signature image first before saving.');
+                            event.preventDefault();
+                            return;
+                        }
+                        signatureData = this.uploadedSignature;
+                    } else {
+                        if (!this.signPad || this.signPad.isEmpty()) {
+                            alert('Please sign as Prepared By first before saving.');
+                            event.preventDefault();
+                            return;
+                        }
+                        signatureData = this.signPad.toDataURL('image/png');
                     }
-                    signatureInput.value = this.signPad.toDataURL('image/png');
+
+                    if (this.rememberSignature && signatureData) {
+                        try {
+                            localStorage.setItem('eprocure_saved_signature', signatureData);
+                        } catch (e) {}
+                    }
+                    signatureInput.value = signatureData;
                 }
             },
-        };
+};
     }
 </script>

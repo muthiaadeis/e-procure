@@ -1,4 +1,5 @@
 <?php
+// routes/web.php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MaterialRequestController;
@@ -11,7 +12,9 @@ use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\ApprovalSlotController;
 use App\Http\Controllers\Auth\ForcePasswordChangeController;
+use App\Http\Controllers\DraftController;
 
 Route::get('/', function () {
     if (auth()->check() && auth()->user()->is_admin) {
@@ -23,6 +26,10 @@ Route::get('/', function () {
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'force.password.change', 'restrict.admin'])->name('dashboard');
+    Route::get('/drafts', [DraftController::class, 'show'])->name('drafts.show');
+    Route::post('/drafts', [DraftController::class, 'store'])->name('drafts.store');
+    Route::delete('/drafts', [DraftController::class, 'destroy'])->name('drafts.destroy');
+    Route::delete('/drafts/{draft}', [DraftController::class, 'remove'])->name('drafts.remove');
 
 Route::middleware(['auth', 'force.password.change', 'restrict.admin'])->group(function () {
     Route::resource('material-requests', MaterialRequestController::class);
@@ -89,6 +96,10 @@ Route::middleware(['auth', 'admin', 'force.password.change'])->prefix('admin')->
     Route::delete('users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
     Route::post('users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])
         ->name('users.reset-password');
+
+    // Posisi tanda tangan PR / PO: siapa yang memegang tiap posisi
+    Route::get('approval-slots', [ApprovalSlotController::class, 'index'])->name('approval-slots.index');
+    Route::put('approval-slots', [ApprovalSlotController::class, 'update'])->name('approval-slots.update');
 });
 
 require __DIR__.'/auth.php';

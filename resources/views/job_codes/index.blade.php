@@ -96,7 +96,7 @@
                                     x-show="q && !loading"
                                     x-cloak
                                     x-on:click="clearSearch()"
-                                    title="Clear search"
+                                    title="Hapus pencarian"
                                     class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -117,7 +117,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        Add Job Code
+                        Tambah Job Code
                     </a>
                 </div>
 
@@ -147,11 +147,11 @@
                 <div class="flex items-center justify-center gap-3">
                     <button type="button" @click="confirmOpen = false"
                             class="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
-                        Cancel
+                        Batal
                     </button>
                     <button type="button" @click="submitConfirm()"
                             class="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition">
-                        Yes, Delete
+                        Ya, Hapus
                     </button>
                 </div>
             </div>

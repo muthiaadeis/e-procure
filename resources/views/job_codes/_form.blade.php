@@ -2,7 +2,7 @@
 
 <div class="p-6 sm:p-8 space-y-8">
     <div>
-        <h3 class="text-sm font-semibold text-gray-800 mb-4">Job Code Details</h3>
+        <h3 class="text-sm font-semibold text-gray-800 mb-4">Detail Job Code</h3>
 
         <div class="space-y-4">
             <div>
@@ -84,17 +84,17 @@
 <div class="flex items-center justify-end gap-5 px-6 sm:px-8 py-5 bg-gray-50 border-t border-gray-100">
     <a href="{{ route('job-codes.index') }}"
        class="text-sm font-semibold text-gray-500 hover:text-gray-700 transition">
-        Cancel
+        Batal
     </a>
     @isset($jobCode)
         <button type="submit" data-update-submit disabled
                 class="inline-flex items-center gap-2 bg-gray-200 text-gray-400 cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-semibold transition shadow-sm">
-            Update
+            Perbarui
         </button>
     @else
         <button type="submit"
                 class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition shadow-sm">
-            Save
+            Simpan
         </button>
     @endisset
 </div>

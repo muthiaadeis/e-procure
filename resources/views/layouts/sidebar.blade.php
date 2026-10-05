@@ -1,4 +1,12 @@
-<aside x-data="{ mobileOpen: false, showLogoutModal: false }" x-cloak>
+{{-- resources/views/layouts/sidebar.blade.php --}}
+@php
+    $draftCounts = \App\Models\Draft::where('user_id', auth()->id())
+        ->selectRaw('form, count(*) as total')
+        ->groupBy('form')
+        ->pluck('total', 'form');
+@endphp
+
+<aside x-data="{ mobileOpen: false, showKeluarModal: false }">
 
     {{-- Tombol hamburger khusus mobile --}}
     <button @click="mobileOpen = true"
@@ -14,8 +22,8 @@
          x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
          class="fixed inset-0 bg-gray-900/40 z-40 lg:hidden" style="display:none;"></div>
 
-    <div :class="mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-         class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col transition-transform duration-200 lg:translate-x-0">
+        <div :class="mobileOpen ? '!translate-x-0' : ''"
+             class="-translate-x-full lg:translate-x-0 fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col transition-transform duration-200">
 
         {{-- Brand --}}
         <div class="flex items-center gap-3 px-5 h-16 border-b border-gray-100 shrink-0">
@@ -42,13 +50,16 @@
                     </x-sidebar-link>
 
                     <div class="pt-4 mt-4 border-t border-gray-100 space-y-1">
-                        <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Procurement</p>
+                        <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Pengadaan</p>
 
                         <x-sidebar-link :href="route('material-requests.index')" :active="request()->routeIs('material-requests.*')">
                             <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-5 8h6m-6 4h6"/>
                             </svg>
                             <span class="flex-1 truncate">Material Request</span>
+                            @if(($draftCounts['KEY'] ?? 0) > 0)
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['KEY'] }} draft</span>
+                            @endif
                             <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('material-requests.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">MR</span>
                         </x-sidebar-link>
 
@@ -57,6 +68,9 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 8.25l-9-4.5-9 4.5m18 0v9l-9 4.5m9-13.5l-9 4.5m0 9l-9-4.5v-9m9 13.5v-9m-9-4.5l9 4.5"/>
                             </svg>
                             <span class="flex-1 truncate">Local Purchase</span>
+                            @if(($draftCounts['KEY'] ?? 0) > 0)
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['KEY'] }} draft</span>
+                            @endif
                             <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('rlps.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">RRP</span>
                         </x-sidebar-link>
 
@@ -65,6 +79,9 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
                             </svg>
                             <span class="flex-1 truncate">Purchase Order</span>
+                            @if(($draftCounts['KEY'] ?? 0) > 0)
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['KEY'] }} draft</span>
+                            @endif
                             <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('purchase-orders.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">PO</span>
                         </x-sidebar-link>
 
@@ -73,12 +90,15 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.708 2.6-7.253a1.125 1.125 0 00-1.11-1.35H5.25M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
                             </svg>
                             <span class="flex-1 truncate">Purchase Request</span>
+                            @if(($draftCounts['KEY'] ?? 0) > 0)
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['KEY'] }} draft</span>
+                            @endif
                             <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('purchase-requests.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">PR</span>
                         </x-sidebar-link>
                     </div>
 
                     <div class="pt-4 mt-4 border-t border-gray-100 space-y-1">
-                        <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Master Data</p>
+                        <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Data Master</p>
 
                         <x-sidebar-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*')">
                             <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,18 +118,24 @@
 
                 @if (auth()->user()?->is_admin)
                     <div class="pt-4 mt-4 border-t border-gray-100 space-y-1">
-                        <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Administration</p>
+                        <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Administrasi</p>
                         <x-sidebar-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.index') || request()->routeIs('admin.users.edit')">
                             <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/>
                             </svg>
-                            User Accounts
+                            Akun Pengguna
                         </x-sidebar-link>
                         <x-sidebar-link :href="route('admin.users.create')" :active="request()->routeIs('admin.users.create')">
                             <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                             </svg>
-                            Create User
+                            Tambah Pengguna
+                        </x-sidebar-link>
+                        <x-sidebar-link :href="route('admin.approval-slots.index')" :active="request()->routeIs('admin.approval-slots.*')">
+                            <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/>
+                            </svg>
+                            Posisi Persetujuan
                         </x-sidebar-link>
                     </div>
                 @endif
@@ -124,48 +150,48 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.93l-.149.893c-.09.543-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.893c-.071-.425-.384-.765-.781-.93-.398-.165-.854-.143-1.204.107l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.93l.15-.893z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
-                    Settings
+                    Pengaturan
                 </x-sidebar-link>
             @endunless
 
-            <button type="button" @click="showLogoutModal = true"
+            <button type="button" @click="showKeluarModal = true"
                     class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition cursor-pointer">
                 <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                 </svg>
-                Logout
+                Keluar
             </button>
         </div>
     </div>
 
     {{-- Modal: konfirmasi logout --}}
-    <div x-show="showLogoutModal" x-cloak
+    <div x-show="showKeluarModal" x-cloak
          x-transition:enter="ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
          x-transition:leave="ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
          class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/50 px-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6" @click.outside="showLogoutModal = false">
+        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6" @click.outside="showKeluarModal = false">
             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mx-auto">
                 <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                 </svg>
             </div>
 
-            <h3 class="text-lg font-semibold text-gray-800 text-center mt-4">Log Out?</h3>
+            <h3 class="text-lg font-semibold text-gray-800 text-center mt-4">Keluar dari Sistem?</h3>
             <p class="text-sm text-gray-500 text-center mt-1">
-                You'll need to log in again to access the system.
+                Anda harus masuk kembali untuk mengakses sistem.
             </p>
 
             <div class="mt-6 flex gap-3">
-                <button @click="showLogoutModal = false" type="button"
+                <button @click="showKeluarModal = false" type="button"
                         class="flex-1 py-2.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
-                    Cancel
+                    Batal
                 </button>
 
                 <form method="POST" action="{{ route('logout') }}" class="flex-1">
                     @csrf
                     <button type="submit"
                             class="w-full py-2.5 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700">
-                        Log Out
+                        Keluar
                     </button>
                 </form>
             </div>

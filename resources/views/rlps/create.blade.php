@@ -2,13 +2,13 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
-                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Add Local Purchase (RRP)</h1>
+                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Tambah Local Purchase (RRP)</h1>
                 <p class="text-sm text-gray-500 mt-1">Create a new local purchase request with multi-vendor price comparison.</p>
             </div>
             <nav class="text-sm text-gray-400 mt-1.5">
                 <a href="{{ route('rlps.index') }}" class="hover:text-indigo-600 transition">RRP</a>
                 <span class="mx-1.5">/</span>
-                <span class="text-indigo-600 font-medium">Add New</span>
+                <span class="text-indigo-600 font-medium">Tambah Baru</span>
             </nav>
         </div>
     </x-slot>
@@ -34,7 +34,12 @@
                     </div>
                 @endif
 
-                <form action="{{ route('rlps.store') }}" method="POST" @submit="handleSubmit($event)">
+                <form action="{{ route('rlps.store') }}" method="POST" @submit="handleSubmit($event)"
+                        data-draft="rlps"
+                        data-draft-url="{{ url('drafts') }}"
+                        data-draft-state="items,vendors,selectedVendorUid,_itemSeq,_vendorSeq"
+                        data-draft-skip="{{ count(session()->getOldInput()) ? 1 : 0 }}"
+                        data-draft-resume="{{ request()->boolean('resume') ? 1 : 0 }}">
                     @csrf
                     @include('rlps._form')
                 </form>

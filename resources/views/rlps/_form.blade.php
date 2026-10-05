@@ -1,7 +1,7 @@
 {{-- Header RRP --}}
 <div>
     <h3 class="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">
-        RRP Data
+        Data Dokumen RRP
     </h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
         <div>
@@ -10,7 +10,7 @@
             </label>
             <input type="text" name="no_rlp" value="{{ old('no_rlp', $rlp->no_rlp ?? '') }}" required
                    class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
-            <p class="mt-1.5 text-xs text-gray-400">Enter RRP number.</p>
+            <p class="mt-1.5 text-xs text-gray-400">Masukkan nomor RRP.</p>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
@@ -18,7 +18,7 @@
                    value="{{ isset($rlp) ? ($rlp->date ? $rlp->date->format('d-m-Y') : '-') : now()->format('d-m-Y') }}"
                    readonly tabindex="-1"
                    class="w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm text-sm text-gray-500 cursor-not-allowed focus:ring-0 focus:border-gray-300">
-            <p class="mt-1.5 text-xs text-gray-400">Date is set automatically.</p>
+            <p class="mt-1.5 text-xs text-gray-400">Tanggal diisi otomatis.</p>
         </div>
     </div>
 </div>
@@ -31,14 +31,14 @@
                 <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] font-bold mr-1.5 align-middle">1</span>
                 RRP Items
             </h3>
-            <p class="text-xs text-gray-400 mt-0.5">Pick the Job Code first — Description, PN, and Part Catalog price fill in automatically. Add every item you need before moving to Vendors below.</p>
+            <p class="text-xs text-gray-400 mt-0.5">Pilih Job Code terlebih dahulu — Description, PN, dan harga Part Catalog terisi otomatis. Tambahkan seluruh item sebelum beralih ke Vendor di bawah.</p>
         </div>
         <button type="button" @click="addItem()"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-50 transition shrink-0">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            Add Item
+            Tambah Item
         </button>
     </div>
 
@@ -61,7 +61,7 @@
                         <button type="button" @click="open = !open; $nextTick(() => open && $refs.jcSearch && $refs.jcSearch.focus())"
                                 class="w-full flex items-center justify-between gap-2 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-left hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition">
                             <span class="truncate" :class="item.job_code_id ? 'text-gray-700' : 'text-gray-400'"
-                                  x-text="item.job_code_id ? jobCodeLabel(item.job_code_id) : 'Select job code'"></span>
+                                  x-text="item.job_code_id ? jobCodeLabel(item.job_code_id) : 'Pilih job code'"></span>
                             <svg class="w-4 h-4 text-gray-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
@@ -73,15 +73,15 @@
                              class="absolute z-20 mt-2 w-full sm:w-[28rem] max-h-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
                             <div class="p-2 border-b border-gray-100">
                                 <input type="text" x-ref="jcSearch" x-model="search" @click.stop
-                                       placeholder="Search job code or description..."
+                                       placeholder="Cari job code atau deskripsi..."
                                        class="w-full rounded-lg border-gray-200 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                             <div class="max-h-64 overflow-y-auto py-1">
                                 <template x-if="jobCodeOptions.length === 0">
-                                    <p class="px-4 py-3 text-xs text-gray-400">No job codes yet. Add one in Master Data &rarr; Job Code.</p>
+                                    <p class="px-4 py-3 text-xs text-gray-400">Belum ada job code. Tambahkan di Data Master &rarr; Job Code.</p>
                                 </template>
                                 <template x-if="jobCodeOptions.length > 0 && filteredJobCodeOptions(search).length === 0">
-                                    <p class="px-4 py-3 text-xs text-gray-400">No matching job codes.</p>
+                                    <p class="px-4 py-3 text-xs text-gray-400">Tidak ada job code yang sesuai.</p>
                                 </template>
                                 <template x-for="opt in filteredJobCodeOptions(search)" :key="opt.id">
                                     <button type="button" @click="selectJobCode(item, opt.id); open = false; search = ''"
@@ -207,7 +207,7 @@
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            Add Vendor
+            Tambah Vendor
         </button>
     </div>
 
@@ -290,14 +290,14 @@
                             <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
-                            <span x-text="selectedVendorUid === vendor.uid ? 'Winning Vendor' : 'Pick as Winner'"></span>
+                            <span x-text="selectedVendorUid === vendor.uid ? 'Vendor Pemenang' : 'Pilih Pemenang'"></span>
                         </button>
-                        <button type="button" @click="removeVendor(vIndex)" title="Delete vendor"
+                        <button type="button" @click="removeVendor(vIndex)" title="Hapus vendor"
                                 class="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition shrink-0 whitespace-nowrap">
                             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                             </svg>
-                            <span>Delete</span>
+                            <span>Hapus</span>
                         </button>
                     </div>
                 </div>
@@ -513,29 +513,98 @@
 </div>
 
 @unless(isset($rlp))
-    {{-- Prepared By signature — required right here, before the RRP can be saved,
-         so it can't end up saved without the preparer's signature. --}}
+    {{-- Prepared By signature --}}
     <div class="pt-6 mt-8 border-t border-gray-100">
         <h3 class="text-sm font-semibold text-gray-800 mb-1">
             Prepared By — Digital Signature <span class="text-red-500">*</span>
         </h3>
-        <p class="text-xs text-gray-400 mb-4">Sign below to confirm you're preparing this RRP. Required before saving.</p>
-        <div class="relative bg-gray-50/50 rounded-xl border border-gray-200 p-2">
-            <canvas id="rlp-prepared-signature-canvas" class="w-full h-56 sm:h-64 bg-white rounded-lg touch-none shadow-inner cursor-crosshair"></canvas>
-            <div class="absolute bottom-6 left-6 right-6 border-b border-gray-300 pointer-events-none flex justify-between items-end pb-1">
-                <span class="text-[11px] text-gray-400 font-normal">Sign above this line</span>
-                <span class="text-[11px] text-gray-400 font-normal">✕</span>
-            </div>
-        </div>
-        <div class="mt-2.5">
-            <button type="button" @click="clearSignPad()"
-                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-red-600 bg-gray-100 hover:bg-red-50 px-3.5 py-2 rounded-lg transition">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        <p class="text-xs text-gray-400 mb-3">Upload foto tanda tangan atau tanda tangan langsung di bawah. Wajib sebelum menyimpan.</p>
+
+        {{-- Tab Switcher --}}
+        <div class="flex items-center gap-1.5 mb-3 p-1 bg-gray-100 rounded-xl max-w-md">
+            <button type="button"
+                    @click="signMode = 'upload'"
+                    :class="signMode === 'upload' ? 'bg-white text-indigo-600 font-semibold shadow-xs' : 'text-gray-600 hover:text-gray-900 font-medium'"
+                    class="flex-1 py-1.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
-                Clear Signature
+                Upload Gambar TTD
+            </button>
+            <button type="button"
+                    @click="signMode = 'draw'; $nextTick(() => initSignPad())"
+                    :class="signMode === 'draw' ? 'bg-white text-indigo-600 font-semibold shadow-xs' : 'text-gray-600 hover:text-gray-900 font-medium'"
+                    class="flex-1 py-1.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                </svg>
+                Tulis / Gambar Manual
             </button>
         </div>
+
+        {{-- Mode 1: Upload Gambar --}}
+        <div x-show="signMode === 'upload'" class="space-y-3">
+            <input type="file" x-ref="rlpCreateSigFileInput" class="hidden" accept="image/png,image/jpeg,image/jpg,image/webp" @change="handleSigFile($event)">
+
+            <template x-if="uploadedSignature">
+                <div class="relative bg-gray-50/70 border-2 border-dashed border-indigo-200 rounded-xl p-4 flex flex-col items-center justify-center min-h-[200px]">
+                    <div class="max-h-48 flex items-center justify-center bg-white p-3 rounded-lg shadow-xs border border-gray-100">
+                        <img :src="uploadedSignature" alt="Signature Preview" class="max-h-40 max-w-full object-contain">
+                    </div>
+                    <div class="flex items-center gap-2 mt-3">
+                        <button type="button" @click="$refs.rlpCreateSigFileInput.click()" class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-xs hover:bg-gray-50 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            Ganti Gambar
+                        </button>
+                        <button type="button" @click="uploadedSignature = ''" class="inline-flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-700 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-xs hover:bg-red-50 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Hapus
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="!uploadedSignature">
+                <div @click="$refs.rlpCreateSigFileInput.click()" class="cursor-pointer border-2 border-dashed border-gray-300 hover:border-indigo-500 hover:bg-indigo-50/20 rounded-xl p-8 flex flex-col items-center justify-center text-center transition group">
+                    <div class="w-12 h-12 rounded-full bg-indigo-50 group-hover:bg-indigo-100 text-indigo-600 flex items-center justify-center mb-2.5 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-700 group-hover:text-indigo-600">Klik untuk upload foto / gambar TTD</span>
+                    <span class="text-xs text-gray-400 mt-1">Mendukung format PNG, JPG, JPEG, WEBP (Otomatis disesuaikan & diperjelas)</span>
+                </div>
+            </template>
+        </div>
+
+        {{-- Mode 2: Tulis / Gambar Manual --}}
+        <div x-show="signMode === 'draw'">
+            <div class="relative bg-gray-50/50 rounded-xl border border-gray-200 p-2">
+                <canvas id="rlp-prepared-signature-canvas" class="w-full h-56 sm:h-64 bg-white rounded-lg touch-none shadow-inner cursor-crosshair"></canvas>
+                <div class="absolute bottom-6 left-6 right-6 border-b border-gray-300 pointer-events-none flex justify-between items-end pb-1">
+                    <span class="text-[11px] text-gray-400 font-normal">Tanda tangan di atas garis ini</span>
+                    <span class="text-[11px] text-gray-400 font-normal">✕</span>
+                </div>
+            </div>
+            <div class="mt-2.5">
+                <button type="button" @click="clearSignPad()"
+                        class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-red-600 bg-gray-100 hover:bg-red-50 px-3.5 py-2 rounded-lg transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Clear Signature
+                </button>
+            </div>
+        </div>
+
+        {{-- Ingat TTD Checkbox --}}
+        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+            <input type="checkbox" id="rlp-create-remember-sig" x-model="rememberSignature" class="rounded border-gray-300 text-indigo-600 shadow-xs focus:ring-indigo-500">
+            <label for="rlp-create-remember-sig" class="text-xs text-gray-600 cursor-pointer select-none">
+                Ingat tanda tangan ini di browser untuk dokumen berikutnya
+            </label>
+        </div>
+
         <input type="hidden" name="signature" id="rlp-create-signature-input">
     </div>
 @endunless
@@ -543,7 +612,7 @@
 <div class="flex justify-end gap-3 pt-6 mt-8 border-t border-gray-100">
     <a href="{{ route('rlps.index') }}"
        class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50 transition">
-        Cancel
+        Batal
     </a>
     <button type="submit"
             class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-sm text-white hover:bg-indigo-700 transition shadow-sm">

@@ -3,7 +3,7 @@
         <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">Edit Material Request (MR)</h1>
-                <p class="text-sm text-gray-500 mt-1">Fix the details of a rejected material request.</p>
+                <p class="text-sm text-gray-500 mt-1">Perbaiki rincian material request yang ditolak.</p>
             </div>
             <nav class="text-sm text-gray-400 mt-1.5">
                 <a href="{{ route('material-requests.index') }}" class="hover:text-indigo-600 transition">MR</a>
@@ -118,15 +118,15 @@
                         <div>
                             <div class="flex items-center justify-between mb-4">
                                 <div>
-                                    <h3 class="text-sm font-semibold text-gray-800">Material Items</h3>
-                                    <p class="text-xs text-gray-400 mt-0.5" x-text="items.length + ' item(s) added'"></p>
+                                    <h3 class="text-sm font-semibold text-gray-800">Daftar Item Material</h3>
+                                    <p class="text-xs text-gray-400 mt-0.5" x-text="items.length + ' item ditambahkan'"></p>
                                 </div>
                                 <button type="button" @click="addItem()"
                                         class="inline-flex items-center gap-1.5 text-indigo-600 border border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 px-3.5 py-2 rounded-lg text-xs font-semibold transition">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                     </svg>
-                                    Add Item
+                                    Tambah Item
                                 </button>
                             </div>
 
@@ -244,7 +244,7 @@
                         <a href="{{ route('material-requests.index') }}"
                            onclick="event.preventDefault(); window.location.replace('{{ route('material-requests.index') }}')"
                            class="text-sm font-semibold text-gray-500 hover:text-gray-700 transition">
-                            Cancel
+                            Batal
                         </a>
                         <button type="submit"
                                 :disabled="!isDirty"

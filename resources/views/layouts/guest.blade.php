@@ -22,8 +22,8 @@
             <div class="pointer-events-none absolute -bottom-24 -right-24 w-72 h-72 bg-rose-200/40 rounded-full blur-3xl"></div>
 
             <div class="relative flex flex-col items-center mb-6">
-                <a href="/" class="flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-600/30 mb-3">
-                    <x-application-logo class="w-9 h-9 fill-current text-white" />
+                <a href="/" class="flex items-center justify-center mb-3">
+                    <img src="{{ asset('images\LOGO PRK.jpeg') }}" alt="{{ config('app.name', 'e-Procure') }}" class="h-16 w-auto object-contain rounded-xl shadow-md">
                 </a>
                 <h1 class="text-lg font-semibold text-gray-800">{{ config('app.name', 'e-Procure') }}</h1>
                 <p class="text-xs text-gray-400">Material Request Management</p>

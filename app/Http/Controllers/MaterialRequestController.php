@@ -1,9 +1,11 @@
 <?php
+// app/Http/Controllers/MaterialRequestController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\MaterialRequest;
 use Illuminate\Http\Request;
+use App\Models\Draft;
 
 class MaterialRequestController extends Controller
 {
@@ -128,6 +130,8 @@ class MaterialRequestController extends Controller
             $materialRequest->items()->create($item);
         }
 
+        Draft::forget('material-requests');
+
         return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
             ->with('success', 'Material Request added successfully.');
     }
@@ -201,6 +205,14 @@ class MaterialRequestController extends Controller
     {
         abort_unless(auth()->user()->isInput(), 403, "You don't have permission to delete this Material Request.");
 
+        // MR yang sudah di-approve tidak boleh dihapus (sama seperti aturan edit).
+        // MR yang sedang ditolak / dikembalikan ke inputer tetap boleh dihapus.
+        abort_if(
+            $materialRequest->is_approved_by_a && ! $materialRequest->is_rejected,
+            403,
+            "This MR has already been approved and can't be deleted."
+        );
+
         $materialRequest->delete();
 
         return redirect()->route('material-requests.index')
@@ -211,6 +223,10 @@ class MaterialRequestController extends Controller
     {
         $user = auth()->user();
         abort_unless($user->id === $materialRequest->created_by || $user->isAdmin(), 403, "Only the creator or an administrator can sign this request.");
+
+        // Ttd Prepared By yang sudah ada tidak boleh ditimpa (tombolnya juga cuma
+        // muncul kalau ttd masih kosong), supaya ttd di MR yang sudah approved tidak bisa diganti.
+        abort_if($materialRequest->created_signature, 403, 'This MR has already been signed by the preparer.');
 
         $validated = $request->validate([
             'signature' => 'required|string',

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="font-bold text-2xl text-gray-800 leading-tight">Vendors</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage the list of vendors and their contact information.</p>
+        <p class="text-sm text-gray-500 mt-1">Kelola daftar vendor dan informasi kontak.</p>
     </x-slot>
 
     <div class="py-8" x-data="{
@@ -88,7 +88,7 @@
                                 </svg>
                             </span>
                             <input type="text"
-                                   placeholder="Search by code, name, email, or phone..."
+                                   placeholder="Cari kode, nama, email, atau telepon..."
                                    x-model="q"
                                    x-on:input="runSearch()"
                                    class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm text-sm w-full sm:w-72 pl-10 pr-8 py-2">
@@ -96,7 +96,7 @@
                                     x-show="q && !loading"
                                     x-cloak
                                     x-on:click="clearSearch()"
-                                    title="Clear search"
+                                    title="Hapus pencarian"
                                     class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -117,7 +117,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        Add Vendor
+                        Tambah Vendor
                     </a>
                 </div>
 
@@ -147,11 +147,11 @@
                 <div class="flex items-center justify-center gap-3">
                     <button type="button" @click="confirmOpen = false"
                             class="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
-                        Cancel
+                        Batal
                     </button>
                     <button type="button" @click="submitConfirm()"
                             class="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition">
-                        Yes, Delete
+                        Ya, Hapus
                     </button>
                 </div>
             </div>

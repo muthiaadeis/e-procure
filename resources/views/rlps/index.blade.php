@@ -3,14 +3,14 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="font-bold text-2xl text-gray-800 leading-tight">Local Purchase (RRP)</h1>
-            <p class="text-sm text-gray-500 mt-1">Manage Request for Retail Purchase and multi-vendor comparisons.</p>
+            <p class="text-sm text-gray-500 mt-1">Kelola Rencana Pengadaan (RRP) dan perbandingan penawaran vendor.</p>
         </div>
         <a href="{{ route('rlps.create') }}"
                class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                Add RRP
+                Tambah RRP
             </a>
         </div>
     </x-slot>
@@ -44,6 +44,39 @@
             signLabel: '',
             signPad: null,
             signRequired: false,
+            signMode: 'upload',
+            uploadedSignature: '',
+            rememberSignature: true,
+            initPad() {
+                const setupPad = () => {
+                    const canvas = document.getElementById('rlp-signature-canvas');
+                    if (!canvas) return;
+                    if (!canvas.offsetWidth || !canvas.offsetHeight) {
+                        requestAnimationFrame(setupPad);
+                        return;
+                    }
+
+                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    canvas.width = canvas.offsetWidth * ratio;
+                    canvas.height = canvas.offsetHeight * ratio;
+                    const ctx = canvas.getContext('2d');
+                    ctx.scale(ratio, ratio);
+
+                    if (this.signPad) {
+                        this.signPad.off();
+                        this.signPad = null;
+                    }
+                    if (window.SignaturePad) {
+                        this.signPad = new SignaturePad(canvas, {
+                            backgroundColor: 'rgb(255, 255, 255)',
+                            penColor: 'rgb(17, 24, 39)',
+                            minWidth: 1.2,
+                            maxWidth: 3.2,
+                        });
+                    }
+                };
+                setupPad();
+            },
             openSign(id, label, actionUrl, method = 'PATCH', required = false) {
                 this.signLabel = label;
                 this.signRequired = required;
@@ -52,37 +85,104 @@
                 document.getElementById('rlp-sign-method-input').value = method;
                 this.signModalOpen = true;
 
+                const saved = localStorage.getItem('eprocure_saved_signature');
+                if (saved) {
+                    this.uploadedSignature = saved;
+                    this.signMode = 'upload';
+                }
+
                 this.$nextTick(() => {
-                    const setupPad = () => {
-                        const canvas = document.getElementById('rlp-signature-canvas');
-                        if (!canvas) return;
-                        if (!canvas.offsetWidth || !canvas.offsetHeight) {
-                            // modal belum selesai digambar browser, coba lagi di frame berikutnya
-                            requestAnimationFrame(setupPad);
-                            return;
-                        }
-
-                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                        canvas.width = canvas.offsetWidth * ratio;
-                        canvas.height = canvas.offsetHeight * ratio;
-                        const ctx = canvas.getContext('2d');
-                        ctx.scale(ratio, ratio);
-
-                        if (this.signPad) {
-                            this.signPad.off();
-                            this.signPad = null;
-                        }
-                        if (window.SignaturePad) {
-                            this.signPad = new SignaturePad(canvas, {
-                                backgroundColor: 'rgb(255, 255, 255)',
-                                penColor: 'rgb(17, 24, 39)',
-                                minWidth: 1.2,
-                                maxWidth: 3.2,
-                            });
-                        }
-                    };
-                    setupPad();
+                    if (this.signMode === 'draw') {
+                        this.initPad();
+                    }
                 });
+            },
+            handleSigFile(event) {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file (PNG, JPG, JPEG, WEBP).');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = img.naturalWidth || img.width;
+                        tempCanvas.height = img.naturalHeight || img.height;
+                        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+                        tempCtx.drawImage(img, 0, 0);
+
+                        const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                        const data = imgData.data;
+                        const w = tempCanvas.width;
+                        const h = tempCanvas.height;
+
+                        let minX = w, minY = h, maxX = 0, maxY = 0;
+                        let foundInk = false;
+
+                        for (let y = 0; y < h; y++) {
+                            for (let x = 0; x < w; x++) {
+                                const i = (y * w + x) * 4;
+                                const r = data[i];
+                                const g = data[i + 1];
+                                const b = data[i + 2];
+                                const a = data[i + 3];
+
+                                if (a > 30) {
+                                    const lum = (r * 299 + g * 587 + b * 114) / 1000;
+                                    if (lum < 235) {
+                                        foundInk = true;
+                                        if (x < minX) minX = x;
+                                        if (x > maxX) maxX = x;
+                                        if (y < minY) minY = y;
+                                        if (y > maxY) maxY = y;
+                                    }
+                                }
+                            }
+                        }
+
+                        const pad = 12;
+                        let cropX = 0, cropY = 0, cropW = w, cropH = h;
+                        if (foundInk && maxX >= minX && maxY >= minY) {
+                            cropX = Math.max(0, minX - pad);
+                            cropY = Math.max(0, minY - pad);
+                            cropW = Math.min(w - cropX, (maxX - minX) + pad * 2);
+                            cropH = Math.min(h - cropY, (maxY - minY) + pad * 2);
+                        }
+
+                        const maxDim = 800;
+                        let targetW = cropW;
+                        let targetH = cropH;
+                        if (targetW > maxDim || targetH > maxDim) {
+                            const ratio = Math.min(maxDim / targetW, maxDim / targetH);
+                            targetW = Math.round(targetW * ratio);
+                            targetH = Math.round(targetH * ratio);
+                        }
+
+                        const finalCanvas = document.createElement('canvas');
+                        finalCanvas.width = targetW;
+                        finalCanvas.height = targetH;
+                        const finalCtx = finalCanvas.getContext('2d', { willReadFrequently: true });
+                        finalCtx.drawImage(tempCanvas, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
+
+                        const fData = finalCtx.getImageData(0, 0, targetW, targetH);
+                        const fd = fData.data;
+                        for (let i = 0; i < fd.length; i += 4) {
+                            const lum = (fd[i] * 299 + fd[i + 1] * 587 + fd[i + 2] * 114) / 1000;
+                            if (lum > 220) {
+                                const fade = Math.min(1, Math.max(0, (lum - 220) / 25));
+                                fd[i + 3] = Math.round(fd[i + 3] * (1 - fade));
+                            }
+                        }
+                        finalCtx.putImageData(fData, 0, 0);
+
+                        this.uploadedSignature = finalCanvas.toDataURL('image/png');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
             },
             clearSignPad() {
                 if (this.signPad) {
@@ -95,12 +195,28 @@
                 this.clearSignPad();
             },
             submitSignature() {
-                if (!this.signPad || this.signPad.isEmpty()) {
-                    alert('Please provide a signature before saving.');
-                    return;
+                let signatureData = '';
+                if (this.signMode === 'upload') {
+                    if (!this.uploadedSignature) {
+                        alert('Please choose or upload a signature image first.');
+                        return;
+                    }
+                    signatureData = this.uploadedSignature;
+                } else {
+                    if (!this.signPad || this.signPad.isEmpty()) {
+                        alert('Please provide a signature before saving.');
+                        return;
+                    }
+                    signatureData = this.signPad.toDataURL('image/png');
                 }
-                const dataUrl = this.signPad.toDataURL('image/png');
-                document.getElementById('rlp-signature-data-input').value = dataUrl;
+
+                if (this.rememberSignature && signatureData) {
+                    try {
+                        localStorage.setItem('eprocure_saved_signature', signatureData);
+                    } catch (e) {}
+                }
+
+                document.getElementById('rlp-signature-data-input').value = signatureData;
                 document.getElementById('rlp-sign-form').submit();
             },
             init() {
@@ -186,6 +302,8 @@
         }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
+            <x-draft-list form="rlps" />
+
             @if(session('success'))
                 <div x-data="{ show: true }"
                      x-show="show"
@@ -213,15 +331,25 @@
 
             <div class="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
+                    <table class="w-full text-sm" style="table-layout:fixed; min-width:1000px;">
+                        <colgroup>
+                            <col style="width:56px">
+                            <col style="width:30%">
+                            <col style="width:120px">
+                            <col style="width:24%">
+                            <col style="width:170px">
+                            <col style="width:150px">
+                            <col style="width:80px">
+                        </colgroup>
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">No</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">No RRP</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Date</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Selected Vendor</th>
-                                <th class="pl-8 pr-6 py-3 text-right font-medium text-gray-600">Revenue (Ext)</th>
-                                <th class="pl-6 pr-6 py-3 text-center font-medium text-gray-600 w-32">Action</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">No</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">No RRP</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Date</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Selected Vendor</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-center">Revenue (Ext)</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-center">Status</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -313,24 +441,28 @@
                                 @endphp
                                 <tr @click="openDetail({{ \Illuminate\Support\Js::from($detailPayload) }})"
                                     class="border-t border-gray-100 hover:bg-gray-50/60 cursor-pointer transition">
-                                    <td class="px-4 py-4 text-gray-500">{{ $rlps->firstItem() + $loop->index }}</td>
-                                    <td class="px-4 py-4 font-medium text-gray-800">
-                                        {{ $rlp->no_rlp }}
+                                    <td class="px-3 py-3.5 text-gray-500">{{ $rlps->firstItem() + $loop->index }}</td>
+                                    <td class="px-3 py-3.5 font-medium text-gray-800">
+                                        <div class="truncate" title="{{ $rlp->no_rlp }}">{{ $rlp->no_rlp }}</div>
                                         @if($rlp->purchaseOrder)
-                                            <span class="inline-flex items-center ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                        <div class="mt-1">
+                                            <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
                                                 PO: {{ $rlp->purchaseOrder->po_no }}
                                             </span>
+                                        </div>
                                         @endif
-                                        <span class="inline-flex items-center ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $rlp->is_approved ? 'bg-green-100 text-green-700' : ($rlp->is_acknowledged ? 'bg-indigo-100 text-indigo-700' : ($rlp->is_reviewed ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600')) }}">
+                                    </td>
+                                    <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap">{{ $rlp->date ? $rlp->date->format('d-m-Y') : '-' }}</td>
+                                    <td class="px-3 py-3.5 text-gray-600"><div title="{{ $vendorDisplay }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">{{ $vendorDisplay }}</div></td>
+                                    <td class="px-3 py-3.5 text-center font-medium whitespace-nowrap tabular-nums {{ $rlp->revenue_ext_price < 0 ? 'text-red-600' : 'text-emerald-600' }}">
+                                        Rp {{ number_format($rlp->revenue_ext_price, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-3 py-3.5 text-center whitespace-nowrap">
+                                        <span class="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-semibold {{ $rlp->is_approved ? 'bg-green-100 text-green-700' : ($rlp->is_acknowledged ? 'bg-indigo-100 text-indigo-700' : ($rlp->is_reviewed ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600')) }}">
                                             {{ $rlp->status }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-4 text-gray-600">{{ $rlp->date ? $rlp->date->format('d-m-Y') : '-' }}</td>
-                                    <td class="px-4 py-4 text-gray-600">{{ $vendorDisplay }}</td>
-                                    <td class="pl-8 pr-6 py-4 text-right font-medium whitespace-nowrap {{ $rlp->revenue_ext_price < 0 ? 'text-red-600' : 'text-emerald-600' }}">
-                                        Rp {{ number_format($rlp->revenue_ext_price, 0, ',', '.') }}
-                                    </td>
-                                    <td class="pl-6 pr-6 py-4" @click.stop>
+                                    <td class="px-2 py-3.5" @click.stop>
                                         <div class="flex items-center justify-center gap-3">
                                             <div class="relative" x-data="{ rowOpen: false, menuTop: 0, menuLeft: 0 }" @click.outside="rowOpen = false" @scroll.window="rowOpen = false">
                                                 <button type="button"
@@ -366,7 +498,7 @@
                                                             <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                                             </svg>
-                                                            Sign & Review
+                                                            Tanda Tangani & Tinjau
                                                         </button>
                                                     @elseif($canSignAcknowledge)
                                                         <button type="button"
@@ -375,7 +507,7 @@
                                                             <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                                             </svg>
-                                                            Sign & Acknowledge
+                                                            Tanda Tangani & Mengetahui
                                                         </button>
                                                     @elseif($canSignApprove)
                                                         <button type="button"
@@ -384,7 +516,7 @@
                                                             <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                                             </svg>
-                                                            Sign & Approve
+                                                            Tanda Tangani & Setujui
                                                         </button>
                                                     @elseif($canSignPrepared && ! $rlp->created_signature)
                                                         <button type="button"
@@ -403,7 +535,7 @@
                                                             <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
                                                             </svg>
-                                                            View PO
+                                                            Lihat PO
                                                         </a>
                                                     @else
                                                         <a href="{{ route('purchase-orders.create', ['from_rlp' => $rlp->id]) }}"
@@ -411,7 +543,7 @@
                                                             <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                                             </svg>
-                                                            Generate PO
+                                                            Buat PO
                                                         </a>
                                                     @endif
 
@@ -428,19 +560,19 @@
                                                         @method('DELETE')
                                                     </form>
                                                     <button type="button"
-                                                            @click="rowOpen = false; openConfirm('Delete RRP {{ $rlp->no_rlp }}? This action cannot be undone.', 'delete-rlp-{{ $rlp->id }}')"
+                                                            @click="rowOpen = false; openConfirm('Hapus RRP {{ $rlp->no_rlp }}? This action cannot be undone.', 'delete-rlp-{{ $rlp->id }}')"
                                                             class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
                                                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                         </svg>
-                                                        Delete
+                                                        Hapus
                                                     </button>
                                                     <a href="{{ route('rlps.print', $rlp) }}" target="_blank"
                                                         class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
                                                             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-12 0h12v6H6v-6z"/>
                                                             </svg>
-                                                            Print
+                                                            Cetak
                                                         </a>
                                                 </div>
                                             </div>
@@ -449,7 +581,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-4 py-10 text-center text-gray-400">
+                                    <td colspan="7" class="px-4 py-10 text-center text-gray-400">
                                         No RRP data yet.
                                     </td>
                                 </tr>
@@ -499,10 +631,9 @@
                     </button>
                 </div>
 
-                <div class="flex items-center justify-between mb-1">
-                    <p class="text-sm font-medium text-indigo-600" x-text="detailData.no_rlp"></p>
-                    <p class="text-xs text-gray-400" x-text="detailData.date"></p>
-                    <span class="inline-block px-3 py-1 rounded-full text-xs font-medium"
+                <div class="flex items-center justify-between gap-3 mb-1">
+                    <p class="text-sm font-semibold text-indigo-600 truncate" x-text="detailData.no_rlp"></p>
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-medium shrink-0"
                           :class="{
                             'bg-green-100 text-green-700': detailData.status === 'Approved',
                             'bg-blue-100 text-blue-700': detailData.status === 'Pending Approval',
@@ -576,7 +707,7 @@
                     <div class="pt-4 border-t border-gray-100">
                         <div class="flex items-center justify-between gap-2 mb-3">
                             <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700">Approval Workflow</h4>
-                            <span class="text-[10px] text-gray-400">Sequential digital signatures</span>
+                            <span class="text-[10px] text-gray-400">Tahapan tanda tangan digital</span>
                         </div>
 
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -594,16 +725,17 @@
                                     <h5 class="text-[11px] font-bold text-gray-800 truncate" title="Prepared By">Prepared By</h5>
                                 </div>
 
-                                <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[64px] flex flex-col items-center justify-center">
+                                <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[96px] sm:min-h-[110px] flex flex-col items-center justify-center">
                                     <template x-if="detailData.created_signature">
-                                        <img :src="detailData.created_signature" alt="signature" class="h-11 object-contain filter drop-shadow-xs">
+                                        <img :src="detailData.created_signature" alt="signature" data-sig-fit class="h-20 sm:h-24 w-full object-contain filter drop-shadow-xs p-1">
                                     </template>
                                     <template x-if="!detailData.created_signature && detailData.can_sign_prepared">
                                         <button type="button"
                                                 @click="openSign(detailData.id, 'Prepared By (' + detailData.no_rlp + ')', detailData.sign_prepared_url, 'POST')"
-                                                class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1 px-2 rounded shadow-xs transition">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1.5 px-3 rounded shadow-xs transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                             Sign
+                                            Tanda Tangani
                                         </button>
                                     </template>
                                     <template x-if="!detailData.created_signature && !detailData.can_sign_prepared">
@@ -631,16 +763,17 @@
                                     <h5 class="text-[11px] font-bold text-gray-800 truncate" title="Review By">Review By</h5>
                                 </div>
 
-                                <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[64px] flex flex-col items-center justify-center">
+                                <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[96px] sm:min-h-[110px] flex flex-col items-center justify-center">
                                     <template x-if="detailData.reviewed_signature">
-                                        <img :src="detailData.reviewed_signature" alt="signature" class="h-11 object-contain filter drop-shadow-xs">
+                                        <img :src="detailData.reviewed_signature" alt="signature" data-sig-fit class="h-20 sm:h-24 w-full object-contain filter drop-shadow-xs p-1">
                                     </template>
                                     <template x-if="!detailData.reviewed_signature && detailData.can_sign_review">
                                         <button type="button"
                                                 @click="openSign(detailData.id, 'Review By (' + detailData.no_rlp + ')', detailData.review_url, 'PATCH')"
-                                                class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1 px-2 rounded shadow-xs transition">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1.5 px-3 rounded shadow-xs transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                             Sign
+                                            Tanda Tangani
                                         </button>
                                     </template>
                                     <template x-if="!detailData.reviewed_signature && !detailData.can_sign_review">
@@ -652,6 +785,7 @@
                                     <p class="text-[10px] font-semibold text-gray-800 truncate" x-text="detailData.reviewed_by || 'Reviewer'"></p>
                                     <p class="text-[9px] text-emerald-600 font-medium mt-0.5 leading-none" x-show="detailData.reviewed_at" x-text="detailData.reviewed_at"></p>
                                     <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-show="!detailData.reviewed_at">Awaiting</p>
+                                    <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-show="!detailData.reviewed_at">Menunggu</p>
                                 </div>
                             </div>
 
@@ -669,19 +803,21 @@
                                     <h5 class="text-[11px] font-bold text-gray-800 truncate" title="Acknowledge By">Acknowledge By</h5>
                                 </div>
 
-                                <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[64px] flex flex-col items-center justify-center">
+                                <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[96px] sm:min-h-[110px] flex flex-col items-center justify-center">
                                     <template x-if="detailData.acknowledged_signature">
-                                        <img :src="detailData.acknowledged_signature" alt="signature" class="h-11 object-contain filter drop-shadow-xs">
+                                        <img :src="detailData.acknowledged_signature" alt="signature" data-sig-fit class="h-20 sm:h-24 w-full object-contain filter drop-shadow-xs p-1">
                                     </template>
                                     <template x-if="!detailData.acknowledged_signature && !detailData.is_reviewed">
                                         <span class="text-[9px] text-gray-400">Locked (Step 2)</span>
+                                        <span class="text-[9px] text-gray-400">Terkunci (Tahap 2)</span>
                                     </template>
                                     <template x-if="!detailData.acknowledged_signature && detailData.is_reviewed && detailData.can_sign_acknowledge">
                                         <button type="button"
                                                 @click="openSign(detailData.id, 'Acknowledge By (' + detailData.no_rlp + ')', detailData.acknowledge_url, 'PATCH')"
-                                                class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1 px-2 rounded shadow-xs transition">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1.5 px-3 rounded shadow-xs transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                             Sign
+                                            Tanda Tangani
                                         </button>
                                     </template>
                                     <template x-if="!detailData.acknowledged_signature && detailData.is_reviewed && !detailData.can_sign_acknowledge">
@@ -693,6 +829,7 @@
                                     <p class="text-[10px] font-semibold text-gray-800 truncate" x-text="detailData.acknowledger || 'Acknowledger'"></p>
                                     <p class="text-[9px] text-emerald-600 font-medium mt-0.5 leading-none" x-show="detailData.acknowledged_at" x-text="detailData.acknowledged_at"></p>
                                     <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-show="!detailData.acknowledged_at">Awaiting</p>
+                                    <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-show="!detailData.acknowledged_at">Menunggu</p>
                                 </div>
                             </div>
 
@@ -710,19 +847,21 @@
                                     <h5 class="text-[11px] font-bold text-gray-800 truncate" title="Approved By">Approved By</h5>
                                 </div>
 
-                                <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[64px] flex flex-col items-center justify-center">
+                                <div class="my-1.5 py-1 border-y border-dashed border-gray-200/80 min-h-[96px] sm:min-h-[110px] flex flex-col items-center justify-center">
                                     <template x-if="detailData.approved_signature">
-                                        <img :src="detailData.approved_signature" alt="signature" class="h-11 object-contain filter drop-shadow-xs">
+                                        <img :src="detailData.approved_signature" alt="signature" data-sig-fit class="h-20 sm:h-24 w-full object-contain filter drop-shadow-xs p-1">
                                     </template>
                                     <template x-if="!detailData.approved_signature && !detailData.is_acknowledged">
                                         <span class="text-[9px] text-gray-400">Locked (Step 3)</span>
+                                        <span class="text-[9px] text-gray-400">Terkunci (Tahap 3)</span>
                                     </template>
                                     <template x-if="!detailData.approved_signature && detailData.is_acknowledged && detailData.can_sign_approve">
                                         <button type="button"
                                                 @click="openSign(detailData.id, 'Approved By (' + detailData.no_rlp + ')', detailData.approve_url, 'PATCH')"
-                                                class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1 px-2 rounded shadow-xs transition">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                class="inline-flex items-center justify-center gap-1 text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 py-1.5 px-3 rounded shadow-xs transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                             Sign
+                                            Tanda Tangani
                                         </button>
                                     </template>
                                     <template x-if="!detailData.approved_signature && detailData.is_acknowledged && !detailData.can_sign_approve">
@@ -734,6 +873,7 @@
                                     <p class="text-[10px] font-semibold text-gray-800 truncate" x-text="detailData.approver || 'Approver'"></p>
                                     <p class="text-[9px] text-emerald-600 font-medium mt-0.5 leading-none" x-show="detailData.approved_at" x-text="detailData.approved_at"></p>
                                     <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-show="!detailData.approved_at">Awaiting</p>
+                                    <p class="text-[9px] text-gray-400 mt-0.5 leading-none" x-show="!detailData.approved_at">Menunggu</p>
                                 </div>
                             </div>
                         </div>
@@ -746,7 +886,7 @@
                                 <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.318 2.226c.079.554-.36 1.052-.92 1.052H6.94c-.56 0-.998-.498-.92-1.052L6.34 18m11.318 0h1.093c1.036 0 1.875-.84 1.875-1.875V9.375c0-1.036-.84-1.875-1.875-1.875H4.875C3.839 7.5 3 8.34 3 9.375v6.75c0 1.035.84 1.875 1.875 1.875H6.34m10.94 0H6.34m9.94-11.25V4.875c0-1.036-.84-1.875-1.875-1.875H8.625C7.59 3 6.75 3.84 6.75 4.875v2.625"/>
                                 </svg>
-                                Print / PDF
+                                Cetak / PDF
                             </a>
                             <template x-if="detailData.has_po">
                                 <a :href="detailData.po_url" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
@@ -761,12 +901,12 @@
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                     </svg>
-                                    Generate Purchase Order (PO)
+                                    Buat Purchase Order (PO)
                                 </a>
                             </template>
                         </div>
                         <button type="button" @click="detailOpen = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition ml-auto">
-                            Close
+                            Tutup
                         </button>
                     </div>
                 </div>
@@ -783,17 +923,17 @@
             <div x-show="confirmOpen"
                  class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-sm sm:w-full sm:mx-auto relative">
                 <div class="px-6 py-5">
-                    <h3 class="text-base font-semibold text-gray-800 mb-2">Confirmation</h3>
+                    <h3 class="text-base font-semibold text-gray-800 mb-2">Konfirmasi</h3>
                     <p class="text-sm text-gray-600" x-text="confirmMessage"></p>
                 </div>
                 <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3">
                     <button type="button" @click="confirmOpen = false"
                             class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50 transition">
-                        Cancel
+                        Batal
                     </button>
                     <button type="button" @click="submitConfirm()"
                             class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-sm text-white hover:bg-red-700 transition shadow-sm">
-                        Yes, Delete
+                        Ya, Hapus
                     </button>
                 </div>
             </div>
@@ -805,8 +945,8 @@
             <div class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 sm:p-8">
                 <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900">Digital Signature Pad</h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Signing as: <strong class="text-indigo-600" x-text="signLabel"></strong></p>
+                        <h3 class="text-lg font-bold text-gray-900">Tanda Tangan Digital</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Menandatangani sebagai: <strong class="text-indigo-600" x-text="signLabel"></strong></p>
                     </div>
                     <button type="button" x-show="!signRequired" @click="closeSignModal()" class="text-gray-400 hover:text-gray-600 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -822,32 +962,123 @@
                     <span>Your data has been saved. Please sign as Prepared By before continuing.</span>
                 </div>
 
-                {{-- Spacious Canvas --}}
-                <div class="relative bg-gray-50/50 rounded-xl border border-gray-200 p-2">
-                    <canvas id="rlp-signature-canvas" class="w-full h-64 sm:h-72 bg-white rounded-lg touch-none shadow-inner cursor-crosshair"></canvas>
-                    <div class="absolute bottom-6 left-6 right-6 border-b border-gray-300 pointer-events-none flex justify-between items-end pb-1">
-                        <span class="text-[11px] text-gray-400 font-normal">Sign above this line</span>
-                        <span class="text-[11px] text-gray-400 font-normal">✕</span>
+                {{-- Dua Pilihan Metode Tanda Tangan --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    {{-- Pilihan 1: Upload Gambar --}}
+                    <label class="relative flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition select-none"
+                           :class="signMode === 'upload' ? 'border-indigo-600 bg-indigo-50/50 text-indigo-950 shadow-xs ring-1 ring-indigo-500/20' : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'">
+                        <input type="radio" name="sign_method_rlp_modal" value="upload" x-model="signMode" class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                                 :class="signMode === 'upload' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold leading-snug">Pilihan 1: Upload Gambar</p>
+                                <p class="text-[11px] text-gray-500 leading-none mt-0.5">Upload file foto / scan TTD</p>
+                            </div>
+                        </div>
+                    </label>
+
+                    {{-- Pilihan 2: Tulis / Coret Manual --}}
+                    <label class="relative flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition select-none"
+                           :class="signMode === 'draw' ? 'border-indigo-600 bg-indigo-50/50 text-indigo-950 shadow-xs ring-1 ring-indigo-500/20' : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'">
+                        <input type="radio" name="sign_method_rlp_modal" value="draw" x-model="signMode" @change="$nextTick(() => initPad())" class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                                 :class="signMode === 'draw' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold leading-snug">Pilihan 2: Tulis / Coret Tangan</p>
+                                <p class="text-[11px] text-gray-500 leading-none mt-0.5">Tanda tangan langsung di layar</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                {{-- Mode 1: Upload Signature --}}
+                <div x-show="signMode === 'upload'" x-cloak class="space-y-3">
+                    <div class="border-2 border-dashed border-gray-300 hover:border-indigo-500 rounded-xl p-5 text-center bg-gray-50/50 transition cursor-pointer relative"
+                         @click="$refs.sigFileInputRlp.click()">
+                        <input type="file"
+                               x-ref="sigFileInputRlp"
+                               @change="handleSigFile($event)"
+                               accept="image/png,image/jpeg,image/jpg,image/webp"
+                               class="hidden">
+
+                        <template x-if="!uploadedSignature">
+                            <div class="py-6">
+                                <div class="w-12 h-12 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-sm font-semibold text-gray-700">Klik untuk upload foto / scan tanda tangan</p>
+                                <p class="text-xs text-gray-400 mt-1">Format PNG, JPG, JPEG (latar kertas putih otomatis dibuat transparan)</p>
+                            </div>
+                        </template>
+
+                        <template x-if="uploadedSignature">
+                            <div class="py-2">
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Pratinjau Tanda Tangan (Siap Digunakan)</p>
+                                <div class="max-w-xs mx-auto p-3 bg-white rounded-lg border border-gray-200 shadow-inner flex items-center justify-center min-h-[120px]">
+                                    <img :src="uploadedSignature" alt="Signature preview" class="max-h-28 max-w-full object-contain filter drop-shadow-xs">
+                                </div>
+                                <p class="text-xs text-indigo-600 font-medium mt-2 hover:underline">Klik di sini jika ingin mengganti gambar</p>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
+                {{-- Mode 2: Draw on Canvas --}}
+                <div x-show="signMode === 'draw'" x-cloak class="space-y-2">
+                    <div class="relative bg-gray-50/50 rounded-xl border border-gray-200 p-2">
+                        <canvas id="rlp-signature-canvas" class="w-full h-64 sm:h-72 bg-white rounded-lg touch-none shadow-inner cursor-crosshair"></canvas>
+                        <div class="absolute bottom-6 left-6 right-6 border-b border-gray-300 pointer-events-none flex justify-between items-end pb-1">
+                            <span class="text-[11px] text-gray-400 font-normal">Tanda tangan di atas garis ini</span>
+                            <span class="text-[11px] text-gray-400 font-normal">✕</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Option to remember signature in browser --}}
+                <div class="mt-3 flex items-center gap-2">
+                    <input type="checkbox" id="remember_sig_rlp_modal" x-model="rememberSignature" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 text-xs">
+                    <label for="remember_sig_rlp_modal" class="text-xs text-gray-600 cursor-pointer select-none">
+                        Simpan tanda tangan ini di browser untuk pemakaian berikutnya
+                    </label>
+                </div>
+
                 <div class="flex flex-wrap items-center justify-between gap-3 mt-5">
-                    <button type="button" @click="clearSignPad()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-red-600 bg-gray-100 hover:bg-red-50 px-3.5 py-2 rounded-lg transition">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                        Clear Signature
-                    </button>
+                    <div>
+                        <button type="button" x-show="signMode === 'draw'" @click="clearSignPad()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-red-600 bg-gray-100 hover:bg-red-50 px-3.5 py-2 rounded-lg transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Hapus Tanda Tangan
+                        </button>
+                        <button type="button" x-show="signMode === 'upload' && uploadedSignature" @click="uploadedSignature = ''" class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-red-600 bg-gray-100 hover:bg-red-50 px-3.5 py-2 rounded-lg transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Hapus Gambar
+                        </button>
+                    </div>
                     <div class="flex gap-2.5">
                         <button type="button" x-show="!signRequired" @click="closeSignModal()" class="text-xs font-semibold text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg transition">
-                            Cancel
+                            Batal
                         </button>
                         <button type="button" @click="submitSignature()"
                                 class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold px-5 py-2.5 rounded-lg shadow-sm transition">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
-                            Save & Sign Document
+                            Simpan & Tanda Tangani
                         </button>
                     </div>
                 </div>

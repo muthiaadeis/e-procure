@@ -6,6 +6,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Draft;
 
 class PurchaseRequestController extends Controller
 {
@@ -96,6 +97,8 @@ class PurchaseRequestController extends Controller
 
             return $pr;
         });
+
+        Draft::forget('purchase-requests', $request->input('purchase_order_id'));
 
         return redirect()->route('purchase-requests.show', $purchaseRequest)
             ->with('success', 'Purchase Request added successfully.');

@@ -2,13 +2,13 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
-                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Add Vendor</h1>
-                <p class="text-sm text-gray-500 mt-1">Fill in the vendor's details. Vendor code is generated automatically.</p>
+                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Tambah Vendor</h1>
+                <p class="text-sm text-gray-500 mt-1">Isi rincian vendor. Kode vendor akan dibuat secara otomatis.</p>
             </div>
             <nav class="text-sm text-gray-400 mt-1.5">
                 <a href="{{ route('vendors.index') }}" class="hover:text-indigo-600 transition">Vendor</a>
                 <span class="mx-1.5">/</span>
-                <span class="text-indigo-600 font-medium">Add New</span>
+                <span class="text-indigo-600 font-medium">Tambah Baru</span>
             </nav>
         </div>
     </x-slot>

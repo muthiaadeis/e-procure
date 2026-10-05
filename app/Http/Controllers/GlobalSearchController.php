@@ -111,7 +111,6 @@ class GlobalSearchController extends Controller
                 'badge' => 'VDR',
                 'badge_class' => 'bg-blue-50 text-blue-700 border-blue-200',
                 'title' => $vendor->vendor_name,
-                'subtitle' => ($vendor->vendor_code ? $vendor->vendor_code . ' • ' : '') . ($vendor->email ?? ($vendor->phone ?? 'Vendor Aktif')),
                 'subtitle' => ($vendor->vendor_code ? $vendor->vendor_code . ' • ' : '') . ($vendor->email ?? ($vendor->phone ?? 'Active Vendor')),
                 'status' => 'Master Data',
                 'url' => route('vendors.index'),
@@ -182,7 +181,7 @@ class GlobalSearchController extends Controller
                 'message' => 'Requires review and verification of local purchase document.',
                 'time' => $r->created_at->diffForHumans(),
                 'sort_at' => $r->created_at,
-                'url' => route('rlps.index'),
+                'url' => route('rlps.index', ['auto_open' => $r->id]),
             ];
         }
 

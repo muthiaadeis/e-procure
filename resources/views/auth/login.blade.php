@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-6 text-center">
-        <h2 class="text-xl font-semibold text-gray-800">Welcome Back</h2>
-        <p class="mt-1 text-sm text-gray-500">Log in to manage your Material Requests</p>
+        <h2 class="text-xl font-semibold text-gray-800">Selamat Datang Kembali</h2>
+        <p class="mt-1 text-sm text-gray-500">Masuk untuk mengelola sistem pengadaan dokumen</p>
     </div>
 
     <!-- Session Status -->
@@ -63,7 +63,7 @@
         </div>
 
         <x-primary-button class="w-full justify-center py-2.5">
-            {{ __('Log in') }}
+            Masuk
         </x-primary-button>
     </form>
 </x-guest-layout>

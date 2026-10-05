@@ -2,15 +2,15 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Edit User Account</h1>
-                <p class="text-sm text-gray-500 mt-1">Update profile information and system role for {{ $user->name }}.</p>
+                <h1 class="font-bold text-2xl text-gray-800 leading-tight">Edit Akun Pengguna</h1>
+                <p class="text-sm text-gray-500 mt-1">Perbarui informasi profil dan peran sistem untuk {{ $user->name }}.</p>
             </div>
             <a href="{{ route('admin.users.index') }}"
                class="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
-                Back to User List
+                Kembali ke Daftar Pengguna
             </a>
         </div>
     </x-slot>
@@ -23,7 +23,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <span>Please correct the errors below:</span>
+                    <span>Silakan perbaiki kesalahan berikut:</span>
                 </div>
                 <ul class="list-disc list-inside text-xs text-red-600 space-y-1">
                     @foreach ($errors->all() as $error)
@@ -41,13 +41,13 @@
             <div>
                 <h3 class="text-base font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5 flex items-center gap-2">
                     <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold">1</span>
-                    User Identity & Contact
+                    Identitas Pengguna & Kontak
                 </h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                            Full Name <span class="text-red-500">*</span>
+                            Nama Lengkap <span class="text-red-500">*</span>
                         </label>
                         <input type="text"
                                name="name"
@@ -58,7 +58,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                            Email Address (Login Username) <span class="text-red-500">*</span>
+                            Alamat Email (Username Login) <span class="text-red-500">*</span>
                         </label>
                         <input type="email"
                                name="email"
@@ -73,7 +73,7 @@
             <div>
                 <h3 class="text-base font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5 flex items-center gap-2">
                     <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold">2</span>
-                    Role & Workflow Assignment
+                    Penetapan Peran & Alur Kerja
                 </h3>
 
                 @php $currentRole = old('role', $user->role); @endphp
@@ -89,7 +89,7 @@
                         </div>
                         <p class="text-sm font-bold text-gray-800">User Input</p>
                         <p class="text-xs text-gray-500 mt-1 leading-relaxed">
-                            Can draft and submit Material Requests (MR) and initiate Local Purchase (RRP) documents.
+                            Dapat membuat dan mengajukan draft Material Request (MR) dan Pembelian Lokal (RRP).
                         </p>
                     </label>
 
@@ -102,9 +102,9 @@
                             <input type="radio" name="role" value="approver_a" class="text-indigo-600 focus:ring-indigo-500"
                                    {{ $currentRole === 'approver_a' ? 'checked' : '' }}>
                         </div>
-                        <p class="text-sm font-bold text-gray-800">First-Stage Approver</p>
+                        <p class="text-sm font-bold text-gray-800">Penyetuju Tahap 1</p>
                         <p class="text-xs text-gray-500 mt-1 leading-relaxed">
-                            Reviews and authorizes newly submitted Material Requests (Approval Stage 1).
+                            Meninjau dan menyetujui pengajuan Material Request (Persetujuan Tahap 1).
                         </p>
                     </label>
 
@@ -117,9 +117,9 @@
                             <input type="radio" name="role" value="approver_c" class="text-indigo-600 focus:ring-indigo-500"
                                    {{ $currentRole === 'approver_c' ? 'checked' : '' }}>
                         </div>
-                        <p class="text-sm font-bold text-gray-800">Second-Stage Approver</p>
+                        <p class="text-sm font-bold text-gray-800">Penyetuju Tahap 2</p>
                         <p class="text-xs text-gray-500 mt-1 leading-relaxed">
-                            Final decision maker approving Material Requests before Finance disbursement (Approval Stage 2).
+                            Pengambil keputusan akhir yang menyetujui Material Request sebelum pencairan Finance (Persetujuan Tahap 2).
                         </p>
                     </label>
 
@@ -132,9 +132,9 @@
                             <input type="radio" name="role" value="finance" class="text-indigo-600 focus:ring-indigo-500"
                                    {{ $currentRole === 'finance' ? 'checked' : '' }}>
                         </div>
-                        <p class="text-sm font-bold text-gray-800">Finance & Payment</p>
+                        <p class="text-sm font-bold text-gray-800">Keuangan & Pembayaran</p>
                         <p class="text-xs text-gray-500 mt-1 leading-relaxed">
-                            Verifies payment execution and marks approved Material Requests as Paid.
+                            Memverifikasi pembayaran dan menandai Material Request yang disetujui sebagai Lunas.
                         </p>
                     </label>
                 </div>
@@ -149,12 +149,12 @@
                            {{ $user->id === auth()->id() ? 'disabled' : '' }}
                            class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                     <label for="is_admin" class="cursor-pointer select-none">
-                        <span class="block text-sm font-bold text-gray-800">Administrator Access</span>
+                        <span class="block text-sm font-bold text-gray-800">Akses Administrator</span>
                         <span class="block text-xs text-gray-500 mt-0.5">
                             @if ($user->id === auth()->id())
-                                (You cannot remove admin rights from your currently logged-in account).
+                                (Anda tidak dapat mencabut hak admin dari akun Anda yang sedang login).
                             @else
-                                Allows this user to access the Admin Panel, manage user accounts, and reset passwords.
+                                Mengizinkan pengguna ini mengakses Panel Admin, mengelola akun pengguna, dan mereset password.
                             @endif
                         </span>
                     </label>
@@ -169,9 +169,9 @@
                            {{ old('must_change_password', $user->must_change_password) ? 'checked' : '' }}
                            class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                     <label for="must_change_password" class="cursor-pointer select-none">
-                        <span class="block text-sm font-bold text-gray-800">Require Password Change on Next Login</span>
+                        <span class="block text-sm font-bold text-gray-800">Wajibkan Ganti Password pada Login Berikutnya</span>
                         <span class="block text-xs text-gray-500 mt-0.5">
-                            When enabled, the user will be prompted to choose a new personal password upon their next login.
+                            Jika diaktifkan, pengguna akan diminta memilih password baru saat login berikutnya.
                         </span>
                     </label>
                 </div>
@@ -181,14 +181,14 @@
             <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
                 <a href="{{ route('admin.users.index') }}"
                    class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition">
-                    Cancel
+                    Batal
                 </a>
                 <button type="submit"
                         class="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 shadow-sm transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Save Changes
+                    Simpan Perubahan
                 </button>
             </div>
         </form>

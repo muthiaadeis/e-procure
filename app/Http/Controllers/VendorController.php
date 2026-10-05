@@ -1,42 +1,55 @@
 <?php
+// app/Http/Controllers/VendorController.php
 
 namespace App\Http\Controllers;
 
+use App\Models\RlpVendor;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 
 class VendorController extends Controller
 {
-    public function index(Request $request)
-{
-    $search = $request->query('search');
-
-    $vendors = Vendor::query()
-        ->when($search, function ($query) use ($search) {
-            $query->where('vendor_code', 'like', "%{$search}%")
-                ->orWhere('vendor_name', 'like', "%{$search}%")
-                ->orWhere('brand', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%")
-                ->orWhere('phone', 'like', "%{$search}%");
-        })
-        ->latest()
-        ->paginate(10)
-        ->withQueryString();
-
-    if ($request->ajax() || $request->wantsJson()) {
-        return view('vendors._table', compact('vendors', 'search'));
+    // Vendor ikut dari project / RRP, jadi yang boleh mengubahnya cuma user input
+    // (pembuat dokumen). Approver dan finance hanya boleh melihat daftar.
+    private function authorizeManage(): void
+    {
+        abort_unless(auth()->user()->isInput(), 403, "You don't have permission to manage vendors.");
     }
 
-    return view('vendors.index', compact('vendors', 'search'));
+    public function index(Request $request)
+    {
+        $search = $request->query('search');
+
+        $vendors = Vendor::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where('vendor_code', 'like', "%{$search}%")
+                    ->orWhere('vendor_name', 'like', "%{$search}%")
+                    ->orWhere('brand', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return view('vendors._table', compact('vendors', 'search'));
+        }
+
+        return view('vendors.index', compact('vendors', 'search'));
     }
 
     public function create()
     {
+        $this->authorizeManage();
+
         return view('vendors.create');
     }
 
     public function store(Request $request)
     {
+        $this->authorizeManage();
+
         $validated = $this->validateVendor($request);
 
         Vendor::create([
@@ -53,11 +66,15 @@ class VendorController extends Controller
 
     public function edit(Vendor $vendor)
     {
+        $this->authorizeManage();
+
         return view('vendors.edit', compact('vendor'));
     }
 
     public function update(Request $request, Vendor $vendor)
     {
+        $this->authorizeManage();
+
         $validated = $this->validateVendor($request, $vendor->id);
 
         // vendor_code auto & tetap, tidak diubah lewat form
@@ -74,6 +91,16 @@ class VendorController extends Controller
 
     public function destroy(Vendor $vendor)
     {
+        $this->authorizeManage();
+
+        // Vendor yang sudah dipakai di penawaran RRP tidak boleh dihapus,
+        // kalau dihapus relasinya di RRP lama jadi kosong.
+        abort_if(
+            RlpVendor::where('vendor_id', $vendor->id)->exists(),
+            403,
+            "This vendor is already used in an RRP and can't be deleted."
+        );
+
         $vendor->delete();
 
         return redirect()->route('vendors.index')->with('success', 'Vendor deleted successfully.');

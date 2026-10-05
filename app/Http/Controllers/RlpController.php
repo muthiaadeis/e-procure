@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/RlpController.php
 
 namespace App\Http\Controllers;
 
@@ -7,9 +8,24 @@ use App\Models\Rlp;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Draft;
 
 class RlpController extends Controller
 {
+    // Pembuatan / perubahan / penghapusan RRP hanya untuk user input (pembuat dokumen),
+    // sama seperti aturan di Material Request.
+    private function authorizeInput(string $action): void
+    {
+        abort_unless(auth()->user()->isInput(), 403, "You don't have permission to {$action} an RRP.");
+    }
+
+    // Setelah RRP di-review (tanda tangan tahap 1 masuk), isinya dikunci supaya
+    // dokumen yang sudah ditandatangani tidak bisa berubah diam-diam.
+    private function abortIfReviewed(Rlp $rlp, string $action): void
+    {
+        abort_if($rlp->is_reviewed, 403, "This RRP can't be {$action} because it has already been reviewed.");
+    }
+
     public function index()
     {
         $rlps = Rlp::with(
@@ -28,6 +44,8 @@ class RlpController extends Controller
 
     public function create()
     {
+        $this->authorizeInput('create');
+
         $vendorOptions = Vendor::orderBy('vendor_name')->get(['id', 'vendor_name']);
         $jobCodeOptions = JobCode::orderBy('job_code')->get(['id', 'job_code', 'description', 'price', 'part_number']);
 
@@ -36,6 +54,8 @@ class RlpController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizeInput('create');
+
         $validated = $this->validateRlp($request);
 
         // Ttd Prepared By wajib diisi bareng form, biar RRP gak bisa kesimpan
@@ -58,11 +78,16 @@ class RlpController extends Controller
             return $rlp;
         });
 
+        Draft::forget('rlps');
+
         return redirect()->route('rlps.index', ['auto_open' => $rlp->id])->with('success', 'RRP added successfully.');
     }
 
     public function edit(Rlp $rlp)
     {
+        $this->authorizeInput('edit');
+        $this->abortIfReviewed($rlp, 'edited');
+
         $rlp->load('items.jobCode', 'items.vendors', 'costs');
         $vendorOptions = Vendor::orderBy('vendor_name')->get(['id', 'vendor_name']);
         $jobCodeOptions = JobCode::orderBy('job_code')->get(['id', 'job_code', 'description', 'price', 'part_number']);
@@ -72,6 +97,9 @@ class RlpController extends Controller
 
     public function update(Request $request, Rlp $rlp)
     {
+        $this->authorizeInput('edit');
+        $this->abortIfReviewed($rlp, 'edited');
+
         $validated = $this->validateRlp($request, $rlp->id);
 
         DB::transaction(function () use ($validated, $rlp) {
@@ -90,10 +118,18 @@ class RlpController extends Controller
         return redirect()->route('rlps.index')->with('success', 'RRP updated successfully.');
     }
 
-
-
     public function destroy(Rlp $rlp)
     {
+        $this->authorizeInput('delete');
+        $this->abortIfReviewed($rlp, 'deleted');
+
+        // RRP yang sudah dibuatkan PO tidak boleh dihapus, supaya jejak dokumennya tetap ada.
+        abort_if(
+            $rlp->purchaseOrders()->exists(),
+            403,
+            "This RRP already has a Purchase Order and can't be deleted."
+        );
+
         $rlp->delete();
 
         return redirect()->route('rlps.index')->with('success', 'RRP deleted successfully.');
@@ -114,7 +150,11 @@ class RlpController extends Controller
     public function signPrepared(Request $request, Rlp $rlp)
     {
         $user = auth()->user();
-        abort_unless($user->id === $rlp->created_by || $user->isAdmin() || $user->isApprover(), 403, "Only the creator or an administrator can sign this request.");
+
+        // Ttd Prepared By hanya milik pembuat RRP, dan tidak bisa ditimpa
+        // setelah dokumen masuk tahap review.
+        abort_unless($user->id === $rlp->created_by, 403, 'Only the creator can sign as Prepared By.');
+        $this->abortIfReviewed($rlp, 'signed again');
 
         $validated = $request->validate([
             'signature' => 'required|string',

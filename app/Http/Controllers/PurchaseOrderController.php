@@ -7,6 +7,7 @@ use App\Models\Rlp;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Draft;
 
 class PurchaseOrderController extends Controller
 {
@@ -126,6 +127,8 @@ class PurchaseOrderController extends Controller
 
             return $po;
         });
+
+        Draft::forget('purchase-orders', $request->input('rlp_id'));
 
         return redirect()->route('purchase-orders.show', $purchaseOrder)
             ->with('success', 'Purchase Order added successfully.');

@@ -1,4 +1,5 @@
 <?php
+// app/Models/User.php
 
 namespace App\Models;
 
@@ -77,19 +78,31 @@ class User extends Authenticatable
         return (bool) $this->is_approver || in_array($this->role, ['approver_a', 'approver_c', 'rlp_reviewer', 'rlp_acknowledger', 'rlp_approver'], true);
     }
 
-    // Cek apakah user bisa menandatangani slot approval digital di PO atau PR
+    // Posisi tanda tangan PR / PO yang dipegang user ini (ditentukan administrator)
+    public function approvalSlotHolders()
+    {
+        return $this->hasMany(ApprovalSlotHolder::class);
+    }
+
+    // Apakah user ini memegang posisi tertentu? Kalau $roleLabel kosong,
+    // artinya "memegang posisi apa saja".
+    public function holdsApprovalSlot(?string $roleLabel = null): bool
+    {
+        $query = $this->approvalSlotHolders();
+
+        if ($roleLabel !== null) {
+            $query->where('role_label', $roleLabel);
+        }
+
+        return $query->exists();
+    }
+
+    // Cek apakah user bisa menandatangani kotak approval digital di PO atau PR.
+    // Sekarang ditentukan oleh posisi yang diberikan administrator, bukan sekadar
+    // "apakah dia approver". Akun admin sendiri tidak ikut tanda tangan.
     public function canSignApproval(?string $roleLabel = null): bool
     {
-        if ($this->isAdmin() || $this->isApprover()) {
-            return true;
-        }
-
-        // Finance user diizinkan tanda tangan jika slotnya Finance Control
-        if ($this->isFinance() && $roleLabel && str_contains(strtolower($roleLabel), 'finance')) {
-            return true;
-        }
-
-        return false;
+        return $this->holdsApprovalSlot($roleLabel);
     }
 
     protected $hidden = [

@@ -3,14 +3,14 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">Purchase Order (PO)</h1>
-                <p class="text-sm text-gray-500 mt-1">Manage purchase orders to suppliers.</p>
+                <p class="text-sm text-gray-500 mt-1">Kelola purchase order kepada pemasok.</p>
             </div>
             <a href="{{ route('purchase-orders.create') }}"
                class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                Add PO
+                Tambah PO
             </a>
         </div>
     </x-slot>
@@ -31,6 +31,8 @@
         }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
+            <x-draft-list form="purchase-orders" />
+
             @if(session('success'))
                 <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" x-transition
                      class="mb-4 flex items-center gap-3 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg text-sm shadow-sm">
@@ -48,10 +50,10 @@
                             </svg>
                         </span>
                         <input type="text" name="search" value="{{ $search ?? '' }}"
-                               placeholder="Search PO no, subject, client, or supplier no..."
+                               placeholder="Cari no PO, perihal, klien, atau no pemasok..."
                                class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm text-sm w-full sm:w-80 pl-10 py-2">
                     </div>
-                    <button type="submit" class="text-sm font-semibold text-gray-600 hover:text-indigo-600 px-3 py-2">Search</button>
+                    <button type="submit" class="text-sm font-semibold text-gray-600 hover:text-indigo-600 px-3 py-2">Cari</button>
                     @if(!empty($search))
                         <a href="{{ route('purchase-orders.index') }}" class="text-sm text-gray-400 hover:text-gray-600">Reset</a>
                     @endif
@@ -60,17 +62,27 @@
 
             <div class="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
+                    <table class="w-full text-sm" style="table-layout:fixed; min-width:1080px;">
+                        <colgroup>
+                            <col style="width:250px">
+                            <col style="width:104px">
+                            <col>
+                            <col>
+                            <col style="width:110px">
+                            <col style="width:146px">
+                            <col style="width:150px">
+                            <col style="width:88px">
+                        </colgroup>
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">PO No</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Order Date</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Subject</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Client</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Supplier No</th>
-                                <th class="px-4 py-3 text-right font-medium text-gray-600">Grand Total</th>
-                                <th class="px-4 py-3 text-center font-medium text-gray-600">Status</th>
-                                <th class="px-4 py-3 text-center font-medium text-gray-600 w-40">Action</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">PO No</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Order Date</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Subject</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Client</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-left">Supplier No</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-center">Grand Total</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-center">Status</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -86,30 +98,28 @@
                                 @endphp
                                 <tr @click="window.location.href = '{{ route('purchase-orders.show', $po) }}'"
                                     class="hover:bg-gray-50/70 transition cursor-pointer">
-                                    <td class="px-4 py-3 font-semibold text-gray-800">
+                                    <td class="px-3 py-3 font-semibold text-gray-800 whitespace-nowrap">
                                         <span class="hover:text-indigo-600 transition">
                                             {{ $po->po_no }}
                                         </span>
                                         @if($po->rlp)
-                                            <span class="block text-[11px] text-purple-600 font-normal">RRP: {{ $po->rlp->no_rlp }}</span>
+                                            <span class="block truncate text-[11px] text-purple-600 font-normal" title="RRP: {{ $po->rlp->no_rlp }}">RRP: {{ $po->rlp->no_rlp }}</span>
                                         @endif
                                         @if($po->purchaseRequest)
-                                            <span class="inline-flex items-center gap-0.5 text-[11px] text-amber-700 font-medium">
-                                                PR: {{ $po->purchaseRequest->no_request }}
-                                            </span>
+                                            <span class="block truncate text-[11px] text-amber-700 font-medium" title="PR: {{ $po->purchaseRequest->no_request }}">PR: {{ $po->purchaseRequest->no_request }}</span>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3 text-gray-600">{{ $po->our_order_date?->format('d-m-Y') ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-gray-700 max-w-[220px] truncate" title="{{ $po->subject }}">{{ $po->subject ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-gray-600">{{ $po->client ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-gray-600">{{ $po->supplier_no ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-right text-gray-700">Rp {{ number_format((float) $po->grand_total, 0, ',', '.') }}</td>
-                                    <td class="px-4 py-3 text-center">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ $statusColor }}">
+                                    <td class="px-3 py-3 text-gray-600 whitespace-nowrap">{{ $po->our_order_date?->format('d-m-Y') ?? '-' }}</td>
+                                    <td class="px-3 py-3 text-gray-700"><div title="{{ $po->subject }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">{{ $po->subject ?? '-' }}</div></td>
+                                    <td class="px-3 py-3 text-gray-600"><div title="{{ $po->client }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">{{ $po->client ?? '-' }}</div></td>
+                                    <td class="px-3 py-3 text-gray-600 whitespace-nowrap truncate" title="{{ $po->supplier_no }}">{{ $po->supplier_no ?? '-' }}</td>
+                                    <td class="px-3 py-3 text-center text-gray-700 whitespace-nowrap tabular-nums">Rp {{ number_format((float) $po->grand_total, 0, ',', '.') }}</td>
+                                    <td class="px-3 py-3 text-center whitespace-nowrap">
+                                        <span class="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-semibold {{ $statusColor }}">
                                             {{ $po->status }} ({{ $signedCount }}/{{ $totalCount }})
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3" @click.stop>
+                                    <td class="px-2 py-3" @click.stop>
                                         <div class="flex items-center justify-center gap-1">
                                             <a href="{{ route('purchase-orders.print', $po) }}" target="_blank" title="Print"
                                                class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
@@ -153,11 +163,11 @@
              x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
             <div class="absolute inset-0 bg-gray-900/40" @click="confirmOpen = false"></div>
             <div class="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
-                <h3 class="font-semibold text-gray-800 mb-2">Confirm</h3>
+                <h3 class="font-semibold text-gray-800 mb-2">Konfirmasi</h3>
                 <p class="text-sm text-gray-600 mb-6" x-text="confirmMessage"></p>
                 <div class="flex justify-end gap-3">
-                    <button type="button" @click="confirmOpen = false" class="text-sm font-semibold text-gray-500 hover:text-gray-700">Cancel</button>
-                    <button type="button" @click="submitConfirm()" class="text-sm font-semibold bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Delete</button>
+                    <button type="button" @click="confirmOpen = false" class="text-sm font-semibold text-gray-500 hover:text-gray-700">Batal</button>
+                    <button type="button" @click="submitConfirm()" class="text-sm font-semibold bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Hapus</button>
                 </div>
             </div>
         </div>
