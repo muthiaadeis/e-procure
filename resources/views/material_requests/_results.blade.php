@@ -9,24 +9,22 @@
 @endif
 
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left border-separate border-spacing-0" style="table-layout:fixed; min-width:1000px;">
+                    <table class="w-full text-sm text-left border-separate border-spacing-0" style="table-layout:fixed;">
                         <colgroup>
-                            <col style="width:48px">
-                            <col style="width:260px">
-                            <col style="width:110px">
-                            <col>
-                            <col style="width:200px">
-                            <col style="width:210px">
-                            <col style="width:64px">
+                            <col style="width: 5%;">
+                            <col style="width: 29%;">
+                            <col style="width: 15%;">
+                            <col style="width: 20%;">
+                            <col style="width: 22%;">
+                            <col style="width: 9%;">
                         </colgroup>
                         <thead>
                             <tr class="bg-gray-50 text-gray-600 uppercase text-xs align-middle">
-                                <th class="px-3 py-3 rounded-l-lg whitespace-nowrap">No</th>
-                                <th class="px-3 py-3 whitespace-nowrap">No MR</th>
-                                <th class="px-3 py-3 whitespace-nowrap">Date</th>
-                                <th class="px-3 py-3 whitespace-nowrap text-center">Charge To</th>
-                                <th class="px-3 py-3 whitespace-nowrap">Approval</th>
-                                <th class="px-3 py-3 whitespace-nowrap">Status</th>
+                                <th class="px-3 py-3 rounded-l-lg whitespace-nowrap text-center">No</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-left">No MR</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-left">Date</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-left">Charge To</th>
+                                <th class="px-3 py-3 whitespace-nowrap text-center">Status</th>
                                 <th class="px-1 py-3 rounded-r-lg text-center whitespace-nowrap">Action</th>
                             </tr>
                         </thead>
@@ -81,265 +79,68 @@
                                 ];
                             @endphp
                             <tr id="mr-row-{{ $req->id }}" style="height:64px"
-                                @click="openDetail({{ \Illuminate\Support\Js::from($detailPayload) }})"
-                                class="cursor-pointer transition {{ request('auto_open') && ($req->id == request('auto_open') || $req->no_mr == request('auto_open')) ? 'bg-indigo-50/80 ring-2 ring-indigo-500/50' : 'hover:bg-gray-50' }}">
-                                <td class="px-3 py-3.5 text-gray-500">{{ $requests->firstItem() + $loop->index }}</td>
+                                onclick="window.location.href = '{{ route('material-requests.show', $req) }}'"
+                                data-href="{{ route('material-requests.show', $req) }}"
+                                class="cursor-pointer transition hover:bg-gray-50/80">
+                                <td class="px-3 py-3.5 text-center text-gray-500">{{ $requests->firstItem() + $loop->index }}</td>
                                 <td class="px-3 py-3.5 font-medium text-gray-800 truncate" title="{{ $req->no_mr }}">{{ $req->no_mr ?? '-' }}</td>
                                 <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap">{{ $req->date->format('d-m-Y') }}</td>
-                                <td class="px-3 py-3.5 font-medium text-gray-800 text-center"><div title="{{ $req->charge_to }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">{{ $req->charge_to }}</div></td>
-                                <td class="px-3 py-3.5">
-                                    <div class="space-y-1">
-                                        <div class="flex items-center gap-1.5 text-xs">
-                                            <span class="text-gray-400 font-medium w-14 shrink-0">Appr. 1</span>
-                                            @if($req->is_rejected_by_a)
-                                                <span class="text-red-600 font-medium truncate" title="Rejected {{ $req->rejected_a_at->format('d-m-Y H:i') }}">✗ Rejected</span>
-                                            @elseif($req->is_approved_by_a)
-                                                <span class="text-green-600 font-medium truncate">✓ {{ $req->approverA->name ?? '-' }}</span>
-                                            @else
-                                                <span class="text-gray-400">Pending</span>
-                                            @endif
-                                        </div>
-                                        <div class="flex items-center gap-1.5 text-xs">
-                                            <span class="text-gray-400 font-medium w-14 shrink-0">Appr. 2</span>
-                                            @if($req->is_rejected_by_c)
-                                                <span class="text-red-600 font-medium truncate" title="Rejected {{ $req->rejected_c_at->format('d-m-Y H:i') }}">✗ Rejected</span>
-                                            @elseif($req->is_approved_by_c)
-                                                <span class="text-green-600 font-medium truncate">✓ {{ $req->approverC->name ?? '-' }}</span>
-                                            @else
-                                                <span class="text-gray-400">Pending</span>
-                                            @endif
-                                        </div>
-                                    </div>
+                                <td class="px-3 py-3.5 font-medium text-gray-800 text-left">
+                                    <div title="{{ $req->charge_to }}" class="truncate">{{ $req->charge_to ?? '-' }}</div>
                                 </td>
-                                <td class="px-3 py-3.5">
+                                <td class="px-3 py-3.5 text-center">
                                     @php
+                                        $signedCount = $req->approvals->whereNotNull('signed_at')->count();
+                                        $totalCount = $req->approvals->count();
                                         $colors = [
                                             'Done' => 'bg-green-100 text-green-700',
+                                            'Pending Setup' => 'bg-amber-100 text-amber-800',
                                             'Pending Payment' => 'bg-blue-100 text-blue-700',
                                             'Pending Approval 1' => 'bg-gray-100 text-gray-600',
                                             'Pending Approval 2' => 'bg-yellow-100 text-yellow-700',
+                                            'Rejected' => 'bg-red-100 text-red-700',
                                             'Rejected (Approval 1)' => 'bg-red-100 text-red-700',
                                             'Rejected (Approval 2)' => 'bg-red-100 text-red-700',
                                             'Rejected (Finance)' => 'bg-red-100 text-red-700',
                                         ];
+                                        $statusColor = $colors[$req->status] ?? (str_starts_with($req->status, 'Rejected') ? 'bg-red-100 text-red-700' : (str_starts_with($req->status, 'Pending') ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'));
                                     @endphp
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap {{ $colors[$req->status] ?? 'bg-gray-100 text-gray-600' }}">
-                                        {{ $req->status }}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap {{ $statusColor }}"
+                                          @if($req->is_overdue) title="{{ $req->overdue_reason }}" @endif>
+                                        {{ $req->status }}@if($totalCount > 1 && $req->status !== 'Done' && $req->status !== 'Pending Setup' && !str_starts_with($req->status, 'Rejected')) ({{ $signedCount }}/{{ $totalCount }})@endif
                                     </span>
-                                    @if($req->is_rejected_by_finance)
-                                        <div class="mt-1 text-xs text-red-600 font-medium truncate" title="Rejected by {{ $req->financeRejector->name ?? '-' }}">✗ by {{ $req->financeRejector->name ?? '-' }}</div>
-                                    @elseif($req->is_overdue)
-                                        <div class="mt-1 flex items-center gap-1 min-w-0 text-xs text-red-600 font-medium" title="{{ $req->overdue_reason }}">
-                                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
-                                            </svg>
-                                            <span class="truncate">{{ $req->overdue_reason }}</span>
-                                        </div>
-                                    @endif
                                 </td>
-                                <td class="px-1 py-3.5" @click.stop>
-                                    @php
-                                        $canApproveA = auth()->user()->isApproverA() && ! $req->is_approved_by_a && ! $req->is_rejected_by_a;
-                                        $canApproveC = auth()->user()->isApproverC() && $req->is_approved_by_a && ! $req->is_approved_by_c && ! $req->is_rejected_by_c;
-                                        $canApprove = $canApproveA || $canApproveC;
-                                        $canRejectApproval = $canApprove; // approver yang sama juga bisa reject di tahapnya
-                                        $approveLabel = 'Approve';
-                                        $canMarkPaid = auth()->user()->isFinance() && $req->is_approved && $req->status !== 'Done' && ! $req->is_rejected_by_finance;
-                                        $canRejectFinance = $canMarkPaid;
-                                        $canEdit = auth()->user()->isInput() && $req->is_rejected;
-                                        $canHapus = auth()->user()->isInput();
-
-                                        // Hitung total aksi yang beneran akan muncul di menu.
-                                        // Kalau cuma 1, tampilkan langsung sebagai icon (gak usah titik tiga).
-                                        // Kalau 2 atau lebih, baru dikumpulkan jadi dropdown titik tiga.
-                                        $actionCount = ($canApprove ? 1 : 0) + ($canRejectApproval ? 1 : 0)
-                                            + ($canMarkPaid ? 1 : 0) + ($canRejectFinance ? 1 : 0)
-                                            + ($canEdit ? 1 : 0) + ($canHapus ? 1 : 0);
-                                        $hasAnyAction = $actionCount > 0;
-                                    @endphp
-                                    <div class="flex items-center justify-center">
-    <div class="relative" x-data="{
-            menuOpen: false,
-            menuStyle: '',
-            updateMenuPos() {
-                const r = $refs['menuBtn{{ $req->id }}'].getBoundingClientRect();
-                this.menuStyle = 'top:' + (r.bottom + 6) + 'px; left:' + (r.right - 192) + 'px;';
-            }
-         }"
-         @scroll.window.passive="if (menuOpen) updateMenuPos()"
-         @resize.window.passive="if (menuOpen) updateMenuPos()">
-        <button type="button"
-                title="Menu"
-                x-ref="menuBtn{{ $req->id }}"
-                @click="updateMenuPos(); menuOpen = !menuOpen;"
-                class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 6a2 2 0 110-4 2 2 0 010 4zm0 8a2 2 0 110-4 2 2 0 010 4zm0 8a2 2 0 110-4 2 2 0 010 4z"/>
-            </svg>
-        </button>
-
-        <template x-teleport="body">
-        <div x-show="menuOpen"
-             x-cloak
-             @click.outside="menuOpen = false"
-             x-transition:enter="ease-out duration-100"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
-             :style="menuStyle"
-             class="fixed w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50 text-left">
-
-            <a href="{{ route('material-requests.print', $req->id) }}" target="_blank"
-               @click="menuOpen = false"
-               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.318 2.226c.079.554-.36 1.052-.92 1.052H6.94c-.56 0-.998-.498-.92-1.052L6.34 18m11.318 0h1.093c1.036 0 1.875-.84 1.875-1.875V9.375c0-1.036-.84-1.875-1.875-1.875H4.875C3.839 7.5 3 8.34 3 9.375v6.75c0 1.035.84 1.875 1.875 1.875H6.34m10.94 0H6.34m9.94-11.25V4.875c0-1.036-.84-1.875-1.875-1.875H8.625C7.59 3 6.75 3.84 6.75 4.875v2.625"/>
-                </svg>
-                Cetak / PDF
-            </a>
-            @if($actionCount > 0)
-                <div class="my-1 border-t border-gray-100"></div>
-            @endif
-
-            @if($canApprove)
-                <form id="approve-form-{{ $req->id }}" class="hidden"
-                      action="{{ route('material-requests.approve', $req->id) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                </form>
-                <button type="button"
-                        @click="menuOpen = false; openConfirm(
-                            'Approve This MR?',
-                            'You are about to approve the MR for {{ addslashes($req->charge_to) }}.',
-                            'indigo',
-                            'check',
-                            'Yes, Approve',
-                            'approve-form-{{ $req->id }}'
-                        )"
-                        @click="menuOpen = false; openSign({{ $req->id }}, '{{ $canApproveA ? 'Approval 1' : 'Approval 2' }} ({{ addslashes($req->no_mr ?? $req->charge_to) }})', '{{ route('material-requests.approve', $req->id) }}', 'PATCH')"
-                        class="w-full flex items-center gap-2 px-4 py-2 text-sm text-indigo-600 hover:bg-indigo-50 transition">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75l2.25 2.25L15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                    </svg>
-                    {{ $approveLabel }}
-                    Sign & {{ $approveLabel }}
-                </button>
-            @endif
-
-            @if($canRejectApproval)
-                <form id="reject-approval-form-{{ $req->id }}" class="hidden"
-                      action="{{ route('material-requests.reject', $req->id) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <input type="hidden" name="reason" value="">
-                </form>
-                <button type="button"
-                        @click="menuOpen = false; openReject(
-                            'Reject This MR?',
-                            'You are about to reject the MR for {{ addslashes($req->charge_to) }}. Write the reason below.',
-                            'reject-approval-form-{{ $req->id }}'
-                        )"
-                        class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                    Reject
-                </button>
-            @endif
-
-            @if($canMarkPaid)
-                <form id="mark-paid-form-{{ $req->id }}" class="hidden"
-                      action="{{ route('material-requests.mark-paid', $req->id) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                </form>
-                <button type="button"
-                        @click="menuOpen = false; openConfirm(
-                            'Mark as Paid?',
-                            'The MR for {{ addslashes($req->charge_to) }} will be marked as paid.',
-                            'green',
-                            'check',
-                            'Yes, Mark Paid',
-                            'mark-paid-form-{{ $req->id }}'
-                        )"
-                        @click="menuOpen = false; openSign({{ $req->id }}, 'Finance Payment ({{ addslashes($req->no_mr ?? $req->charge_to) }})', '{{ route('material-requests.mark-paid', $req->id) }}', 'PATCH')"
-                        class="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50 transition">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                    </svg>
-                    Mark Paid
-                    Sign & Mark Paid
-                </button>
-            @endif
-
-            @if($canRejectFinance)
-                <form id="reject-finance-form-{{ $req->id }}" class="hidden"
-                      action="{{ route('material-requests.reject', $req->id) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <input type="hidden" name="reason" value="">
-                </form>
-                <button type="button"
-                        @click="menuOpen = false; openReject(
-                            'Reject Payment For This MR?',
-                            'The MR for {{ addslashes($req->charge_to) }} will be rejected by Finance. Write the reason below.',
-                            'reject-finance-form-{{ $req->id }}'
-                        )"
-                        class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                    Reject
-                </button>
-            @endif
-
-            @if(auth()->user()->isInput())
-                @if($canApprove || $canRejectApproval || $canMarkPaid || $canRejectFinance)
-                    <div class="my-1 border-t border-gray-100"></div>
-                @endif
-
-                @if($canEdit)
-                    <a href="{{ route('material-requests.edit', $req->id) }}"
-                       class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                    Edit
-                </a>
-                    <div class="my-1 border-t border-gray-100"></div>
-                @endif
-
-                <form id="delete-form-{{ $req->id }}" class="hidden"
-                      action="{{ route('material-requests.destroy', $req->id) }}" method="POST">
-                    @csrf
-                    @method('DELETE')
-                </form>
-                <button type="button"
-                        @click="menuOpen = false; openConfirm(
-                            'Hapus This Record?',
-                            'The MR data for {{ addslashes($req->charge_to) }} will be permanently deleted and cannot be recovered.',
-                            'red',
-                            'trash',
-                            'Yes, Hapus',
-                            'delete-form-{{ $req->id }}'
-                        )"
-                        class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                    Hapus
-                </button>
-            @endif
-        </div>
-        </template>
-    </div>
-</div>
+                                <td class="px-2 py-3.5" onclick="event.stopPropagation()">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <a href="{{ route('material-requests.show', $req) }}" title="Lihat Detail"
+                                           class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                        </a>
+                                        <a href="{{ route('material-requests.print', $req) }}" target="_blank" title="Cetak / PDF"
+                                           class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"/>
+                                            </svg>
+                                        </a>
+                                        @if(auth()->user()->isInput() || auth()->user()->isAdmin())
+                                            @if($req->is_rejected)
+                                                <a href="{{ route('material-requests.edit', $req) }}" title="Edit & Ajukan Ulang"
+                                                   class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                </a>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center py-8 text-gray-400">{{ $search ? 'No MRs match your search' : 'No MR data yet' }}</td>
+                                <td colspan="6" class="text-center py-8 text-gray-400">{{ $search ? 'No MRs match your search' : 'No MR data yet' }}</td>
                             </tr>
                             @endforelse
                         </tbody>

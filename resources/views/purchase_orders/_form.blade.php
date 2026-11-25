@@ -1,3 +1,7 @@
+@php
+    $isEdit = $isEdit ?? false;
+@endphp
+
 @if($errors->any())
     <div class="m-6 mb-0 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
         <ul class="list-disc list-inside space-y-1">
@@ -16,11 +20,20 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                    Purchase Order No <span class="text-red-500">*</span>
+                    Purchase Order No
                 </label>
-                <input type="text" name="po_no" value="{{ old('po_no', $isEdit ? $purchaseOrder->po_no : '') }}" required
-                       class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
-                <p class="mt-1.5 text-xs text-gray-400">Masukkan nomor purchase order.</p>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h4M5 3h14a1 1 0 011 1v16l-4-2-3 2-3-2-3 2-3-2V4a1 1 0 011-1z"/>
+                        </svg>
+                    </span>
+                <input type="text" name="po_no"
+                       value="{{ $isEdit ? $purchaseOrder->po_no : ($defaultPoNo ?? '') }}"
+                       readonly tabindex="-1"
+                       class="w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm text-sm pl-10 text-gray-500 cursor-not-allowed focus:ring-0 focus:border-gray-300">
+                </div>
+                <p class="mt-1.5 text-xs text-gray-400">Nomor Purchase Order otomatis digenerate oleh sistem.</p>
             </div>
 
             <div class="border border-gray-200 rounded-xl p-4">
@@ -40,9 +53,21 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Our Order Date</label>
-                        <input type="date" name="our_order_date"
-                               value="{{ old('our_order_date', $isEdit && $purchaseOrder->our_order_date ? $purchaseOrder->our_order_date->format('Y-m-d') : now()->format('Y-m-d')) }}"
-                               class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        @php
+                            $orderDateDisplay = ($isEdit && $purchaseOrder->our_order_date)
+                                ? $purchaseOrder->our_order_date->format('d-m-Y')
+                                : now()->format('d-m-Y');
+                            $orderDateValue = ($isEdit && $purchaseOrder->our_order_date)
+                                ? $purchaseOrder->our_order_date->format('Y-m-d')
+                                : now()->format('Y-m-d');
+                        @endphp
+                        <input type="text"
+                               value="{{ $orderDateDisplay }}"
+                               readonly
+                               tabindex="-1"
+                               class="w-full rounded-lg border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed shadow-sm text-sm focus:ring-0 focus:border-gray-200 select-none">
+                        <input type="hidden" name="our_order_date" value="{{ $orderDateValue }}">
+                        <p class="text-[11px] text-gray-400 mt-1">Otomatis tanggal saat ini (tidak dapat diubah).</p>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Revision</label>
@@ -134,7 +159,7 @@
                                 <textarea name="project_description" rows="2"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">{{ old('project_description', $isEdit ? $purchaseOrder->project_description : ($prefill['project_description'] ?? '')) }}</textarea>
             </div>
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Contact Number</label>
                     <input type="text" name="contact_number"
@@ -143,9 +168,16 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Client</label>
-                                        <input type="text" name="client"
-                                                value="{{ old('client', $isEdit ? $purchaseOrder->client : ($prefill['client'] ?? '')) }}"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                    <input type="text" name="client"
+                           value="{{ old('client', $isEdit ? $purchaseOrder->client : ($prefill['client'] ?? '')) }}"
+                           class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Charge To</label>
+                    <input type="text" name="charge_to"
+                           value="{{ old('charge_to', $isEdit ? $purchaseOrder->charge_to : ($prefill['charge_to'] ?? '')) }}"
+                           placeholder="Charge To..."
+                           class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                 </div>
             </div>
         </div>
@@ -178,16 +210,16 @@
 
         <div class="border border-gray-200 rounded-xl overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm min-w-[1000px] table-fixed divide-y divide-gray-200">
+                <table class="w-full text-sm min-w-[1100px] table-fixed divide-y divide-gray-200">
                     <colgroup>
-                        <col class="w-10">     {{-- No --}}
-                        <col class="w-[30%]">  {{-- Description --}}
-                        <col class="w-16">     {{-- Qty --}}
-                        <col class="w-16">     {{-- UOM (dikecilin) --}}
-                        <col class="w-32">     {{-- Brand --}}
-                        <col class="w-36">     {{-- Unit Price (dibesarin) --}}
-                        <col class="w-32">     {{-- Total Price --}}
-                        <col class="w-9">      {{-- Action --}}
+                        <col class="w-10">              {{-- No --}}
+                        <col class="w-[38%]">           {{-- Description --}}
+                        <col class="w-16">              {{-- Qty --}}
+                        <col class="w-16">              {{-- UOM --}}
+                        <col class="w-44">              {{-- Brand --}}
+                        <col class="w-36">              {{-- Unit Price --}}
+                        <col class="w-36">              {{-- Total Price --}}
+                        <col class="w-9">               {{-- Action --}}
                     </colgroup>
                     <thead>
                         <tr class="bg-indigo-50/60 divide-x divide-indigo-100">
@@ -206,53 +238,56 @@
                             <tr :id="'po-item-row-' + index" class="group align-top hover:bg-gray-50/70 transition divide-x divide-gray-100">
                                 <td class="px-2 py-2.5 text-center text-xs font-semibold text-indigo-600 pt-3.5" x-text="index + 1"></td>
 
-                                {{-- Description (bisa lebih dari 1 baris deskripsi dalam 1 row) --}}
+                                {{-- Description (Panjang ke bawah / auto-grow) --}}
                                 <td class="px-2 py-2.5">
-                                    <textarea :name="'items[' + index + '][description]'" rows="3" required
+                                    <textarea :name="'items[' + index + '][description]'" rows="2" required
                                               x-model="item.description"
-                                              placeholder="Enter description... "
-                                              class="w-full max-w-full box-border resize-y rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition break-words"></textarea>
+                                              x-init="$nextTick(() => autoResize($el))"
+                                              @input="autoResize($event.target)"
+                                              placeholder="Enter description..."
+                                              style="field-sizing: content;"
+                                              class="w-full max-w-full box-border resize-none overflow-hidden rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition break-words"></textarea>
                                 </td>
 
                                 {{-- Qty --}}
                                 <td class="px-1.5 py-2.5">
-                                    <textarea rows="1" inputmode="numeric" required
-                                              :value="formatThousands(item.qty)"
-                                              @input="item.qty = parseThousands($event.target.value)"
-                                              @focus="$event.target.select()"
-                                              placeholder="0"
-                                              class="w-full max-w-full box-border resize-none rounded-md border border-gray-200 bg-white px-1 py-1.5 text-sm text-gray-700 text-center placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition break-all"></textarea>
+                                    <input type="text" inputmode="numeric" required
+                                           :value="formatThousands(item.qty)"
+                                           @input="item.qty = parseThousands($event.target.value)"
+                                           @focus="$event.target.select()"
+                                           placeholder="0"
+                                           class="w-full max-w-full box-border rounded-md border border-gray-200 bg-white px-1 py-1.5 text-sm text-gray-700 text-center whitespace-nowrap placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
                                     <input type="hidden" :name="'items[' + index + '][qty]'" :value="item.qty">
                                 </td>
 
                                 {{-- UOM --}}
                                 <td class="px-1.5 py-2.5">
-                                    <textarea :name="'items[' + index + '][uom]'" rows="1" required
-                                              x-model="item.uom" placeholder="Unit"
-                                              class="w-full max-w-full box-border resize-y rounded-md border border-gray-200 bg-white px-1 py-1.5 text-sm text-gray-700 text-center placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition break-words"></textarea>
+                                    <input type="text" :name="'items[' + index + '][uom]'" required
+                                           x-model="item.uom" placeholder="Unit"
+                                           class="w-full max-w-full box-border rounded-md border border-gray-200 bg-white px-1 py-1.5 text-sm text-gray-700 text-center whitespace-nowrap placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
                                 </td>
 
                                 {{-- Brand --}}
                                 <td class="px-2 py-2.5">
-                                    <textarea :name="'items[' + index + '][brand]'" rows="1"
-                                              x-model="item.brand" placeholder="Brand"
-                                              class="w-full max-w-full box-border resize-y rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition break-words"></textarea>
+                                    <input type="text" :name="'items[' + index + '][brand]'"
+                                           x-model="item.brand" placeholder="Brand"
+                                           class="w-full max-w-full box-border rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
                                 </td>
 
                                 {{-- Unit Price --}}
                                 <td class="px-2 py-2.5">
-                                    <textarea rows="1" inputmode="numeric" required
-                                              :value="formatThousands(item.price)"
-                                              @input="item.price = parseThousands($event.target.value)"
-                                              @focus="$event.target.select()"
-                                              placeholder="0"
-                                              class="w-full max-w-full box-border resize-y rounded-md border border-indigo-200 bg-white px-2 py-1.5 text-sm text-gray-700 text-left placeholder:text-gray-400 hover:border-indigo-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition break-all"></textarea>
+                                    <input type="text" inputmode="numeric" required
+                                           :value="formatThousands(item.price)"
+                                           @input="item.price = parseThousands($event.target.value)"
+                                           @focus="$event.target.select()"
+                                           placeholder="0"
+                                           class="w-full max-w-full box-border rounded-md border border-indigo-200 bg-white px-2 py-1.5 text-sm text-gray-700 text-left whitespace-nowrap placeholder:text-gray-400 hover:border-indigo-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
                                     <input type="hidden" :name="'items[' + index + '][price]'" :value="item.price">
                                 </td>
 
                                 {{-- Total Price --}}
                                 <td class="px-2 py-2.5 text-left pt-3.5">
-                                    <span class="font-semibold text-indigo-700 text-sm block break-all" x-text="formatRupiah(itemTotal(item))"></span>
+                                    <span class="font-semibold text-indigo-700 text-sm block whitespace-nowrap" x-text="formatRupiah(itemTotal(item))"></span>
                                 </td>
 
                                 {{-- Action --}}
@@ -296,6 +331,10 @@
             </div>
         </div>
     </div>
+
+    @unless($isEdit)
+        <x-inputer-signature-pad name="signature" id="po-create-signature-input" title="Prepared By — Tanda Tangan Digital" />
+    @endunless
 </div>
 
 <div class="flex items-center justify-end gap-5 px-6 sm:px-8 py-5 bg-gray-50 border-t border-gray-100">

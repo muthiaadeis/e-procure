@@ -16,54 +16,20 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'jabatan',
         'email',
         'password',
         'is_approver',
         'role',
-        'is_admin',              // tambahkan
+        'is_admin',
         'must_change_password',
     ];
 
-    // Role User B: yang menginput / membuat Material Request
+    // Staff yang menginput / membuat dokumen (MR, RRP, PO, PR).
+    // Super admin BUKAN inputer dan tidak bisa menginput dokumen apapun.
     public function isInput(): bool
     {
-        return $this->role === 'input';
-    }
-
-    // Role User A: approval tahap pertama
-    public function isApproverA(): bool
-    {
-        return $this->role === 'approver_a';
-    }
-
-    // Role User C: approval tahap kedua
-    public function isApproverC(): bool
-    {
-        return $this->role === 'approver_c';
-    }
-
-    // Role User D: menandai status lunas / belum lunas
-    public function isFinance(): bool
-    {
-        return $this->role === 'finance';
-    }
-
-    // Role RRP: yang me-review RRP (tahap 1)
-    public function isRlpReviewer(): bool
-    {
-        return $this->role === 'rlp_reviewer';
-    }
-
-    // Role RRP: yang meng-acknowledge RRP (tahap 2)
-    public function isRlpAcknowledger(): bool
-    {
-        return $this->role === 'rlp_acknowledger';
-    }
-
-    // Role RRP: yang approve RRP (tahap akhir)
-    public function isRlpApprover(): bool
-    {
-        return $this->role === 'rlp_approver';
+        return ! $this->isAdmin() && $this->role === 'input';
     }
 
     public function isAdmin(): bool
@@ -71,37 +37,53 @@ class User extends Authenticatable
         return (bool) $this->is_admin;
     }
 
-    // Role Approver: User yang berwenang menandatangani approval
-    public function isApprover(): bool
-    {
-        return (bool) $this->is_approver || in_array($this->role, ['approver_a', 'approver_c'], true);
-        return (bool) $this->is_approver || in_array($this->role, ['approver_a', 'approver_c', 'rlp_reviewer', 'rlp_acknowledger', 'rlp_approver'], true);
-    }
-
-    // Posisi tanda tangan PR / PO yang dipegang user ini (ditentukan administrator)
+    // Posisi tanda tangan yang dipegang user ini (ditentukan administrator)
     public function approvalSlotHolders()
     {
         return $this->hasMany(ApprovalSlotHolder::class);
     }
 
-    // Apakah user ini memegang posisi tertentu? Kalau $roleLabel kosong,
-    // artinya "memegang posisi apa saja".
-    public function holdsApprovalSlot(?string $roleLabel = null): bool
+    // Daftar posisi milik user ini, di-cache per request supaya tidak
+    // jadi satu query per baris tabel.
+    protected ?array $slotLabelsCache = null;
+
+    protected function slotLabels(): array
     {
-        $query = $this->approvalSlotHolders();
-
-        if ($roleLabel !== null) {
-            $query->where('role_label', $roleLabel);
-        }
-
-        return $query->exists();
+        return $this->slotLabelsCache ??= $this->approvalSlotHolders()->pluck('role_label')->all();
     }
 
-    // Cek apakah user bisa menandatangani kotak approval digital di PO atau PR.
-    // Sekarang ditentukan oleh posisi yang diberikan administrator, bukan sekadar
-    // "apakah dia approver". Akun admin sendiri tidak ikut tanda tangan.
+    // Kalau $roleLabel kosong, artinya "memegang posisi apa saja".
+    public function holdsApprovalSlot(?string $roleLabel = null): bool
+    {
+        $labels = $this->slotLabels();
+
+        return $roleLabel === null ? count($labels) > 0 : in_array($roleLabel, $labels, true);
+    }
+
+    // MR
+    public function isApproverA(): bool        { return $this->holdsApprovalSlot('MR Approval 1'); }
+    public function isApproverC(): bool        { return $this->holdsApprovalSlot('MR Approval 2'); }
+    public function isFinance(): bool          { return $this->holdsApprovalSlot('MR Finance'); }
+
+    // RRP
+    public function isRlpReviewer(): bool      { return $this->holdsApprovalSlot('RRP Review'); }
+    public function isRlpAcknowledger(): bool  { return $this->holdsApprovalSlot('RRP Acknowledge'); }
+    public function isRlpApprover(): bool      { return $this->holdsApprovalSlot('RRP Approve'); }
+
+    // Memegang posisi apa saja (Super admin BUKAN approver dan tidak ikut tanda tangan)
+    public function isApprover(): bool
+    {
+        return ! $this->isAdmin() && ($this->role === 'approver' || $this->holdsApprovalSlot());
+    }
+
+    // Cek apakah user bisa menandatangani kotak approval digital.
+    // Akun admin sendiri tidak ikut tanda tangan.
     public function canSignApproval(?string $roleLabel = null): bool
     {
+        if ($this->isAdmin()) {
+            return false;
+        }
+
         return $this->holdsApprovalSlot($roleLabel);
     }
 
@@ -116,7 +98,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_approver' => 'boolean',
-            'is_admin' => 'boolean',              // tambahkan
+            'is_admin' => 'boolean',
             'must_change_password' => 'boolean',
         ];
     }

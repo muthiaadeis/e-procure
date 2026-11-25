@@ -39,9 +39,46 @@ class Rlp extends Model
         'approved_at' => 'datetime',
     ];
 
+    /**
+     * Generate the next auto No RRP, format: RRP001, RRP002, ...
+     * Nomor berurutan 3 digit tanpa tanda hubung.
+     */
+    public static function generateNextNoRlp(): string
+    {
+        $prefix = 'RRP';
+
+        $rlps = static::query()
+            ->where(function ($q) {
+                $q->where('no_rlp', 'like', 'RRP%')
+                  ->orWhere('no_rlp', 'like', 'RRP-%');
+            })
+            ->pluck('no_rlp');
+
+        $maxNumber = 0;
+        foreach ($rlps as $no) {
+            if (preg_match('/^RRP-?(\d+)$/i', trim((string) $no), $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            }
+        }
+
+        $nextNumber = $maxNumber + 1;
+
+        return $prefix . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
+    }
+
     public function items()
     {
         return $this->hasMany(RlpItem::class);
+    }
+
+    public function approvals()
+    {
+        return $this->hasMany(DocumentApproval::class, 'document_id')
+            ->where('document_type', 'rlp')
+            ->orderBy('step');
     }
 
     public function costs()
@@ -83,33 +120,103 @@ class Rlp extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
-    protected function isReviewed(): Attribute
+    protected function isFullySigned(): Attribute
     {
         return Attribute::make(
-            get: fn () => ! is_null($this->reviewed_at),
-        );
-    }
-
-    protected function isAcknowledged(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => ! is_null($this->acknowledged_at),
+            get: fn () => $this->approvals->isNotEmpty()
+                && $this->approvals->contains(fn ($a) => $a->step > 1)
+                && $this->approvals->every(fn ($a) => ! is_null($a->signed_at)),
         );
     }
 
     protected function isApproved(): Attribute
     {
         return Attribute::make(
-            get: fn () => ! is_null($this->approved_at),
+            get: fn () => $this->approvals->isNotEmpty()
+                ? $this->is_fully_signed
+                : ! is_null($this->approved_at),
         );
     }
 
-    // Status alur tanda tangan: Prepared -> Pending Review -> Pending Acknowledgement
-    // -> Pending Approval -> Approved.
+    protected function isDraft(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->approvals->every(fn ($a) => is_null($a->signed_at)),
+        );
+    }
+
+    protected function isRejected(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->approvals->isNotEmpty() && $this->approvals->contains(fn ($a) => $a->isRejected()),
+        );
+    }
+
+    protected function isOverdue(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->is_rejected || $this->status === 'Done') {
+                    return false;
+                }
+
+                return $this->approvals->isNotEmpty() && $this->approvals->contains(fn ($a) => $a->isOverdue());
+            },
+        );
+    }
+
+    protected function isReviewed(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->approvals->isNotEmpty()) {
+                    return $this->approvals->contains(fn ($a) => $a->step > 1 && $a->isSigned());
+                }
+
+                return ! is_null($this->reviewed_at);
+            },
+        );
+    }
+
+    protected function isAcknowledged(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->approvals->isNotEmpty()) {
+                    return $this->approvals->contains(fn ($a) => $a->step > 2 && $a->isSigned());
+                }
+
+                return ! is_null($this->acknowledged_at);
+            },
+        );
+    }
+
     protected function status(): Attribute
     {
         return Attribute::make(
             get: function () {
+                if ($this->is_rejected) {
+                    return 'Rejected';
+                }
+
+                if ($this->approvals->isNotEmpty()) {
+                    $hasConfiguredApprovals = $this->approvals->contains(fn ($a) => $a->step > 1);
+                    if (! $hasConfiguredApprovals) {
+                        return 'Pending Setup';
+                    }
+
+                    if ($this->is_fully_signed) {
+                        return 'Done';
+                    }
+
+                    if ($this->is_draft) {
+                        return 'Draft';
+                    }
+
+                    $current = $this->approvals->sortBy('step')->first(fn ($a) => ! $a->isSigned());
+                    return $current ? 'Pending ' . $current->label : 'In Progress';
+                }
+
                 if (! $this->is_reviewed) {
                     return 'Pending Review';
                 }
@@ -122,7 +229,7 @@ class Rlp extends Model
                     return 'Pending Approval';
                 }
 
-                return 'Approved';
+                return 'Done';
             },
         );
     }

@@ -1,13 +1,16 @@
 @props(['form'])
 
 @php
-    $drafts = \App\Models\Draft::where('user_id', auth()->id())
-        ->where('form', $form)
-        ->latest('updated_at')
-        ->get();
+    $canViewDraft = auth()->check() && auth()->user()->isInput();
+    $drafts = $canViewDraft
+        ? \App\Models\Draft::where('user_id', auth()->id())
+            ->where('form', $form)
+            ->latest('updated_at')
+            ->get()
+        : collect();
 @endphp
 
-@if($drafts->isNotEmpty())
+@if($canViewDraft && $drafts->isNotEmpty())
     <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 overflow-hidden">
         <div class="flex items-center gap-2 px-5 py-3 border-b border-amber-200 bg-amber-100/60">
             <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +37,7 @@
                     </a>
 
                     <form action="{{ route('drafts.remove', $draft) }}" method="POST"
-                          onsubmit="return confirm('Hapus draft ini? Isinya tidak bisa dikembalikan.')">
+                          @submit.prevent="if (await window.showConfirm('Hapus draft ini? Isinya tidak bisa dikembalikan.', { title: 'Hapus Draft', danger: true, confirmText: 'Ya, Hapus' })) $el.submit()">
                         @csrf
                         @method('DELETE')
                         <button type="submit"

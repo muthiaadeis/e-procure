@@ -17,6 +17,8 @@
 
     <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6"
          x-data="{
+            search: @js($search ?? ''),
+            visibleCount: {{ $users->count() }},
             showPasswordModal: {{ session('generated_password') ? 'true' : 'false' }},
             isNewUser: {{ session('is_new_user') ? 'true' : 'false' }},
             password: @js(session('generated_password') ?? ''),
@@ -24,6 +26,72 @@
             userEmail: @js(session('generated_email_for') ?? ''),
             copiedPassword: false,
             copiedAll: false,
+
+            updateSearch(forcedValue) {
+                const raw = forcedValue !== undefined ? forcedValue : (this.search || '');
+                this.search = raw;
+                const q = raw.toLowerCase().trim();
+                const terms = q.split(/\s+/).filter(Boolean);
+                const rows = Array.from(document.querySelectorAll('tbody tr[data-user-row]'));
+
+                // Jika pencarian terdiri dari 1 huruf, aktifkan mode awalan kata (prefix)
+                // agar huruf pertama langsung menyaring user secara spesifik (misal: 'd' langsung menyaring Dedi).
+                let singleLetterPrefixMode = false;
+                if (terms.length === 1 && terms[0].length === 1) {
+                    const char = terms[0];
+                    singleLetterPrefixMode = rows.some(row => {
+                        const words = ((row.getAttribute('data-name') || '') + ' ' + (row.getAttribute('data-username') || '')).toLowerCase().split(/\s+/).filter(Boolean);
+                        return words.some(w => w.startsWith(char));
+                    });
+                }
+
+                let count = 0;
+                rows.forEach(row => {
+                    const name = (row.getAttribute('data-name') || '').toLowerCase();
+                    const username = (row.getAttribute('data-username') || '').toLowerCase();
+                    const email = (row.getAttribute('data-email') || '').toLowerCase();
+                    const role = (row.getAttribute('data-role') || '').toLowerCase();
+                    const jabatan = (row.getAttribute('data-jabatan') || '').toLowerCase();
+                    const words = (name + ' ' + username + ' ' + jabatan).split(/\s+/).filter(Boolean);
+
+                    let match = true;
+                    if (terms.length > 0) {
+                        match = terms.every(term => {
+                            if (singleLetterPrefixMode && term.length === 1) {
+                                return words.some(w => w.startsWith(term));
+                            }
+                            return name.includes(term) || username.includes(term) || role.includes(term) || email.includes(term) || jabatan.includes(term);
+                        });
+                    }
+
+                    row.style.display = match ? '' : 'none';
+                    if (match) count++;
+                });
+                this.visibleCount = count;
+
+                // Sync URL query string without page reload
+                try {
+                    const url = new URL(window.location);
+                    if (q) {
+                        url.searchParams.set('search', raw.trim());
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+                    window.history.replaceState({}, '', url);
+                } catch (e) {}
+            },
+
+            clearSearch() {
+                this.search = '';
+                this.updateSearch('');
+            },
+
+            init() {
+                this.$watch('search', value => this.updateSearch(value));
+                if (this.search) {
+                    this.$nextTick(() => this.updateSearch(this.search));
+                }
+            },
 
             copyPassword() {
                 navigator.clipboard.writeText(this.password);
@@ -142,34 +210,33 @@
 
         {{-- Filter & Search Card --}}
         <div class="bg-white shadow-sm rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <form method="GET" action="{{ route('admin.users.index') }}" class="flex items-center gap-2 w-full sm:w-auto flex-1 max-w-md">
-                <div class="relative w-full">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
-                        </svg>
-                    </span>
-                    <input type="text"
-                           name="search"
-                           value="{{ $search }}"
-                           placeholder="Search by name, email, or role..."
-                           class="w-full pl-9 pr-8 py-2 text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
-                    @if ($search !== '')
-                        <a href="{{ route('admin.users.index') }}"
-                           class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </a>
-                    @endif
-                </div>
-                <button type="submit" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition shrink-0">
-                    Search
+            <div class="relative w-full sm:w-auto flex-1 max-w-md">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+                    </svg>
+                </span>
+                <input type="text"
+                       x-model="search"
+                       @input="updateSearch($event.target.value)"
+                       @keydown.enter.prevent
+                        placeholder="Search by name, email, role, or jabatan..."
+                        autocomplete="off"
+                        class="w-full pl-9 pr-9 py-2 text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                <button type="button"
+                        x-show="search && search.length > 0"
+                        x-cloak
+                        @click="clearSearch()"
+                        title="Hapus pencarian"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
                 </button>
-            </form>
+            </div>
 
             <span class="text-xs text-gray-400 shrink-0">
-                Showing <strong class="text-gray-700">{{ $users->count() }}</strong> user account(s)
+                Showing <strong class="text-gray-700" x-text="visibleCount">{{ $users->count() }}</strong> user account(s)
             </span>
         </div>
 
@@ -189,17 +256,23 @@
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($users as $user)
                             @php
-                                $roleBadge = match($user->role) {
-                                    'approver_a' => ['label' => 'Approver A', 'class' => 'bg-amber-50 text-amber-700 border-amber-200'],
-                                    'approver_c' => ['label' => 'Approver C', 'class' => 'bg-purple-50 text-purple-700 border-purple-200'],
-                                    'finance' => ['label' => 'Finance', 'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200'],
-                                    default => ['label' => 'Staff / Input', 'class' => 'bg-blue-50 text-blue-700 border-blue-200'],
+                                $roleBadge = match(true) {
+                                    $user->is_admin => ['label' => 'Super Admin', 'class' => 'bg-purple-50 text-purple-700 border-purple-200'],
+                                    $user->role === 'approver' => ['label' => 'Approver', 'class' => 'bg-amber-50 text-amber-700 border-amber-200'],
+                                    default => ['label' => 'User Input', 'class' => 'bg-blue-50 text-blue-700 border-blue-200'],
                                 };
 
                                 $initials = strtoupper(substr($user->name, 0, 2));
+                                $emailUsername = strtolower(explode('@', $user->email)[0] ?? '');
                             @endphp
-                            <tr class="hover:bg-gray-50/70 transition">
-                                {{-- Name & Email --}}
+                            <tr data-user-row
+                                data-name="{{ strtolower($user->name) }}"
+                                data-username="{{ $emailUsername }}"
+                                data-email="{{ strtolower($user->email) }}"
+                                data-role="{{ strtolower($roleBadge['label'] . ' ' . $user->role) }}"
+                                data-jabatan="{{ strtolower($user->jabatan ?? '') }}"
+                                class="hover:bg-gray-50/70 transition">
+                                {{-- Name & Email & Jabatan --}}
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center gap-3">
                                         <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
@@ -212,7 +285,13 @@
                                                     <span class="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600 font-normal">You</span>
                                                 @endif
                                             </p>
-                                            <p class="text-xs text-gray-500 font-mono">{{ $user->email }}</p>
+                                            <div class="flex items-center gap-2 mt-0.5">
+                                                @if($user->jabatan)
+                                                    <span class="inline-block text-[11px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.2 rounded">{{ $user->jabatan }}</span>
+                                                    <span class="text-gray-300 text-xs">•</span>
+                                                @endif
+                                                <p class="text-xs text-gray-500 font-mono">{{ $user->email }}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -275,17 +354,6 @@
                                             </svg>
                                         </button>
 
-                                        {{-- Delete Button (Disabled for Self) --}}
-                                        @if ($user->id !== auth()->id())
-                                            <button type="button"
-                                                    title="Delete User"
-                                                    @click="openDelete('{{ route('admin.users.destroy', $user) }}', '{{ $user->name }}')"
-                                                    class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                </svg>
-                                            </button>
-                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -300,6 +368,19 @@
                                 </td>
                             </tr>
                         @endforelse
+                        @if ($users->isNotEmpty())
+                            <tr x-show="visibleCount === 0" x-cloak>
+                                <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+                                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+                                    </svg>
+                                    <p class="font-semibold text-gray-600">No users found</p>
+                                    <p class="text-xs text-gray-400 mt-1">
+                                        Tidak ada akun pengguna yang cocok dengan pencarian "<span class="font-medium text-gray-600" x-text="search"></span>".
+                                    </p>
+                                </td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>

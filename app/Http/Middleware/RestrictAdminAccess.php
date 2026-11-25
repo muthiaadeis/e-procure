@@ -8,21 +8,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RestrictAdminAccess
 {
-    protected array $allowedRoutes = [
-        'admin.*',
-        'password.force-change',
-        'password.force-change.update',
-        'logout',
-    ];
-
+    /**
+     * Super Admin memiliki tampilan yang sama dengan sistem biasa
+     * (Dashboard, Pengadaan: MR, RRP, PO, PR, Data Master: Vendors, Job Code, dan Administrasi).
+     * Super Admin dapat melihat dan mengontrol seluruh dokumen,
+     * tetapi tidak dapat membuat/menginput dokumen baru (dijaga oleh role isInput).
+     */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
-
-        if ($user && $user->is_admin && ! $request->routeIs(...$this->allowedRoutes)) {
-            return redirect()->route('admin.users.index');
-        }
-
         return $next($request);
     }
 }

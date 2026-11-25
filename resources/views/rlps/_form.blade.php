@@ -6,11 +6,13 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                No RRP <span class="text-red-500">*</span>
+                No RRP
             </label>
-            <input type="text" name="no_rlp" value="{{ old('no_rlp', $rlp->no_rlp ?? '') }}" required
-                   class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
-            <p class="mt-1.5 text-xs text-gray-400">Masukkan nomor RRP.</p>
+            <input type="text" name="no_rlp"
+                   value="{{ isset($rlp) ? $rlp->no_rlp : ($defaultNoRlp ?? '') }}"
+                   readonly tabindex="-1"
+                   class="w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm text-sm text-gray-500 cursor-not-allowed focus:ring-0 focus:border-gray-300">
+            <p class="mt-1.5 text-xs text-gray-400">Nomor RRP otomatis digenerate oleh sistem.</p>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
@@ -44,9 +46,18 @@
 
         <div class="space-y-4 mt-4">
         <template x-for="(item, index) in items" :key="item.uid">
-                        <div class="border border-gray-200 rounded-xl p-4">
+                        <div class="border rounded-xl p-4 transition"
+                     :class="item.job_code_id && !String(item.uom || '').trim() ? 'border-amber-300 bg-amber-50/10' : 'border-gray-200'">
                 <div class="flex items-center justify-between mb-3">
-                    <p class="text-xs font-semibold text-gray-400" x-text="'Item ' + (index + 1)"></p>
+                    <div class="flex items-center gap-2">
+                        <p class="text-xs font-semibold text-gray-500" x-text="'Item ' + (index + 1)"></p>
+                        <span x-show="item.job_code_id && !String(item.uom || '').trim()"
+                              x-cloak
+                              class="inline-flex items-center gap-1 text-[11px] font-medium text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            UOM belum diisi
+                        </span>
+                    </div>
                     <button type="button" @click="removeItem(index)" x-show="items.length > 1" title="Delete item"
                             class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +66,7 @@
                     </button>
                 </div>
 
-                <div class="mb-3">
+                <div class="mb-3" :id="'item-jc-' + index">
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">Job Code <span class="text-red-500">*</span></label>
                     <div class="relative" x-data="{ open: false, search: '' }" @click.outside="open = false; search = ''">
                         <button type="button" @click="open = !open; $nextTick(() => open && $refs.jcSearch && $refs.jcSearch.focus())"
@@ -129,10 +140,24 @@
                                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">UOM</label>
-                        <input type="text" :name="'items[' + index + '][uom]'" required
-                               x-model="item.uom" placeholder="Pcs"
-                               class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-medium text-gray-600">UOM <span class="text-red-500">*</span></label>
+                            <span x-show="item.job_code_id && !String(item.uom || '').trim()" x-cloak class="text-[10px] font-semibold text-rose-500">Wajib diisi</span>
+                        </div>
+                        <input type="text"
+                               :id="'item-uom-' + index"
+                               :name="'items[' + index + '][uom]'" required
+                               x-model="item.uom" placeholder="Contoh: Pcs, Unit, Set"
+                               class="w-full rounded-lg shadow-2xs text-sm transition"
+                               :class="item.job_code_id && !String(item.uom || '').trim()
+                                   ? 'border-rose-400 bg-rose-50/30 text-gray-900 focus:border-rose-500 focus:ring-rose-200 ring-1 ring-rose-200'
+                                   : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'">
+                        <p x-show="item.job_code_id && !String(item.uom || '').trim()" x-cloak class="text-[11px] text-rose-600 mt-1 font-medium flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Harap isi UOM</span>
+                        </p>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Catalog U/Price <span class="text-gray-400 font-normal">(auto)</span></label>
@@ -161,7 +186,7 @@
                                     <span class="font-bold ml-1" :class="itemRevenueExt(item) < 0 ? 'text-red-600' : 'text-emerald-600'"
                                           x-text="'Rp ' + formatThousands(itemRevenueExt(item))"></span>
                                     <span class="text-[11px] text-gray-400 font-normal ml-1" x-show="!selectedVendorObj">(Best potential)</span>
-                                    <span class="text-[11px] text-indigo-600 font-semibold ml-1" x-show="selectedVendorObj">(Selected Winner)</span>
+                                    <span class="text-[11px] text-indigo-600 font-semibold ml-1" x-show="selectedVendorObj">(Vendor Terpilih)</span>
                                 </span>
                             </div>
                             <div class="flex flex-wrap gap-1.5 pt-0.5" x-show="itemVendorsWithQuotes(item).length > 1 && !selectedVendorObj">
@@ -201,9 +226,9 @@
             </h3>
             <p class="text-xs text-gray-400 mt-0.5">Add a vendor and fill in its price for every item above. Add as many vendors as you want to compare, then pick the winner — if you add a new item later, come back here and fill in its price too.</p>
         </div>
-        <button type="button" @click="addVendor()" :disabled="!itemsReady"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg transition shrink-0"
-                :class="itemsReady ? 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50' : 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'">
+        <button type="button" @click="addVendor()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg transition shrink-0 cursor-pointer"
+                :class="itemsReady ? 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50' : 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
@@ -212,8 +237,31 @@
     </div>
 
     <template x-if="!itemsReady">
-        <div class="mt-4 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-xs text-gray-400">
-            Complete every item in Step 1 first (Job Code, Quantity, UOM) — the Vendors form unlocks once all items are filled in.
+        <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-xs">
+            <div class="flex items-start gap-3">
+                <span class="text-base text-amber-600">⚠️</span>
+                <div class="flex-1">
+                    <p class="font-semibold text-amber-900">
+                        Item di Langkah 1 belum lengkap
+                    </p>
+                    <p class="text-amber-700 mt-0.5">
+                        Pastikan seluruh item memiliki <strong>Job Code</strong>, <strong>Quantity</strong>, dan <strong>UOM</strong> sebelum mengisi vendor.
+                    </p>
+                    <div class="mt-2.5 space-y-1.5">
+                        <template x-for="(it, idx) in items" :key="it.uid">
+                            <div x-show="!isItemComplete(it)" class="flex items-center gap-2 text-amber-900 bg-white/80 border border-amber-200 rounded-lg px-3 py-1.5">
+                                <span class="font-bold text-gray-700" x-text="'• Item ' + (idx + 1) + ':'"></span>
+                                <span x-show="!it.job_code_id" class="text-rose-600 font-medium">Job Code belum dipilih</span>
+                                <span x-show="it.job_code_id && !String(it.uom || '').trim()" class="text-rose-600 font-semibold">UOM belum diisi</span>
+                                <span x-show="it.job_code_id && String(it.uom || '').trim() && (!it.qty || Number(it.qty) < 1)" class="text-rose-600 font-medium">Qty minimal 1</span>
+                                <button type="button" @click="focusIncompleteItem(idx)" class="ml-auto text-indigo-600 hover:text-indigo-800 underline font-semibold text-xs cursor-pointer">
+                                    Lengkapi sekarang &rarr;
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
         </div>
     </template>
 
@@ -285,12 +333,12 @@
                         </div>
 
                         <button type="button" @click="selectedVendorUid = (selectedVendorUid === vendor.uid ? null : vendor.uid)"
-                                class="inline-flex items-center gap-1.5 px-3 py-3 rounded-xl text-xs font-semibold border transition whitespace-nowrap"
+                                class="inline-flex items-center gap-1.5 px-3 py-3 rounded-xl text-xs font-semibold border transition whitespace-nowrap cursor-pointer"
                                 :class="selectedVendorUid === vendor.uid ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'">
                             <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
-                            <span x-text="selectedVendorUid === vendor.uid ? 'Vendor Pemenang' : 'Pilih Pemenang'"></span>
+                            <span x-text="selectedVendorUid === vendor.uid ? 'Terpilih' : 'Pilih'"></span>
                         </button>
                         <button type="button" @click="removeVendor(vIndex)" title="Hapus vendor"
                                 class="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition shrink-0 whitespace-nowrap">
@@ -549,7 +597,7 @@
             <template x-if="uploadedSignature">
                 <div class="relative bg-gray-50/70 border-2 border-dashed border-indigo-200 rounded-xl p-4 flex flex-col items-center justify-center min-h-[200px]">
                     <div class="max-h-48 flex items-center justify-center bg-white p-3 rounded-lg shadow-xs border border-gray-100">
-                        <img :src="uploadedSignature" alt="Signature Preview" class="max-h-40 max-w-full object-contain">
+                        <img :src="uploadedSignature" alt="Signature Preview" style="max-height: 120px; max-width: 100%; object-fit: contain;" class="max-h-40 max-w-full object-contain">
                     </div>
                     <div class="flex items-center gap-2 mt-3">
                         <button type="button" @click="$refs.rlpCreateSigFileInput.click()" class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-xs hover:bg-gray-50 transition">

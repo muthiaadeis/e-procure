@@ -17,6 +17,7 @@ class PurchaseRequest extends Model
         'title',
         'job_location',
         'client',
+        'charge_to',
         'job_no',
         'location_project',
         'note',
@@ -26,6 +27,7 @@ class PurchaseRequest extends Model
         'ppn_amount',
         'grand_total',
         'created_by',
+        'created_signature',
     ];
 
     protected $casts = [
@@ -37,33 +39,34 @@ class PurchaseRequest extends Model
         'grand_total' => 'decimal:2',
     ];
 
-    // Template alur tanda tangan PR. Urutan (sort_order) menentukan siapa
-    // harus tanda tangan duluan sebelum tahap berikutnya bisa dibuka.
-    // Silakan sesuaikan role_label di sini kalau ada perubahan jabatan.
-    public const APPROVAL_TEMPLATE = [
-        ['stage' => 'prepared',      'stage_label' => 'Prepared By',   'role_label' => 'Admin Support',        'sort_order' => 1],
-        ['stage' => 'review',        'stage_label' => 'Review By',     'role_label' => 'Operation Manager',    'sort_order' => 2],
-        ['stage' => 'review',        'stage_label' => 'Review By',     'role_label' => 'Project Support',      'sort_order' => 2],
-        ['stage' => 'approve',       'stage_label' => 'Approve',       'role_label' => 'KSO Representative',   'sort_order' => 3],
-        ['stage' => 'acknowledge',   'stage_label' => 'Acknowledge',   'role_label' => 'Finance Control',      'sort_order' => 4],
-        ['stage' => 'acknowledge',   'stage_label' => 'Acknowledge',   'role_label' => 'General Manager',      'sort_order' => 4],
-        ['stage' => 'acknowledge',   'stage_label' => 'Acknowledge',   'role_label' => 'VIP Director',         'sort_order' => 4],
-        ['stage' => 'final_approve', 'stage_label' => 'Final Approve', 'role_label' => 'Director',             'sort_order' => 5],
-    ];
-
+    /**
+     * Generate the next auto No Request, format: PR001, PR002, ...
+     * Nomor berurutan 3 digit tanpa tanda hubung.
+     */
     public static function generateNextNoRequest(): string
     {
-        $prefix = 'PR-' . now()->format('Y-m') . '-';
+        $prefix = 'PR';
 
-        $lastNo = static::query()
-            ->where('no_request', 'like', $prefix . '%')
-            ->orderByDesc('id')
-            ->value('no_request');
+        $prs = static::query()
+            ->where(function ($q) {
+                $q->where('no_request', 'like', 'PR%')
+                  ->orWhere('no_request', 'like', 'PR-%');
+            })
+            ->pluck('no_request');
 
-        $lastNumber = $lastNo ? (int) substr($lastNo, strlen($prefix)) : 0;
-        $nextNumber = $lastNumber + 1;
+        $maxNumber = 0;
+        foreach ($prs as $no) {
+            if (preg_match('/^PR-?(\d+)$/i', trim((string) $no), $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            }
+        }
 
-        return $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+        $nextNumber = $maxNumber + 1;
+
+        return $prefix . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
     }
 
     public function items()
@@ -73,7 +76,9 @@ class PurchaseRequest extends Model
 
     public function approvals()
     {
-        return $this->hasMany(PurchaseRequestApproval::class)->orderBy('sort_order')->orderBy('id');
+        return $this->hasMany(DocumentApproval::class, 'document_id')
+            ->where('document_type', 'pr')
+            ->orderBy('step');
     }
 
     public function creator()
@@ -89,7 +94,16 @@ class PurchaseRequest extends Model
     protected function isFullySigned(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->approvals->isNotEmpty() && $this->approvals->every(fn ($a) => ! is_null($a->signed_at)),
+            get: fn () => $this->approvals->isNotEmpty()
+                && $this->approvals->contains(fn ($a) => $a->step > 1)
+                && $this->approvals->every(fn ($a) => ! is_null($a->signed_at)),
+        );
+    }
+
+    protected function isApproved(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->is_fully_signed,
         );
     }
 
@@ -100,20 +114,50 @@ class PurchaseRequest extends Model
         );
     }
 
-    // Draft (belum ada ttd sama sekali) -> In Progress -> Completed (semua kotak sudah ttd)
+    protected function isRejected(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->approvals->isNotEmpty() && $this->approvals->contains(fn ($a) => $a->isRejected()),
+        );
+    }
+
+    protected function isOverdue(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->is_rejected || $this->status === 'Done') {
+                    return false;
+                }
+
+                return $this->approvals->isNotEmpty() && $this->approvals->contains(fn ($a) => $a->isOverdue());
+            },
+        );
+    }
+
+    // Draft (belum ada ttd sama sekali) -> Pending Setup -> In Progress / Pending Approver -> Done (semua kotak sudah ttd) / Rejected
     protected function status(): Attribute
     {
         return Attribute::make(
             get: function () {
+                if ($this->is_rejected) {
+                    return 'Rejected';
+                }
+
+                $hasConfiguredApprovals = $this->approvals->contains(fn ($a) => $a->step > 1);
+                if (! $hasConfiguredApprovals) {
+                    return 'Pending Setup';
+                }
+
                 if ($this->is_fully_signed) {
-                    return 'Completed';
+                    return 'Done';
                 }
 
                 if ($this->is_draft) {
                     return 'Draft';
                 }
 
-                return 'In Progress';
+                $currentApproval = $this->approvals->sortBy('step')->first(fn ($a) => ! $a->isSigned());
+                return $currentApproval ? 'Pending ' . $currentApproval->label : 'In Progress';
             },
         );
     }

@@ -16,8 +16,10 @@
                 <th class="px-4 py-3 whitespace-nowrap">Brand</th>
                 <th class="px-4 py-3 min-w-[200px]">Address</th>
                 <th class="px-4 py-3 whitespace-nowrap">Email</th>
-                <th class="px-4 py-3 whitespace-nowrap">Phone</th>
-                <th class="px-4 py-3 rounded-r-lg text-center whitespace-nowrap">Action</th>
+                <th class="px-4 py-3 whitespace-nowrap {{ auth()->user()->isInput() ? '' : 'rounded-r-lg' }}">Phone</th>
+                @if(auth()->user()->isInput())
+                    <th class="px-4 py-3 rounded-r-lg text-center whitespace-nowrap">Action</th>
+                @endif
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -64,10 +66,25 @@
                         -
                     @endif
                 </td>
+                @if(auth()->user()->isInput())
                 <td class="px-4 py-3.5">
                     <div class="flex items-center justify-center">
-                        <div class="relative" x-data="{ rowOpen: false }" @click.outside="rowOpen = false">
-                            <button type="button" @click="rowOpen = !rowOpen" title="Actions"
+                        <div class="relative"
+                             x-data="{
+                                 rowOpen: false,
+                                 menuId: 'vendor-{{ $vendor->id }}',
+                                 toggle() {
+                                     if (!this.rowOpen) {
+                                         window.dispatchEvent(new CustomEvent('close-action-menus', { detail: this.menuId }));
+                                         this.rowOpen = true;
+                                     } else {
+                                         this.rowOpen = false;
+                                     }
+                                 }
+                             }"
+                             @close-action-menus.window="if ($event.detail !== menuId) rowOpen = false"
+                             @click.outside="rowOpen = false">
+                            <button type="button" @click="toggle()" title="Actions"
                                     class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M10 6a2 2 0 100-4 2 2 0 000 4zm0 6a2 2 0 100-4 2 2 0 000 4zm0 6a2 2 0 100-4 2 2 0 000 4z"/>
@@ -104,10 +121,11 @@
                         </div>
                     </div>
                 </td>
+                @endif
             </tr>
             @empty
             <tr>
-                <td colspan="8" class="text-center py-12 text-gray-400">
+                <td colspan="{{ auth()->user()->isInput() ? 8 : 7 }}" class="text-center py-12 text-gray-400">
                     <div class="flex flex-col items-center gap-2">
                         <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>

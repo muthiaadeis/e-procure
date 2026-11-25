@@ -14,8 +14,10 @@
                 <th class="px-4 py-3 whitespace-nowrap">Job Code</th>
                 <th class="px-4 py-3 min-w-[220px]">Description</th>
                 <th class="px-4 py-3 text-center whitespace-nowrap">Price</th>
-                <th class="px-4 py-3 text-center whitespace-nowrap">Part Number</th>
-                <th class="px-4 py-3 rounded-r-lg text-center whitespace-nowrap">Action</th>
+                <th class="px-4 py-3 text-center whitespace-nowrap {{ auth()->user()->isInput() ? '' : 'rounded-r-lg' }}">Part Number</th>
+                @if(auth()->user()->isInput())
+                    <th class="px-4 py-3 rounded-r-lg text-center whitespace-nowrap">Action</th>
+                @endif
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -30,10 +32,25 @@
                 <td class="px-4 py-3.5 text-gray-600">{{ $jc->description ?? '-' }}</td>
                 <td class="px-4 py-3.5 text-gray-800 font-medium whitespace-nowrap text-center">Rp {{ number_format($jc->price, 2) }}</td>
                 <td class="px-4 py-3.5 text-gray-600 whitespace-nowrap text-center">{{ $jc->part_number ?? '-' }}</td>
+                @if(auth()->user()->isInput())
                 <td class="px-4 py-3.5">
                     <div class="flex items-center justify-center">
-                        <div class="relative" x-data="{ rowOpen: false }" @click.outside="rowOpen = false">
-                            <button type="button" @click="rowOpen = !rowOpen" title="Actions"
+                        <div class="relative"
+                             x-data="{
+                                 rowOpen: false,
+                                 menuId: 'jc-{{ $jc->id }}',
+                                 toggle() {
+                                     if (!this.rowOpen) {
+                                         window.dispatchEvent(new CustomEvent('close-action-menus', { detail: this.menuId }));
+                                         this.rowOpen = true;
+                                     } else {
+                                         this.rowOpen = false;
+                                     }
+                                 }
+                             }"
+                             @close-action-menus.window="if ($event.detail !== menuId) rowOpen = false"
+                             @click.outside="rowOpen = false">
+                            <button type="button" @click="toggle()" title="Actions"
                                     class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M10 6a2 2 0 100-4 2 2 0 000 4zm0 6a2 2 0 100-4 2 2 0 000 4zm0 6a2 2 0 100-4 2 2 0 000 4z"/>
@@ -70,10 +87,11 @@
                         </div>
                     </div>
                 </td>
+                @endif
             </tr>
             @empty
             <tr>
-                <td colspan="6" class="text-center py-12 text-gray-400">
+                <td colspan="{{ auth()->user()->isInput() ? 6 : 5 }}" class="text-center py-12 text-gray-400">
                     <div class="flex flex-col items-center gap-2">
                         <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>

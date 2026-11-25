@@ -148,6 +148,11 @@
             border-top: 1px solid #9ca3af;
             padding-top: 5px;
         }
+        .signatures .box p.jabatan {
+            margin: 1px 0 0;
+            font-size: 10px;
+            color: #6b7280;
+        }
         .signatures .box p.date {
             margin: 2px 0 0;
             font-size: 10px;
@@ -189,6 +194,7 @@
             <div><label>Title</label><strong>{{ $purchaseRequest->title }}</strong></div>
             <div><label>Job Location</label><strong>{{ $purchaseRequest->job_location ?? '-' }}</strong></div>
             <div><label>Client</label><strong>{{ $purchaseRequest->client ?? '-' }}</strong></div>
+            <div><label>Charge To</label><strong>{{ $purchaseRequest->charge_to ?? '-' }}</strong></div>
             <div><label>Job No</label><strong>{{ $purchaseRequest->job_no ?? '-' }}</strong></div>
             <div><label>Location Project</label><strong>{{ $purchaseRequest->location_project ?? '-' }}</strong></div>
         </div>
@@ -256,14 +262,17 @@
         <div class="signatures">
             @foreach($purchaseRequest->approvals as $approval)
                 <div class="box">
-                    <p class="role">{{ $approval->stage_label }}<br>{{ $approval->role_label }}</p>
+                    <p class="role">{{ $approval->label ?? ($approval->stage_label ?? 'Approval') }}</p>
                     <div class="sig-space">
-                        @if($approval->isSigned())
+                        @if($approval->isSigned() && !empty($approval->signature))
                             <img src="{{ $approval->signature }}" alt="signature">
                         @endif
                     </div>
-                    <p class="name">{{ $approval->signer->name ?? '\u00A0' }}</p>
-                    <p class="date">{{ $approval->signed_at?->format('d-m-Y') ?? 'Pending' }}</p>
+                    <p class="name">{{ $approval->user->name ?? ($approval->signer->name ?? '\u00A0') }}</p>
+                    @if(!empty($approval->user?->jabatan))
+                        <p class="jabatan">{{ $approval->user->jabatan }}</p>
+                    @endif
+                    <p class="date">{{ $approval->signed_at ? $approval->signed_at->format('d-m-Y H:i') : 'Pending' }}</p>
                 </div>
             @endforeach
         </div>

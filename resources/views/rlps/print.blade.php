@@ -121,16 +121,15 @@
         .signatures {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-top: 40px;
+            gap: 18px 14px;
+            margin-top: 32px;
             text-align: center;
         }
         .signatures .box p.role {
-            font-size: 11px;
+            font-size: 10px;
             color: #6b7280;
             text-transform: uppercase;
             letter-spacing: .03em;
-            margin: 0 0 48px;
             margin: 0 0 4px;
         }
         .signatures .box .sig-space {
@@ -148,14 +147,19 @@
         }
         .signatures .box p.name {
             margin: 0;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             border-top: 1px solid #9ca3af;
-            padding-top: 6px;
+            padding-top: 5px;
+        }
+        .signatures .box p.jabatan {
+            margin: 1px 0 0;
+            font-size: 10px;
+            color: #6b7280;
         }
         .signatures .box p.date {
             margin: 2px 0 0;
-            font-size: 11px;
+            font-size: 10px;
             color: #6b7280;
         }
         .footer-note {
@@ -284,46 +288,21 @@
         @endif
 
         <div class="signatures">
-            <div class="box">
-                <p class="role">Prepared By</p>
-                <div class="sig-space">
-                    @if($rlp->created_signature)
-                        <img src="{{ $rlp->created_signature }}" alt="signature">
+            @foreach($rlp->approvals->sortBy('step') as $approval)
+                <div class="box">
+                    <p class="role">{{ $approval->label ?? ($approval->stage_label ?? 'Approval') }}</p>
+                    <div class="sig-space">
+                        @if($approval->isSigned() && !empty($approval->signature))
+                            <img src="{{ $approval->signature }}" alt="signature">
+                        @endif
+                    </div>
+                    <p class="name">{{ $approval->user->name ?? ($approval->signer->name ?? "\u00A0") }}</p>
+                    @if(!empty($approval->user?->jabatan))
+                        <p class="jabatan">{{ $approval->user->jabatan }}</p>
                     @endif
+                    <p class="date">{{ $approval->signed_at ? $approval->signed_at->format('d-m-Y H:i') : 'Pending' }}</p>
                 </div>
-                <p class="name">{{ $rlp->creator->name ?? '-' }}</p>
-                <p class="date">{{ $rlp->created_at ? $rlp->created_at->format('d-m-Y H:i') : '-' }}</p>
-            </div>
-            <div class="box">
-                <p class="role">Review By</p>
-                <div class="sig-space">
-                    @if($rlp->reviewed_signature)
-                        <img src="{{ $rlp->reviewed_signature }}" alt="signature">
-                    @endif
-                </div>
-                <p class="name">{{ $rlp->reviewer->name ?? '-' }}</p>
-                <p class="date">{{ $rlp->reviewed_at?->format('d-m-Y H:i') ?? '-' }}</p>
-            </div>
-            <div class="box">
-                <p class="role">Acknowledge By</p>
-                <div class="sig-space">
-                    @if($rlp->acknowledged_signature)
-                        <img src="{{ $rlp->acknowledged_signature }}" alt="signature">
-                    @endif
-                </div>
-                <p class="name">{{ $rlp->acknowledger->name ?? '-' }}</p>
-                <p class="date">{{ $rlp->acknowledged_at?->format('d-m-Y H:i') ?? '-' }}</p>
-            </div>
-            <div class="box">
-                <p class="role">Approved By</p>
-                <div class="sig-space">
-                    @if($rlp->approved_signature)
-                        <img src="{{ $rlp->approved_signature }}" alt="signature">
-                    @endif
-                </div>
-                <p class="name">{{ $rlp->approver->name ?? '-' }}</p>
-                <p class="date">{{ $rlp->approved_at?->format('d-m-Y H:i') ?? '-' }}</p>
-            </div>
+            @endforeach
         </div>
 
         <p class="footer-note">Generated from {{ config('app.name', 'e-Procure') }} RRP Management on {{ now()->format('d-m-Y H:i') }}.</p>

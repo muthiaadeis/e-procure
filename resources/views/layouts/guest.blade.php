@@ -15,6 +15,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans text-gray-900 antialiased">
+        <x-system-alert-modal />
         <div class="min-h-screen flex flex-col sm:justify-center items-center py-10 px-4 bg-gradient-to-br from-indigo-50 via-white to-rose-50 relative overflow-hidden">
 
             <!-- Decorative blobs -->

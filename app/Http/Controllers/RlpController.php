@@ -23,23 +23,61 @@ class RlpController extends Controller
     // dokumen yang sudah ditandatangani tidak bisa berubah diam-diam.
     private function abortIfReviewed(Rlp $rlp, string $action): void
     {
-        abort_if($rlp->is_reviewed, 403, "This RRP can't be {$action} because it has already been reviewed.");
+        abort_if(
+            $rlp->is_approved,
+            403,
+            "Dokumen RRP yang sudah disetujui / selesai (done) tidak dapat di-{$action}."
+        );
+
+        abort_unless(
+            $rlp->is_rejected,
+            403,
+            "Dokumen RRP hanya dapat di-{$action} setelah ditolak oleh approver."
+        );
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $rlps = Rlp::with(
+        $query = Rlp::with([
             'items.jobCode',
             'items.vendors.vendor',
             'items.selectedVendor',
             'creator',
-            'reviewer',
-            'acknowledger',
-            'approver',
-            'purchaseOrder'
-        )->latest()->paginate(10);
+            'purchaseOrder',
+            'approvals.user',
+        ]);
 
-        return view('rlps.index', compact('rlps'));
+        $search = trim((string) $request->query('search'));
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('no_rlp', 'like', "%{$search}%");
+            });
+        }
+
+        // User dengan role approval tidak dapat melihat RRP yang belum diajukan/ditandatangani pembuat
+        if (! auth()->user()->isInput() && ! auth()->user()->isAdmin()) {
+            $query->whereHas('approvals', function ($q) {
+                $q->whereNotNull('signed_at');
+            });
+        }
+
+        $rlps = $query->latest('date')->paginate(15)->withQueryString();
+
+        return view('rlps.index', compact('rlps', 'search'));
+    }
+
+    public function show(Rlp $rlp)
+    {
+        $rlp->load([
+            'items.jobCode',
+            'items.vendors.vendor',
+            'items.selectedVendor',
+            'creator',
+            'purchaseOrder',
+            'approvals.user',
+        ]);
+
+        return view('rlps.show', compact('rlp'));
     }
 
     public function create()
@@ -48,8 +86,9 @@ class RlpController extends Controller
 
         $vendorOptions = Vendor::orderBy('vendor_name')->get(['id', 'vendor_name']);
         $jobCodeOptions = JobCode::orderBy('job_code')->get(['id', 'job_code', 'description', 'price', 'part_number']);
+        $defaultNoRlp = Rlp::generateNextNoRlp();
 
-        return view('rlps.create', compact('vendorOptions', 'jobCodeOptions'));
+        return view('rlps.create', compact('vendorOptions', 'jobCodeOptions', 'defaultNoRlp'));
     }
 
     public function store(Request $request)
@@ -65,8 +104,10 @@ class RlpController extends Controller
         ]);
 
         $rlp = DB::transaction(function () use ($validated, $request) {
+            $noRlp = Rlp::generateNextNoRlp();
+
             $rlp = Rlp::create([
-                'no_rlp' => $validated['no_rlp'],
+                'no_rlp' => $noRlp,
                 'date' => now(), // tanggal otomatis, bukan input manual
                 'created_by' => auth()->id(),
                 'created_signature' => $request->input('signature'),
@@ -75,12 +116,26 @@ class RlpController extends Controller
             $this->syncItems($rlp, $validated['items']);
             $this->syncCosts($rlp, $validated['costs'] ?? []);
 
+            // Otomatis daftarkan tanda tangan inputer sebagai Tahap 1 (Prepared By)
+            \App\Models\DocumentApproval::create([
+                'document_type' => 'rlp',
+                'document_id' => $rlp->id,
+                'step' => 1,
+                'label' => 'Prepared By',
+                'user_id' => auth()->id(),
+                'signature' => $request->input('signature'),
+                'signed_at' => now(),
+            ]);
+
+            // Otomatis terapkan alur persetujuan dari template default jika sudah diatur
+            \App\Models\ApprovalTemplate::applyTemplateTo('rlp', $rlp->id);
+
             return $rlp;
         });
 
         Draft::forget('rlps');
 
-        return redirect()->route('rlps.index', ['auto_open' => $rlp->id])->with('success', 'RRP added successfully.');
+        return redirect()->route('rlps.show', $rlp)->with('success', 'Dokumen RRP berhasil dibuat dan diajukan untuk persetujuan.');
     }
 
     public function edit(Rlp $rlp)
@@ -102,143 +157,61 @@ class RlpController extends Controller
 
         $validated = $this->validateRlp($request, $rlp->id);
 
-        DB::transaction(function () use ($validated, $rlp) {
+        $wasRejected = $rlp->is_rejected;
+
+        DB::transaction(function () use ($validated, $rlp, $wasRejected) {
             $rlp->items()->delete(); // cascade otomatis hapus rlp_vendors di bawahnya
             $rlp->costs()->delete();
 
-            $rlp->update([
-                'no_rlp' => $validated['no_rlp'],
-                // 'date' sengaja tidak diubah — tanggal RRP tetap tanggal pertama kali dibuat.
-            ]);
+            // 'date' sengaja tidak diubah — tanggal RRP tetap tanggal pertama kali dibuat.
+            // 'no_rlp' juga tidak diubah (readonly & permanen).
 
             $this->syncItems($rlp, $validated['items']);
             $this->syncCosts($rlp, $validated['costs'] ?? []);
+
+            if ($wasRejected) {
+                // Reset semua tanda tangan persetujuan (step > 1) dan bersihkan catatan penolakan
+                $rlp->approvals()->where('step', '>', 1)->update([
+                    'signature' => null,
+                    'signed_at' => null,
+                    'rejected_at' => null,
+                    'rejection_reason' => null,
+                ]);
+                $rlp->approvals()->update([
+                    'rejected_at' => null,
+                    'rejection_reason' => null,
+                ]);
+                $rlp->approvals()->where('step', 1)->update([
+                    'signed_at' => now(),
+                ]);
+                $rlp->update([
+                    'reviewed_at' => null,
+                    'acknowledged_at' => null,
+                    'approved_at' => null,
+                ]);
+            }
         });
 
-        return redirect()->route('rlps.index')->with('success', 'RRP updated successfully.');
+        return redirect()->route('rlps.show', $rlp)->with('success', $wasRejected
+            ? 'Dokumen RRP berhasil diperbarui dan diajukan ulang untuk persetujuan dari awal.'
+            : 'Dokumen RRP berhasil diperbarui.');
     }
 
     public function destroy(Rlp $rlp)
     {
-        $this->authorizeInput('delete');
-        $this->abortIfReviewed($rlp, 'deleted');
-
-        // RRP yang sudah dibuatkan PO tidak boleh dihapus, supaya jejak dokumennya tetap ada.
-        abort_if(
-            $rlp->purchaseOrders()->exists(),
-            403,
-            "This RRP already has a Purchase Order and can't be deleted."
-        );
-
-        $rlp->delete();
-
-        return redirect()->route('rlps.index')->with('success', 'RRP deleted successfully.');
+        abort(403, 'Dokumen RRP tidak dapat dihapus.');
     }
 
     public function printPdf(Rlp $rlp)
     {
-        $rlp->load('items.jobCode', 'items.selectedVendor', 'costs', 'creator', 'reviewer', 'acknowledger', 'approver');
+        $rlp->load('items.jobCode', 'items.selectedVendor', 'costs', 'creator', 'approvals.user');
 
         return view('rlps.print', compact('rlp'));
-    }
-
-    public function show(Rlp $rlp)
-    {
-        return redirect()->route('rlps.index', ['auto_open' => $rlp->id]);
-    }
-
-    public function signPrepared(Request $request, Rlp $rlp)
-    {
-        $user = auth()->user();
-
-        // Ttd Prepared By hanya milik pembuat RRP, dan tidak bisa ditimpa
-        // setelah dokumen masuk tahap review.
-        abort_unless($user->id === $rlp->created_by, 403, 'Only the creator can sign as Prepared By.');
-        $this->abortIfReviewed($rlp, 'signed again');
-
-        $validated = $request->validate([
-            'signature' => 'required|string',
-        ]);
-
-        $rlp->update([
-            'created_signature' => $validated['signature'],
-        ]);
-
-        return redirect()->route('rlps.index', ['auto_open' => $rlp->id])
-            ->with('success', 'Signature recorded successfully.');
-    }
-
-    // Tahap 1: Review By
-    public function review(Request $request, Rlp $rlp)
-    {
-        $user = auth()->user();
-
-        abort_unless($user->isRlpReviewer() || $user->isAdmin() || $user->isApprover(), 403, "You don't have permission to review this RRP.");
-        abort_unless($rlp->created_signature, 403, "This RRP hasn't been signed by the preparer yet.");
-        abort_if($rlp->is_reviewed, 403, 'This RRP has already been reviewed.');
-
-        $validated = $request->validate([
-            'signature' => 'required|string',
-        ]);
-
-        $rlp->update([
-            'reviewed_by' => $user->id,
-            'reviewed_at' => now(),
-            'reviewed_signature' => $validated['signature'],
-        ]);
-
-        return redirect()->route('rlps.index', ['auto_open' => $rlp->id])->with('success', 'RRP reviewed and signed successfully.');
-    }
-
-    // Tahap 2: Acknowledge By
-    public function acknowledge(Request $request, Rlp $rlp)
-    {
-        $user = auth()->user();
-
-        abort_unless($user->isRlpAcknowledger() || $user->isAdmin() || $user->isApprover(), 403, "You don't have permission to acknowledge this RRP.");
-        abort_unless($rlp->is_reviewed, 403, "This RRP hasn't been reviewed yet.");
-        abort_if($rlp->is_acknowledged, 403, 'This RRP has already been acknowledged.');
-
-        $validated = $request->validate([
-            'signature' => 'required|string',
-        ]);
-
-        $rlp->update([
-            'acknowledged_by' => $user->id,
-            'acknowledged_at' => now(),
-            'acknowledged_signature' => $validated['signature'],
-        ]);
-
-        return redirect()->route('rlps.index', ['auto_open' => $rlp->id])->with('success', 'RRP acknowledged and signed successfully.');
-    }
-
-    // Tahap 3: Approved By
-    public function approve(Request $request, Rlp $rlp)
-    {
-        $user = auth()->user();
-
-        abort_unless($user->isRlpApprover() || $user->isAdmin() || $user->isApprover(), 403, "You don't have permission to approve this RRP.");
-        abort_unless($rlp->is_acknowledged, 403, "This RRP hasn't been acknowledged yet.");
-        abort_if($rlp->is_approved, 403, 'This RRP has already been approved.');
-
-        $validated = $request->validate([
-            'signature' => 'required|string',
-        ]);
-
-        $rlp->update([
-            'approved_by' => $user->id,
-            'approved_at' => now(),
-            'approved_signature' => $validated['signature'],
-        ]);
-
-        return redirect()->route('rlps.index', ['auto_open' => $rlp->id])->with('success', 'RRP approved and signed successfully.');
     }
 
     private function validateRlp(Request $request, $ignoreId = null): array
     {
         return $request->validate([
-            'no_rlp' => 'required|string|max:50|unique:rlps,no_rlp' . ($ignoreId ? ",$ignoreId" : ''),
-
             'items' => 'required|array|min:1',
             'items.*.job_code_id' => 'required|exists:job_codes,id',
             'items.*.qty' => 'required|integer|min:1',

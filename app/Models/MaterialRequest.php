@@ -17,24 +17,34 @@ class MaterialRequest extends Model
     const APPROVAL_2_DEADLINE_DAYS = 2;
     const PAYMENT_DEADLINE_DAYS = 3;
 
-        /**
-     * Generate the next auto No MR, format: MR-{YYYY}-{MM}-{seq}, e.g. MR-2026-08-0001.
-     * The sequence resets every month and is based on how many MRs already
-     * exist for the current year+month.
+    /**
+     * Generate the next auto No MR, format: MR001, MR002, ...
+     * Nomor berurutan 3 digit tanpa tanda hubung.
      */
     public static function generateNextNoMr(): string
     {
-        $prefix = 'MR-' . now()->format('Y-m') . '-';
+        $prefix = 'MR';
 
-        $lastNoMr = static::query()
-            ->where('no_mr', 'like', $prefix . '%')
-            ->orderByDesc('id')
-            ->value('no_mr');
+        $mrs = static::query()
+            ->where(function ($q) {
+                $q->where('no_mr', 'like', 'MR%')
+                  ->orWhere('no_mr', 'like', 'MR-%');
+            })
+            ->pluck('no_mr');
 
-        $lastNumber = $lastNoMr ? (int) substr($lastNoMr, strlen($prefix)) : 0;
-        $nextNumber = $lastNumber + 1;
+        $maxNumber = 0;
+        foreach ($mrs as $no) {
+            if (preg_match('/^MR-?(\d+)$/i', trim((string) $no), $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            }
+        }
 
-        return $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+        $nextNumber = $maxNumber + 1;
+
+        return $prefix . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
     }
 
     protected $fillable = [
@@ -77,6 +87,13 @@ class MaterialRequest extends Model
     public function items()
     {
         return $this->hasMany(MrItem::class)->orderBy('id');
+    }
+
+    public function approvals()
+    {
+        return $this->hasMany(DocumentApproval::class, 'document_id')
+            ->where('document_type', 'mr')
+            ->orderBy('step');
     }
 
     public function creator()
@@ -155,19 +172,32 @@ class MaterialRequest extends Model
         );
     }
 
-    // Ditolak di tahap manapun (Approval 1, Approval 2, atau Finance)
+    // Ditolak di tahap manapun (Approval dinamis atau legacy)
     protected function isRejected(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->is_rejected_by_a || $this->is_rejected_by_c || $this->is_rejected_by_finance,
+            get: function () {
+                if ($this->approvals->isNotEmpty()) {
+                    return $this->approvals->contains(fn ($a) => $a->isRejected());
+                }
+
+                return (bool) ($this->is_rejected_by_a || $this->is_rejected_by_c || $this->is_rejected_by_finance);
+            },
         );
     }
 
-    // Dianggap "approved" sepenuhnya kalau sudah lewat approval A dan C
+    // Dianggap "approved" sepenuhnya kalau sudah lewat approval
     protected function isApproved(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->is_approved_by_a && $this->is_approved_by_c,
+            get: function () {
+                if ($this->approvals->isNotEmpty()) {
+                    $hasConfiguredApprovals = $this->approvals->contains(fn ($a) => $a->step > 1);
+                    return $hasConfiguredApprovals && $this->approvals->every(fn ($a) => $a->isSigned());
+                }
+
+                return (bool) ($this->is_approved_by_a && $this->is_approved_by_c);
+            },
         );
     }
 
@@ -175,6 +205,26 @@ class MaterialRequest extends Model
     {
         return Attribute::make(
             get: function () {
+                // Jika dokumen memiliki alur tanda tangan dinamis (DocumentApproval)
+                if ($this->approvals->isNotEmpty()) {
+                    if ($this->is_rejected) {
+                        return 'Rejected';
+                    }
+
+                    $hasConfiguredApprovals = $this->approvals->contains(fn ($a) => $a->step > 1);
+                    if (! $hasConfiguredApprovals) {
+                        return 'Pending Setup';
+                    }
+
+                    if ($this->approvals->every(fn ($a) => $a->isSigned())) {
+                        return 'Done';
+                    }
+
+                    $currentApproval = $this->approvals->sortBy('step')->first(fn ($a) => ! $a->isSigned());
+                    return $currentApproval ? 'Pending ' . $currentApproval->label : 'Pending Approval';
+                }
+
+                // Fallback legacy (jika tidak ada data di document_approvals)
                 if ($this->is_rejected_by_a) {
                     return 'Rejected (Approval 1)';
                 }
@@ -304,7 +354,17 @@ class MaterialRequest extends Model
     protected function isOverdue(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->is_overdue_approval_1 || $this->is_overdue_approval_2 || $this->is_overdue_payment,
+            get: function () {
+                if ($this->status === 'Done') {
+                    return false;
+                }
+
+                if ($this->approvals->isNotEmpty()) {
+                    return $this->approvals->contains(fn ($a) => $a->isOverdue());
+                }
+
+                return (bool) ($this->is_overdue_approval_1 || $this->is_overdue_approval_2 || $this->is_overdue_payment);
+            },
         );
     }
 
@@ -313,6 +373,18 @@ class MaterialRequest extends Model
     {
         return Attribute::make(
             get: function () {
+                if ($this->status === 'Done') {
+                    return null;
+                }
+
+                if ($this->approvals->isNotEmpty()) {
+                    $overdueStep = $this->approvals->first(fn ($a) => $a->isOverdue());
+                    if ($overdueStep) {
+                        return "{$overdueStep->label} overdue (more than 2 days)";
+                    }
+                    return null;
+                }
+
                 if ($this->is_overdue_approval_1) {
                     return 'Approval 1 overdue (more than '.self::APPROVAL_1_DEADLINE_DAYS.' days since MR date)';
                 }

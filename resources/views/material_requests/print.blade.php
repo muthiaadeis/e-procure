@@ -126,6 +126,11 @@
             border-top: 1px solid #9ca3af;
             padding-top: 6px;
         }
+        .signatures .box p.jabatan {
+            margin: 1px 0 0;
+            font-size: 10px;
+            color: #6b7280;
+        }
         .signatures .box p.date {
             margin: 2px 0 0;
             font-size: 11px;
@@ -208,56 +213,87 @@
         </table>
 
         <div class="signatures">
-            <div class="box">
-                <p class="role">Requested By</p>
-                <div class="sig-space">
-                    @if($materialRequest->created_signature)
-                        <img src="{{ $materialRequest->created_signature }}" alt="signature">
+            @if($materialRequest->approvals && $materialRequest->approvals->isNotEmpty())
+                @foreach($materialRequest->approvals as $approval)
+                    <div class="box">
+                        <p class="role">{{ $approval->label }}</p>
+                        <div class="sig-space">
+                            @if($approval->isSigned() && !empty($approval->signature))
+                                <img src="{{ $approval->signature }}" alt="signature">
+                            @endif
+                        </div>
+                        <p class="name">{{ $approval->user->name ?? '-' }}</p>
+                        @if(!empty($approval->user?->jabatan))
+                            <p class="jabatan">{{ $approval->user->jabatan }}</p>
+                        @endif
+                        <p class="date">{{ $approval->signed_at ? $approval->signed_at->format('d-m-Y H:i') : 'Pending' }}</p>
+                    </div>
+                @endforeach
+            @else
+                <div class="box">
+                    <p class="role">Requested By</p>
+                    <div class="sig-space">
+                        @if($materialRequest->created_signature)
+                            <img src="{{ $materialRequest->created_signature }}" alt="signature">
+                        @endif
+                    </div>
+                    <p class="name">{{ $materialRequest->creator->name ?? '-' }}</p>
+                    @if(!empty($materialRequest->creator?->jabatan))
+                        <p class="jabatan">{{ $materialRequest->creator->jabatan }}</p>
+                    @endif
+                    <p class="date">{{ $materialRequest->created_at ? $materialRequest->created_at->format('d-m-Y H:i') : '-' }}</p>
+                </div>
+                <div class="box">
+                    <p class="role">Approval 1</p>
+                    <div class="sig-space">
+                        @if($materialRequest->approved_a_signature)
+                            <img src="{{ $materialRequest->approved_a_signature }}" alt="signature">
+                        @endif
+                    </div>
+                    <p class="name">{{ $materialRequest->approverA->name ?? '-' }}</p>
+                    @if(!empty($materialRequest->approverA?->jabatan))
+                        <p class="jabatan">{{ $materialRequest->approverA->jabatan }}</p>
+                    @endif
+                    <p class="date">{{ $materialRequest->approved_a_at?->format('d-m-Y H:i') ?? '-' }}</p>
+                </div>
+                <div class="box">
+                    <p class="role">Approval 2</p>
+                    <div class="sig-space">
+                        @if($materialRequest->approved_c_signature)
+                            <img src="{{ $materialRequest->approved_c_signature }}" alt="signature">
+                        @endif
+                    </div>
+                    <p class="name">{{ $materialRequest->approverC->name ?? '-' }}</p>
+                    @if(!empty($materialRequest->approverC?->jabatan))
+                        <p class="jabatan">{{ $materialRequest->approverC->jabatan }}</p>
+                    @endif
+                    <p class="date">{{ $materialRequest->approved_c_at?->format('d-m-Y H:i') ?? '-' }}</p>
+                </div>
+                <div class="box">
+                    <p class="role">Finance</p>
+                    <div class="sig-space">
+                        @if($materialRequest->paid_signature)
+                            <img src="{{ $materialRequest->paid_signature }}" alt="signature">
+                        @endif
+                    </div>
+                    @if($materialRequest->is_rejected_by_finance)
+                        <p class="name">{{ $materialRequest->financeRejector->name ?? '-' }}</p>
+                        @if(!empty($materialRequest->financeRejector?->jabatan))
+                            <p class="jabatan">{{ $materialRequest->financeRejector->jabatan }}</p>
+                        @endif
+                        <p class="date">Rejected · {{ $materialRequest->finance_rejected_at?->format('d-m-Y H:i') ?? '-' }}</p>
+                    @elseif($materialRequest->paid_at)
+                        <p class="name">{{ $materialRequest->paidByUser->name ?? '-' }}</p>
+                        @if(!empty($materialRequest->paidByUser?->jabatan))
+                            <p class="jabatan">{{ $materialRequest->paidByUser->jabatan }}</p>
+                        @endif
+                        <p class="date">{{ $materialRequest->paid_at->format('d-m-Y H:i') }}</p>
+                    @else
+                        <p class="name">&nbsp;</p>
+                        <p class="date">Pending</p>
                     @endif
                 </div>
-                <p class="name">{{ $materialRequest->creator->name ?? '-' }}</p>
-                <p class="date">{{ $materialRequest->created_at ? $materialRequest->created_at->format('d-m-Y H:i') : '-' }}</p>
-            </div>
-            <div class="box">
-                <p class="role">Approval 1</p>
-                <div class="sig-space">
-                    @if($materialRequest->approved_a_signature)
-                        <img src="{{ $materialRequest->approved_a_signature }}" alt="signature">
-                    @endif
-                </div>
-                <p class="name">{{ $materialRequest->approverA->name ?? '-' }}</p>
-                <p class="date">{{ $materialRequest->approved_a_at?->format('d-m-Y H:i') ?? '-' }}</p>
-            </div>
-            <div class="box">
-                <p class="role">Approval 2</p>
-                <div class="sig-space">
-                    @if($materialRequest->approved_c_signature)
-                        <img src="{{ $materialRequest->approved_c_signature }}" alt="signature">
-                    @endif
-                </div>
-                <p class="name">{{ $materialRequest->approverC->name ?? '-' }}</p>
-                <p class="date">{{ $materialRequest->approved_c_at?->format('d-m-Y H:i') ?? '-' }}</p>
-            </div>
-            {{-- BARU: kolom Finance --}}
-            {{-- Kolom Finance --}}
-            <div class="box">
-                <p class="role">Finance</p>
-                <div class="sig-space">
-                    @if($materialRequest->paid_signature)
-                        <img src="{{ $materialRequest->paid_signature }}" alt="signature">
-                    @endif
-                </div>
-                @if($materialRequest->is_rejected_by_finance)
-                    <p class="name">{{ $materialRequest->financeRejector->name ?? '-' }}</p>
-                    <p class="date">Rejected · {{ $materialRequest->finance_rejected_at?->format('d-m-Y H:i') ?? '-' }}</p>
-                @elseif($materialRequest->paid_at)
-                    <p class="name">{{ $materialRequest->paidByUser->name ?? '-' }}</p>
-                    <p class="date">{{ $materialRequest->paid_at->format('d-m-Y H:i') }}</p>
-                @else
-                    <p class="name">&nbsp;</p>
-                    <p class="date">Pending</p>
-                @endif
-            </div>
+            @endif
         </div>
 
         <p class="footer-note">Generated from {{ config('app.name', 'e-Procure') }} Material Request Management on {{ now()->format('d-m-Y H:i') }}.</p>

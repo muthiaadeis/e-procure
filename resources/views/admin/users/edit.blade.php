@@ -58,6 +58,17 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Jabatan / Posisi
+                        </label>
+                        <input type="text"
+                               name="jabatan"
+                               value="{{ old('jabatan', $user->jabatan) }}"
+                               placeholder="e.g. Project Manager, Site Engineer, Finance Officer"
+                               class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
                             Alamat Email (Username Login) <span class="text-red-500">*</span>
                         </label>
                         <input type="email"
@@ -93,48 +104,18 @@
                         </p>
                     </label>
 
-                    {{-- Role: approver_a --}}
-                    <label class="relative flex flex-col p-4 border rounded-xl cursor-pointer hover:bg-gray-50/80 transition {{ $currentRole === 'approver_a' ? 'border-indigo-500 ring-2 ring-indigo-100 bg-indigo-50/20' : 'border-gray-200' }}">
+                    {{-- Role: approver --}}
+                    <label class="relative flex flex-col p-4 border rounded-xl cursor-pointer hover:bg-gray-50/80 transition {{ $currentRole === 'approver' ? 'border-indigo-500 ring-2 ring-indigo-100 bg-indigo-50/20' : 'border-gray-200' }}">
                         <div class="flex items-center justify-between mb-2">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">
-                                Approver A
+                                Approver
                             </span>
-                            <input type="radio" name="role" value="approver_a" class="text-indigo-600 focus:ring-indigo-500"
-                                   {{ $currentRole === 'approver_a' ? 'checked' : '' }}>
+                            <input type="radio" name="role" value="approver" class="text-indigo-600 focus:ring-indigo-500"
+                                   {{ $currentRole === 'approver' ? 'checked' : '' }}>
                         </div>
-                        <p class="text-sm font-bold text-gray-800">Penyetuju Tahap 1</p>
+                        <p class="text-sm font-bold text-gray-800">Penyetuju</p>
                         <p class="text-xs text-gray-500 mt-1 leading-relaxed">
-                            Meninjau dan menyetujui pengajuan Material Request (Persetujuan Tahap 1).
-                        </p>
-                    </label>
-
-                    {{-- Role: approver_c --}}
-                    <label class="relative flex flex-col p-4 border rounded-xl cursor-pointer hover:bg-gray-50/80 transition {{ $currentRole === 'approver_c' ? 'border-indigo-500 ring-2 ring-indigo-100 bg-indigo-50/20' : 'border-gray-200' }}">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">
-                                Approver C
-                            </span>
-                            <input type="radio" name="role" value="approver_c" class="text-indigo-600 focus:ring-indigo-500"
-                                   {{ $currentRole === 'approver_c' ? 'checked' : '' }}>
-                        </div>
-                        <p class="text-sm font-bold text-gray-800">Penyetuju Tahap 2</p>
-                        <p class="text-xs text-gray-500 mt-1 leading-relaxed">
-                            Pengambil keputusan akhir yang menyetujui Material Request sebelum pencairan Finance (Persetujuan Tahap 2).
-                        </p>
-                    </label>
-
-                    {{-- Role: finance --}}
-                    <label class="relative flex flex-col p-4 border rounded-xl cursor-pointer hover:bg-gray-50/80 transition {{ $currentRole === 'finance' ? 'border-indigo-500 ring-2 ring-indigo-100 bg-indigo-50/20' : 'border-gray-200' }}">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                Finance / Cashier
-                            </span>
-                            <input type="radio" name="role" value="finance" class="text-indigo-600 focus:ring-indigo-500"
-                                   {{ $currentRole === 'finance' ? 'checked' : '' }}>
-                        </div>
-                        <p class="text-sm font-bold text-gray-800">Keuangan & Pembayaran</p>
-                        <p class="text-xs text-gray-500 mt-1 leading-relaxed">
-                            Memverifikasi pembayaran dan menandai Material Request yang disetujui sebagai Lunas.
+                            Menandatangani dokumen sesuai posisi yang ditetapkan administrator di halaman Approval Positions.
                         </p>
                     </label>
                 </div>
@@ -149,12 +130,12 @@
                            {{ $user->id === auth()->id() ? 'disabled' : '' }}
                            class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                     <label for="is_admin" class="cursor-pointer select-none">
-                        <span class="block text-sm font-bold text-gray-800">Akses Administrator</span>
+                        <span class="block text-sm font-bold text-gray-800">Akses Administrator (Super Admin)</span>
                         <span class="block text-xs text-gray-500 mt-0.5">
                             @if ($user->id === auth()->id())
-                                (Anda tidak dapat mencabut hak admin dari akun Anda yang sedang login).
+                                (Anda tidak dapat mencabut hak admin dari akun Anda yang sedang login). Super Admin tidak dapat menginput dokumen.
                             @else
-                                Mengizinkan pengguna ini mengakses Panel Admin, mengelola akun pengguna, dan mereset password.
+                                Mengizinkan pengguna ini mengelola akun pengguna dan mengatur penandatangan (approver) di setiap dokumen. Super Admin tidak dapat menginput/membuat dokumen ataupun menandatangani dokumen.
                             @endif
                         </span>
                     </label>

@@ -74,7 +74,8 @@
                     </div>
                 @endif
 
-                <form action="{{ route('material-requests.update', $materialRequest->id) }}" method="POST">
+                <form action="{{ route('material-requests.update', $materialRequest->id) }}" method="POST"
+                      @submit.prevent="if (await window.showConfirm('Apakah data Material Request sudah benar? Dokumen akan diajukan ulang untuk persetujuan dari awal.', { title: 'Ajukan Ulang MR', confirmText: 'Ya, Ajukan Ulang', cancelText: 'Periksa Lagi' })) $el.submit()">
                     @csrf
                     @method('PUT')
 
@@ -87,7 +88,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                                        No MR <span class="text-red-500">*</span>
+                                        No MR
                                     </label>
                                     <div class="relative">
                                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
@@ -95,9 +96,10 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h4M5 3h14a1 1 0 011 1v16l-4-2-3 2-3-2-3 2-3-2V4a1 1 0 011-1z"/>
                                             </svg>
                                         </span>
-                                        <input type="text" name="no_mr" value="{{ old('no_mr', $materialRequest->no_mr) }}" required
-                                               class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm pl-10">
+                                        <input type="text" name="no_mr" value="{{ $materialRequest->no_mr }}" readonly tabindex="-1"
+                                               class="w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm text-sm pl-10 text-gray-500 cursor-not-allowed focus:ring-0 focus:border-gray-300">
                                     </div>
+                                    <p class="mt-1.5 text-xs text-gray-400">Nomor Material Request otomatis digenerate oleh sistem.</p>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Charge To</label>
@@ -158,54 +160,10 @@
                                                             class="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
                                                     </td>
                                                     <td class="px-3 py-2.5">
-                                                        <div class="relative"
-                                                             x-data="{
-                                                                open: false, menuTop: 0, menuLeft: 0, menuWidth: 0,
-                                                                updatePosition() {
-                                                                    const rect = $refs.unitTrigger.getBoundingClientRect();
-                                                                    const menuHeight = 230; // perkiraan max-h-56 + padding
-                                                                    const spaceBelow = window.innerHeight - rect.bottom;
-                                                                    this.menuTop = (spaceBelow < menuHeight && rect.top > menuHeight)
-                                                                        ? rect.top - menuHeight - 6
-                                                                        : rect.bottom + 6;
-                                                                    this.menuLeft = rect.left;
-                                                                    this.menuWidth = rect.width;
-                                                                }
-                                                             }"
-                                                             @click.outside="open = false"
-                                                             @scroll.window.capture="if (open) updatePosition()"
-                                                             @resize.window="if (open) updatePosition()">
-                                                            <button type="button" x-ref="unitTrigger"
-                                                                    @click="open = !open; if (open) updatePosition()"
-                                                                    class="w-full flex items-center justify-between gap-1 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-left hover:border-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
-                                                                <span class="truncate" :class="item.unit ? 'text-gray-700' : 'text-gray-400'"
-                                                                      x-text="item.unit || 'Select'"></span>
-                                                                <svg class="w-3.5 h-3.5 text-gray-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                                                </svg>
-                                                            </button>
-
-                                                            {{-- position: fixed + reposisi mengikuti scroll, bukan langsung ketutup, biar gak kepotong overflow-x-auto punya wrapper tabel --}}
-                                                            <div x-show="open" x-cloak
-                                                                 x-transition:enter="transition ease-out duration-100"
-                                                                 x-transition:enter-start="opacity-0 scale-95"
-                                                                 x-transition:enter-end="opacity-100 scale-100"
-                                                                 :style="'top:' + menuTop + 'px; left:' + menuLeft + 'px; min-width:' + menuWidth + 'px;'"
-                                                                 style="display:none;"
-                                                                 class="fixed z-50 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg py-1">
-                                                                <template x-for="opt in ['Pcs','Unit','Set','Box','Roll','Meter','Kg','Liter','Sheet','Rod']" :key="opt">
-                                                                    <button type="button" @click="item.unit = opt; open = false"
-                                                                            class="w-full flex items-center justify-between gap-2 text-left px-3 py-2 text-sm transition"
-                                                                            :class="item.unit === opt ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-700 hover:bg-gray-50'">
-                                                                        <span x-text="opt"></span>
-                                                                        <svg x-show="item.unit === opt" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                                        </svg>
-                                                                    </button>
-                                                                </template>
-                                                            </div>
-                                                            <input type="hidden" :name="'items[' + index + '][unit]'" x-model="item.unit" required>
-                                                        </div>
+                                                        <input type="text" :name="'items[' + index + '][unit]'" required
+                                                            x-model="item.unit"
+                                                            placeholder="Pcs, Unit, dll"
+                                                            class="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition">
                                                     </td>
                                                     <td class="px-4 py-2.5">
                                                         <input type="text" :name="'items[' + index + '][remarks]'" required

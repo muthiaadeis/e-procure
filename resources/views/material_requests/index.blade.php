@@ -76,7 +76,7 @@
                 const file = event.target.files && event.target.files[0];
                 if (!file) return;
                 if (!file.type.startsWith('image/')) {
-                    alert('Please select an image file (PNG, JPG, JPEG, WEBP).');
+                    alert('Harap pilih file gambar (PNG, JPG, JPEG, WEBP).');
                     return;
                 }
                 const reader = new FileReader();
@@ -194,13 +194,13 @@
                 let signatureData = '';
                 if (this.signMode === 'upload') {
                     if (!this.uploadedSignature) {
-                        alert('Please choose or upload a signature image first.');
+                        alert('Silakan pilih atau unggah gambar tanda tangan terlebih dahulu.');
                         return;
                     }
                     signatureData = this.uploadedSignature;
                 } else {
                     if (!this.signPad || this.signPad.isEmpty()) {
-                        alert('Please sign in the box first.');
+                        alert('Silakan tanda tangani pada kotak terlebih dahulu.');
                         return;
                     }
                     signatureData = this.signPad.toDataURL('image/png');
@@ -232,7 +232,7 @@
                     .then(async (res) => {
                         const body = await res.json().catch(() => null);
                         if (!res.ok || !body || !body.success) {
-                            throw new Error((body && body.message) || 'Failed to save signature.');
+                            throw new Error((body && body.message) || 'Gagal menyimpan tanda tangan.');
                         }
                         return body;
                     })
@@ -246,7 +246,7 @@
                         window.dispatchEvent(new CustomEvent('mr-list-refresh'));
                     })
                     .catch((err) => {
-                        alert(err.message || 'Failed to save signature. Please check your connection.');
+                        alert(err.message || 'Gagal menyimpan tanda tangan. Silakan periksa koneksi Anda.');
                     })
                     .finally(() => {
                         this.signSubmitting = false;
@@ -461,9 +461,10 @@
                                 this.fetchResults();
                             },
                             init() {
-                                // Biar baris di tabel ikut ke-update abis ttd/approve/reject,
+                                // Biar baris di tabel ikut ke-update abis ttd/approve/reject atau saat ada dokumen baru masuk,
                                 // tanpa perlu reload halaman.
                                 window.addEventListener('mr-list-refresh', () => this.fetchResults());
+                                window.addEventListener('document-list-refresh', () => this.fetchResults());
                             }
                          }">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
@@ -604,13 +605,13 @@
 
                 <div class="flex items-center justify-between mb-1 pb-4 border-b border-gray-100">
                     <p class="text-sm font-medium text-indigo-600" x-text="detailData.no_mr"></p>
-                    <span class="inline-block px-3 py-1 rounded-full text-xs font-medium"
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold"
                           :class="{
                             'bg-green-100 text-green-700': detailData.status === 'Done',
+                            'bg-red-100 text-red-700': detailData.status && detailData.status.startsWith('Rejected'),
                             'bg-blue-100 text-blue-700': detailData.status === 'Pending Payment',
-                            'bg-yellow-100 text-yellow-700': detailData.status === 'Pending Approval 2',
-                            'bg-gray-100 text-gray-600': detailData.status === 'Pending Approval 1',
-                            'bg-red-100 text-red-700': detailData.status === 'Rejected (Approval 1)' || detailData.status === 'Ditolak (Approval 2)' || detailData.status === 'Ditolak (Finance)'
+                            'bg-amber-100 text-amber-700': detailData.status && detailData.status.startsWith('Pending') && detailData.status !== 'Pending Payment',
+                            'bg-gray-100 text-gray-600': !detailData.status
                           }"
                           x-text="detailData.status"></span>
                 </div>
@@ -1111,7 +1112,7 @@
                             <div class="py-2">
                                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Pratinjau Tanda Tangan (Siap Digunakan)</p>
                                 <div class="max-w-xs mx-auto p-3 bg-white rounded-lg border border-gray-200 shadow-inner flex items-center justify-center min-h-[120px]">
-                                    <img :src="uploadedSignature" alt="Signature preview" class="max-h-28 max-w-full object-contain filter drop-shadow-xs">
+                                    <img :src="uploadedSignature" alt="Signature preview" style="max-height: 100px; max-width: 100%; object-fit: contain;" class="max-h-28 max-w-full object-contain filter drop-shadow-xs">
                                 </div>
                                 <p class="text-xs text-indigo-600 font-medium mt-2 hover:underline">Klik di sini jika ingin mengganti gambar</p>
                             </div>
@@ -1122,7 +1123,7 @@
                 {{-- Mode 2: Draw on Canvas --}}
                 <div x-show="signMode === 'draw'" x-cloak class="space-y-2">
                     <div class="relative bg-gray-50/50 rounded-xl border border-gray-200 p-2">
-                        <canvas id="mr-signature-canvas" class="w-full h-64 sm:h-72 bg-white rounded-lg touch-none shadow-inner cursor-crosshair"></canvas>
+                        <canvas id="mr-signature-canvas" class="w-full h-44 sm:h-48 bg-white rounded-lg touch-none shadow-inner cursor-crosshair"></canvas>
                         <div class="absolute bottom-6 left-6 right-6 border-b border-gray-300 pointer-events-none flex justify-between items-end pb-1">
                             <span class="text-[11px] text-gray-400 font-normal">Tanda tangan di atas garis ini</span>
                             <span class="text-[11px] text-gray-400 font-normal">✕</span>

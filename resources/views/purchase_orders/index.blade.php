@@ -5,13 +5,15 @@
                 <h1 class="font-bold text-2xl text-gray-800 leading-tight">Purchase Order (PO)</h1>
                 <p class="text-sm text-gray-500 mt-1">Kelola purchase order kepada pemasok.</p>
             </div>
-            <a href="{{ route('purchase-orders.create') }}"
-               class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Tambah PO
-            </a>
+            @if(auth()->user()->isInput())
+                <a href="{{ route('purchase-orders.create') }}"
+                   class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Tambah PO
+                </a>
+            @endif
         </div>
     </x-slot>
 
@@ -60,7 +62,7 @@
                 </form>
             </div>
 
-            <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div id="po-table-container" class="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm" style="table-layout:fixed; min-width:1080px;">
                         <colgroup>
@@ -91,17 +93,20 @@
                                     $signedCount = $po->approvals->whereNotNull('signed_at')->count();
                                     $totalCount = $po->approvals->count();
                                     $statusColor = match($po->status) {
-                                        'Completed' => 'bg-green-100 text-green-700',
-                                        'In Progress' => 'bg-amber-100 text-amber-700',
-                                        default => 'bg-gray-100 text-gray-600',
+                                        'Done', 'Completed' => 'bg-green-100 text-green-700',
+                                        'Pending Setup' => 'bg-amber-100 text-amber-800',
+                                        'In Progress' => 'bg-blue-100 text-blue-700',
+                                        'Rejected' => 'bg-red-100 text-red-700',
+                                        default => str_starts_with($po->status, 'Pending') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600',
                                     };
                                 @endphp
-                                <tr @click="window.location.href = '{{ route('purchase-orders.show', $po) }}'"
+                                <tr onclick="window.location.href = '{{ route('purchase-orders.show', $po) }}'"
+                                    data-href="{{ route('purchase-orders.show', $po) }}"
                                     class="hover:bg-gray-50/70 transition cursor-pointer">
                                     <td class="px-3 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                                        <span class="hover:text-indigo-600 transition">
+                                        <a href="{{ route('purchase-orders.show', $po) }}" class="hover:text-indigo-600 transition block max-w-[220px] truncate" title="{{ $po->po_no }}">
                                             {{ $po->po_no }}
-                                        </span>
+                                        </a>
                                         @if($po->rlp)
                                             <span class="block truncate text-[11px] text-purple-600 font-normal" title="RRP: {{ $po->rlp->no_rlp }}">RRP: {{ $po->rlp->no_rlp }}</span>
                                         @endif
@@ -111,35 +116,44 @@
                                     </td>
                                     <td class="px-3 py-3 text-gray-600 whitespace-nowrap">{{ $po->our_order_date?->format('d-m-Y') ?? '-' }}</td>
                                     <td class="px-3 py-3 text-gray-700"><div title="{{ $po->subject }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">{{ $po->subject ?? '-' }}</div></td>
-                                    <td class="px-3 py-3 text-gray-600"><div title="{{ $po->client }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">{{ $po->client ?? '-' }}</div></td>
+                                    <td class="px-3 py-3 text-gray-600">
+                                        <div title="{{ $po->client }}" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">{{ $po->client ?? '-' }}</div>
+                                        @if($po->charge_to)
+                                            <div class="mt-0.5 text-xs text-indigo-600 font-medium truncate" title="Charge To: {{ $po->charge_to }}">
+                                                Charge: {{ $po->charge_to }}
+                                            </div>
+                                        @endif
+                                    </td>
                                     <td class="px-3 py-3 text-gray-600 whitespace-nowrap truncate" title="{{ $po->supplier_no }}">{{ $po->supplier_no ?? '-' }}</td>
                                     <td class="px-3 py-3 text-center text-gray-700 whitespace-nowrap tabular-nums">Rp {{ number_format((float) $po->grand_total, 0, ',', '.') }}</td>
                                     <td class="px-3 py-3 text-center whitespace-nowrap">
                                         <span class="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-semibold {{ $statusColor }}">
-                                            {{ $po->status }} ({{ $signedCount }}/{{ $totalCount }})
+                                            {{ $po->status }}@if($totalCount > 1 && $po->status !== 'Done' && $po->status !== 'Pending Setup' && !str_starts_with($po->status, 'Rejected')) ({{ $signedCount }}/{{ $totalCount }})@endif
                                         </span>
                                     </td>
-                                    <td class="px-2 py-3" @click.stop>
+                                    <td class="px-2 py-3" onclick="event.stopPropagation()">
                                         <div class="flex items-center justify-center gap-1">
-                                            <a href="{{ route('purchase-orders.print', $po) }}" target="_blank" title="Print"
-                                               class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
+                                            @if((auth()->user()->isInput() || auth()->user()->isAdmin()) && $po->is_rejected)
+                                                <a href="{{ route('purchase-orders.edit', $po) }}" title="Edit & Ajukan Ulang"
+                                                   class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                </a>
+                                            @endif
+                                            <a href="{{ route('purchase-orders.print', $po) }}" target="_blank" title="Cetak / PDF"
+                                                class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"/>
                                                 </svg>
                                             </a>
-                                            @if($po->is_draft)
-                                                <form id="delete-po-{{ $po->id }}" action="{{ route('purchase-orders.destroy', $po) }}" method="POST" class="hidden">
-                                                    @csrf @method('DELETE')
-                                                </form>
-                                                <button type="button"
-                                                        @click="openConfirm('Delete Purchase Order {{ $po->po_no }}? This cannot be undone.', 'delete-po-{{ $po->id }}')"
-                                                        title="Delete"
-                                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                    </svg>
-                                                </button>
-                                            @endif
+                                            <a href="{{ route('purchase-orders.show', $po) }}" title="Lihat Detail"
+                                                class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>

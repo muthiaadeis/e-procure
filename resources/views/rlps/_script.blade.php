@@ -170,9 +170,50 @@
                 return this.items.reduce((sum, i) => sum + this.itemPartCatalogExt(i), 0);
             },
 
+            focusIncompleteItem(index) {
+                const item = this.items[index];
+                if (!item) return;
+
+                this.$nextTick(() => {
+                    if (!item.job_code_id) {
+                        const jcEl = document.getElementById('item-jc-' + index) || document.getElementById('item-uom-' + index);
+                        if (jcEl) {
+                            jcEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    } else if (!String(item.uom || '').trim()) {
+                        const uomEl = document.getElementById('item-uom-' + index);
+                        if (uomEl) {
+                            uomEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            uomEl.focus();
+                        }
+                    } else {
+                        const uomEl = document.getElementById('item-uom-' + index);
+                        if (uomEl) {
+                            uomEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                });
+            },
+
             // ---------- Step 2: Vendors (one full form per vendor) ----------
             addVendor() {
-                if (!this.itemsReady) return;
+                if (!this.itemsReady) {
+                    const incompleteIndex = this.items.findIndex(i => !this.isItemComplete(i));
+                    if (incompleteIndex !== -1) {
+                        const item = this.items[incompleteIndex];
+                        let msg = '';
+                        if (!item.job_code_id) {
+                            msg = `Item ${incompleteIndex + 1}: Job Code belum dipilih. Silakan pilih Job Code terlebih dahulu.`;
+                        } else if (!String(item.uom || '').trim()) {
+                            msg = `Item ${incompleteIndex + 1}: UOM masih kosong! Harap isi satuan unit (contoh: Pcs, Unit, Set) terlebih dahulu.`;
+                        } else {
+                            msg = `Item ${incompleteIndex + 1}: Quantity harus minimal 1.`;
+                        }
+                        alert(msg);
+                        this.focusIncompleteItem(incompleteIndex);
+                    }
+                    return;
+                }
                 const uid = 'vendor-' + (this._vendorSeq++);
                 const quotes = {};
                 this.items.forEach(i => { quotes[i.uid] = ''; });
@@ -383,7 +424,7 @@
                 const file = event.target.files && event.target.files[0];
                 if (!file) return;
                 if (!file.type.startsWith('image/')) {
-                    alert('Please select an image file (PNG, JPG, JPEG, WEBP).');
+                    alert('Harap pilih file gambar (PNG, JPG, JPEG, WEBP).');
                     return;
                 }
                 const reader = new FileReader();
@@ -471,25 +512,35 @@
             },
 
             // ---------- Submit ----------
-            handleSubmit(event) {
+            async handleSubmit(event) {
+                event.preventDefault();
+
                 if (!this.itemsReady) {
-                    alert('Please complete every RRP item first (Job Code, Quantity, UOM) before filling in vendors.');
-                    event.preventDefault();
+                    const incompleteIndex = this.items.findIndex(i => !this.isItemComplete(i));
+                    if (incompleteIndex !== -1) {
+                        const item = this.items[incompleteIndex];
+                        if (!String(item.uom || '').trim()) {
+                            alert(`Item ${incompleteIndex + 1}: UOM belum diisi! Harap lengkapi UOM sebelum menyimpan.`);
+                            this.focusIncompleteItem(incompleteIndex);
+                        } else {
+                            alert('Harap lengkapi semua RRP Item (Job Code, Quantity, UOM) sebelum menyimpan.');
+                            this.focusIncompleteItem(incompleteIndex);
+                        }
+                    } else {
+                        alert('Harap lengkapi semua RRP Item (Job Code, Quantity, UOM) sebelum menyimpan.');
+                    }
                     return;
                 }
                 if (this.vendorsIncomplete) {
-                    alert('Please complete the Vendors list: pick a vendor and fill in its delivery estimate for every vendor form.');
-                    event.preventDefault();
+                    alert('Harap lengkapi daftar vendor: pilih vendor dan isi estimasi pengiriman untuk setiap vendor.');
                     return;
                 }
                 if (this.vendorQuotesIncomplete) {
-                    alert('Please fill in the price for every item in every vendor form.');
-                    event.preventDefault();
+                    alert('Harap lengkapi harga untuk setiap item pada masing-masing vendor.');
                     return;
                 }
                 if (this.selectedVendorUid === null || this.selectedVendorUid === undefined) {
-                    alert('Please pick the winning vendor (click "Pick as Winner" on one vendor form).');
-                    event.preventDefault();
+                    alert('Harap pilih salah satu vendor terlebih dahulu (klik tombol "Pilih" pada vendor).');
                     return;
                 }
                 // Ttd Prepared By cuma wajib pas bikin RRP baru (di halaman edit gak
@@ -499,15 +550,13 @@
                     let signatureData = '';
                     if (this.signMode === 'upload') {
                         if (!this.uploadedSignature) {
-                            alert('Please choose or upload a signature image first before saving.');
-                            event.preventDefault();
+                            alert('Silakan pilih atau unggah gambar tanda tangan terlebih dahulu sebelum menyimpan.');
                             return;
                         }
                         signatureData = this.uploadedSignature;
                     } else {
                         if (!this.signPad || this.signPad.isEmpty()) {
-                            alert('Please sign as Prepared By first before saving.');
-                            event.preventDefault();
+                            alert('Silakan tanda tangani dokumen sebagai pembuat (Prepared By) terlebih dahulu sebelum menyimpan.');
                             return;
                         }
                         signatureData = this.signPad.toDataURL('image/png');
@@ -520,6 +569,22 @@
                     }
                     signatureInput.value = signatureData;
                 }
+
+                const form = event.target;
+                const isEdit = Boolean(form.querySelector('input[name="_method"][value="PUT"]'));
+                const confirmMsg = isEdit
+                    ? 'Apakah data RRP sudah benar? Dokumen akan diajukan ulang untuk persetujuan dari awal.'
+                    : 'Apakah Anda yakin ingin menyimpan dan mengajukan dokumen RRP ini?';
+
+                const confirmed = await window.showConfirm(confirmMsg, {
+                    title: isEdit ? 'Ajukan Ulang RRP' : 'Simpan RRP',
+                    confirmText: isEdit ? 'Ya, Ajukan Ulang' : 'Ya, Simpan',
+                    cancelText: 'Periksa Lagi'
+                });
+
+                if (!confirmed) return;
+
+                form.submit();
             },
 };
     }

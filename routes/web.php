@@ -15,13 +15,10 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\ApprovalSlotController;
 use App\Http\Controllers\Auth\ForcePasswordChangeController;
 use App\Http\Controllers\DraftController;
+use App\Http\Controllers\DocumentApprovalController;
 
 Route::get('/', function () {
-    if (auth()->check() && auth()->user()->is_admin) {
-        return redirect()->route('admin.users.index');
-    }
-
-    return redirect()->route('material-requests.index');
+    return redirect()->route('dashboard');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -48,12 +45,8 @@ Route::middleware(['auth', 'force.password.change', 'restrict.admin'])->group(fu
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::resource('rlps', RlpController::class)->except(['show']);
+    Route::resource('rlps', RlpController::class);
     Route::get('rlps/{rlp}/print', [RlpController::class, 'printPdf'])->name('rlps.print');
-    Route::post('rlps/{rlp}/sign-prepared', [RlpController::class, 'signPrepared'])->name('rlps.sign-prepared');
-    Route::patch('rlps/{rlp}/review', [RlpController::class, 'review'])->name('rlps.review');
-    Route::patch('rlps/{rlp}/acknowledge', [RlpController::class, 'acknowledge'])->name('rlps.acknowledge');
-    Route::patch('rlps/{rlp}/approve', [RlpController::class, 'approve'])->name('rlps.approve');
 
     Route::resource('job-codes', JobCodeController::class)->except(['show']);
     Route::resource('vendors', VendorController::class)->except(['show']);
@@ -74,6 +67,12 @@ Route::middleware(['auth', 'force.password.change', 'restrict.admin'])->group(fu
     // Global Search & Topbar Notifications
     Route::get('/search/quick', [GlobalSearchController::class, 'search'])->name('search.quick');
     Route::get('/notifications/feed', [GlobalSearchController::class, 'notifications'])->name('notifications.feed');
+
+    // Tanda tangan & penolakan dokumen persetujuan (semua modul: MR, RRP, PO, PR)
+    Route::patch('documents/{type}/{id}/approvals/{approvalId}/sign', [DocumentApprovalController::class, 'sign'])
+        ->name('documents.approvals.sign');
+    Route::patch('documents/{type}/{id}/approvals/{approvalId}/reject', [DocumentApprovalController::class, 'reject'])
+        ->name('documents.approvals.reject');
 });
 
 // Halaman ganti password wajib — HARUS di luar grup 'restrict.admin' & 'force.password.change'
@@ -100,6 +99,10 @@ Route::middleware(['auth', 'admin', 'force.password.change'])->prefix('admin')->
     // Posisi tanda tangan PR / PO: siapa yang memegang tiap posisi
     Route::get('approval-slots', [ApprovalSlotController::class, 'index'])->name('approval-slots.index');
     Route::put('approval-slots', [ApprovalSlotController::class, 'update'])->name('approval-slots.update');
+
+    // Pengaturan penandatangan per-dokumen oleh Super Admin (MR, RRP, PO, PR)
+    Route::post('documents/{type}/{id}/approvals', [DocumentApprovalController::class, 'store'])
+        ->name('documents.approvals.store');
 });
 
 require __DIR__.'/auth.php';

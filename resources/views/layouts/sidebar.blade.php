@@ -1,9 +1,12 @@
 {{-- resources/views/layouts/sidebar.blade.php --}}
 @php
-    $draftCounts = \App\Models\Draft::where('user_id', auth()->id())
-        ->selectRaw('form, count(*) as total')
-        ->groupBy('form')
-        ->pluck('total', 'form');
+    $isInputUser = auth()->check() && auth()->user()->isInput();
+    $draftCounts = $isInputUser
+        ? \App\Models\Draft::where('user_id', auth()->id())
+            ->selectRaw('form, count(*) as total')
+            ->groupBy('form')
+            ->pluck('total', 'form')
+        : collect();
 @endphp
 
 <aside x-data="{ mobileOpen: false, showKeluarModal: false }">
@@ -41,80 +44,78 @@
 
         <div class="flex-1 overflow-y-auto px-4 py-5">
             <nav class="space-y-1">
-                @unless (auth()->user()?->is_admin)
-                    <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                    </svg>
+                    Dashboard
+                </x-sidebar-link>
+
+                <div class="pt-4 mt-4 border-t border-gray-100 space-y-1">
+                    <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Pengadaan</p>
+
+                    <x-sidebar-link :href="route('material-requests.index')" :active="request()->routeIs('material-requests.*')">
                         <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-5 8h6m-6 4h6"/>
                         </svg>
-                        Dashboard
+                        <span class="flex-1 truncate">Material Request</span>
+                        @if($isInputUser && ($draftCounts['material-requests'] ?? 0) > 0)
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['material-requests'] }} draft</span>
+                        @endif
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('material-requests.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">MR</span>
                     </x-sidebar-link>
 
-                    <div class="pt-4 mt-4 border-t border-gray-100 space-y-1">
-                        <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Pengadaan</p>
+                    <x-sidebar-link :href="route('rlps.index')" :active="request()->routeIs('rlps.*')">
+                        <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 8.25l-9-4.5-9 4.5m18 0v9l-9 4.5m9-13.5l-9 4.5m0 9l-9-4.5v-9m9 13.5v-9m-9-4.5l9 4.5"/>
+                        </svg>
+                        <span class="flex-1 truncate">Local Purchase</span>
+                        @if($isInputUser && ($draftCounts['rlps'] ?? 0) > 0)
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['rlps'] }} draft</span>
+                        @endif
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('rlps.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">RRP</span>
+                    </x-sidebar-link>
 
-                        <x-sidebar-link :href="route('material-requests.index')" :active="request()->routeIs('material-requests.*')">
-                            <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-5 8h6m-6 4h6"/>
-                            </svg>
-                            <span class="flex-1 truncate">Material Request</span>
-                            @if(($draftCounts['KEY'] ?? 0) > 0)
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['KEY'] }} draft</span>
-                            @endif
-                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('material-requests.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">MR</span>
-                        </x-sidebar-link>
+                    <x-sidebar-link href="{{ route('purchase-orders.index') }}" :active="request()->routeIs('purchase-orders.*')">
+                        <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
+                        </svg>
+                        <span class="flex-1 truncate">Purchase Order</span>
+                        @if($isInputUser && ($draftCounts['purchase-orders'] ?? 0) > 0)
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['purchase-orders'] }} draft</span>
+                        @endif
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('purchase-orders.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">PO</span>
+                    </x-sidebar-link>
 
-                        <x-sidebar-link :href="route('rlps.index')" :active="request()->routeIs('rlps.*')">
-                            <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 8.25l-9-4.5-9 4.5m18 0v9l-9 4.5m9-13.5l-9 4.5m0 9l-9-4.5v-9m9 13.5v-9m-9-4.5l9 4.5"/>
-                            </svg>
-                            <span class="flex-1 truncate">Local Purchase</span>
-                            @if(($draftCounts['KEY'] ?? 0) > 0)
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['KEY'] }} draft</span>
-                            @endif
-                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('rlps.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">RRP</span>
-                        </x-sidebar-link>
+                    <x-sidebar-link href="{{ route('purchase-requests.index') }}" :active="request()->routeIs('purchase-requests.*')">
+                        <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.708 2.6-7.253a1.125 1.125 0 00-1.11-1.35H5.25M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
+                        </svg>
+                        <span class="flex-1 truncate">Purchase Request</span>
+                        @if($isInputUser && ($draftCounts['purchase-requests'] ?? 0) > 0)
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['purchase-requests'] }} draft</span>
+                        @endif
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('purchase-requests.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">PR</span>
+                    </x-sidebar-link>
+                </div>
 
-                        <x-sidebar-link href="{{ route('purchase-orders.index') }}" :active="request()->routeIs('purchase-orders.*')">
-                            <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
-                            </svg>
-                            <span class="flex-1 truncate">Purchase Order</span>
-                            @if(($draftCounts['KEY'] ?? 0) > 0)
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['KEY'] }} draft</span>
-                            @endif
-                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('purchase-orders.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">PO</span>
-                        </x-sidebar-link>
+                <div class="pt-4 mt-4 border-t border-gray-100 space-y-1">
+                    <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Data Master</p>
 
-                        <x-sidebar-link href="{{ route('purchase-requests.index') }}" :active="request()->routeIs('purchase-requests.*')">
-                            <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.994-4.708 2.6-7.253a1.125 1.125 0 00-1.11-1.35H5.25M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
-                            </svg>
-                            <span class="flex-1 truncate">Purchase Request</span>
-                            @if(($draftCounts['KEY'] ?? 0) > 0)
-                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ $draftCounts['KEY'] }} draft</span>
-                            @endif
-                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('purchase-requests.*') ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">PR</span>
-                        </x-sidebar-link>
-                    </div>
+                    <x-sidebar-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*')">
+                        <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21V9.75l8.25-6 8.25 6V21m-16.5 0h16.5m-16.5 0h-1.5m18 0h1.5m-16.5 0V13.5a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5V21"/>
+                        </svg>
+                        Vendors
+                    </x-sidebar-link>
 
-                    <div class="pt-4 mt-4 border-t border-gray-100 space-y-1">
-                        <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Data Master</p>
-
-                        <x-sidebar-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*')">
-                            <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21V9.75l8.25-6 8.25 6V21m-16.5 0h16.5m-16.5 0h-1.5m18 0h1.5m-16.5 0V13.5a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5V21"/>
-                            </svg>
-                            Vendors
-                        </x-sidebar-link>
-
-                        <x-sidebar-link :href="route('job-codes.index')" :active="request()->routeIs('job-codes.*')">
-                            <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/>
-                            </svg>
-                            Job Code
-                        </x-sidebar-link>
-                    </div>
-                @endunless
+                    <x-sidebar-link :href="route('job-codes.index')" :active="request()->routeIs('job-codes.*')">
+                        <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/>
+                        </svg>
+                        Job Code
+                    </x-sidebar-link>
+                </div>
 
                 @if (auth()->user()?->is_admin)
                     <div class="pt-4 mt-4 border-t border-gray-100 space-y-1">
@@ -135,7 +136,7 @@
                             <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/>
                             </svg>
-                            Posisi Persetujuan
+                            Template Approval
                         </x-sidebar-link>
                     </div>
                 @endif
@@ -144,15 +145,13 @@
 
         {{-- Bottom --}}
         <div class="px-4 py-4 border-t border-gray-100 space-y-1 shrink-0">
-            @unless (auth()->user()?->is_admin)
-                <x-sidebar-link :href="route('profile.edit')" :active="request()->routeIs('profile.*')">
-                    <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.93l-.149.893c-.09.543-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.893c-.071-.425-.384-.765-.781-.93-.398-.165-.854-.143-1.204.107l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.93l.15-.893z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    Pengaturan
-                </x-sidebar-link>
-            @endunless
+            <x-sidebar-link :href="route('profile.edit')" :active="request()->routeIs('profile.*')">
+                <svg class="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.93l-.149.893c-.09.543-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.893c-.071-.425-.384-.765-.781-.93-.398-.165-.854-.143-1.204.107l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.93l.15-.893z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Pengaturan
+            </x-sidebar-link>
 
             <button type="button" @click="showKeluarModal = true"
                     class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition cursor-pointer">

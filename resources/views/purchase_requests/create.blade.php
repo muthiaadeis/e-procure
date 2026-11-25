@@ -19,7 +19,9 @@
         </div>
     </x-slot>
 
-    @php($isEdit = false)
+    @php
+        $isEdit = false;
+    @endphp
 
     <div class="py-8">
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
@@ -45,5 +47,6 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     @include('purchase_requests._script')
 </x-app-layout>

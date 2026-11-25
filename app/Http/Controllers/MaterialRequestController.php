@@ -11,7 +11,7 @@ class MaterialRequestController extends Controller
 {
     public function index(Request $request)
     {
-        $query = MaterialRequest::with(['items', 'approverA', 'approverC', 'rejectorA', 'rejectorC', 'financeRejector', 'paidByUser', 'creator']);
+        $query = MaterialRequest::with(['items', 'approverA', 'approverC', 'rejectorA', 'rejectorC', 'financeRejector', 'paidByUser', 'creator', 'approvals']);
 
         $filter = $request->query('filter');
         $search = trim((string) $request->query('search'));
@@ -34,41 +34,75 @@ class MaterialRequestController extends Controller
                 ->whereNull('rejected_c_at')
                 ->whereNull('finance_rejected_at')
                 ->where(function ($q) {
-                    $q->whereNull('approved_a_at')
-                        ->orWhereNull('approved_c_at');
+                    $q->whereHas('approvals', function ($sub) {
+                        $sub->whereNull('signed_at');
+                    })->orWhere(function ($legacy) {
+                        $legacy->whereDoesntHave('approvals')
+                            ->where(function ($sub) {
+                                $sub->whereNull('approved_a_at')
+                                    ->orWhereNull('approved_c_at');
+                            });
+                    });
                 });
         } elseif ($filter === 'overdue') {
+            $deadlineDays = \App\Models\DocumentApproval::DEADLINE_DAYS;
             $deadlineA = now()->subDays(MaterialRequest::APPROVAL_1_DEADLINE_DAYS);
             $deadlineC = now()->subDays(MaterialRequest::APPROVAL_2_DEADLINE_DAYS);
             $deadlineD = now()->subDays(MaterialRequest::PAYMENT_DEADLINE_DAYS);
 
-            $query->where(function ($q) use ($deadlineA, $deadlineC, $deadlineD) {
-                $q->where(function ($q1) use ($deadlineA) {
-                    $q1->whereNull('approved_a_at')
-                        ->whereNull('rejected_a_at')
-                        ->whereDate('date', '<=', $deadlineA);
+            $query->where(function ($q) use ($deadlineDays, $deadlineA, $deadlineC, $deadlineD) {
+                // Dokumen dengan alur persetujuan dinamis (DocumentApproval 2 hari per tahap)
+                $q->where(function ($dynamic) use ($deadlineDays) {
+                    $dynamic->whereHas('approvals', function ($sub) use ($deadlineDays) {
+                        $sub->whereNull('signed_at')
+                            ->whereNull('rejected_at')
+                            ->where('created_at', '<=', now()->subDays($deadlineDays));
+                    })
+                    ->whereDoesntHave('approvals', function ($sub) {
+                        $sub->whereNotNull('rejected_at');
+                    });
                 })
-                ->orWhere(function ($q2) use ($deadlineC) {
-                    $q2->whereNotNull('approved_a_at')
-                        ->whereNull('approved_c_at')
-                        ->whereNull('rejected_c_at')
-                        ->where('approved_a_at', '<=', $deadlineC);
-                })
-                ->orWhere(function ($q3) use ($deadlineD) {
-                    $q3->whereNotNull('approved_a_at')
-                        ->whereNotNull('approved_c_at')
-                        ->whereNull('finance_rejected_at')
-                        ->whereNull('paid_at')
-                        ->where('approved_c_at', '<=', $deadlineD);
+                // Dokumen lama dengan kolom legacy
+                ->orWhere(function ($legacy) use ($deadlineA, $deadlineC, $deadlineD) {
+                    $legacy->whereDoesntHave('approvals')
+                        ->where(function ($legSub) use ($deadlineA, $deadlineC, $deadlineD) {
+                            $legSub->where(function ($q1) use ($deadlineA) {
+                                $q1->whereNull('approved_a_at')
+                                    ->whereNull('rejected_a_at')
+                                    ->whereDate('date', '<=', $deadlineA);
+                            })
+                            ->orWhere(function ($q2) use ($deadlineC) {
+                                $q2->whereNotNull('approved_a_at')
+                                    ->whereNull('approved_c_at')
+                                    ->whereNull('rejected_c_at')
+                                    ->where('approved_a_at', '<=', $deadlineC);
+                            })
+                            ->orWhere(function ($q3) use ($deadlineD) {
+                                $q3->whereNotNull('approved_a_at')
+                                    ->whereNotNull('approved_c_at')
+                                    ->whereNull('finance_rejected_at')
+                                    ->whereNull('paid_at')
+                                    ->where('approved_c_at', '<=', $deadlineD);
+                            });
+                        });
                 });
             });
         } elseif ($filter === 'done') {
-            $query->whereNull('rejected_a_at')
-                ->whereNull('rejected_c_at')
-                ->whereNull('finance_rejected_at')
-                ->whereNotNull('approved_a_at')
-                ->whereNotNull('approved_c_at')
-                ->whereNotNull('paid_at');
+            $query->where(function ($q) {
+                $q->where(function ($dynamic) {
+                    $dynamic->whereHas('approvals')
+                        ->whereDoesntHave('approvals', function ($sub) {
+                            $sub->whereNull('signed_at');
+                        });
+                })->orWhere(function ($legacy) {
+                    $legacy->whereNull('rejected_a_at')
+                        ->whereNull('rejected_c_at')
+                        ->whereNull('finance_rejected_at')
+                        ->whereNotNull('approved_a_at')
+                        ->whereNotNull('approved_c_at')
+                        ->whereNotNull('paid_at');
+                });
+            });
         }
 
         $requests = $query->latest('date')->paginate(15)->withQueryString();
@@ -80,25 +114,19 @@ class MaterialRequestController extends Controller
         return view('material_requests.index', compact('requests', 'search'));
     }
 
-    public function show(Request $request, MaterialRequest $materialRequest)
+    public function show(MaterialRequest $materialRequest)
     {
-        $params = [
-            'search' => $materialRequest->no_mr,
-            'auto_open' => $materialRequest->id,
-        ];
-
-        if ($request->filled('filter')) {
-            $params['filter'] = $request->query('filter');
-        }
-
-        return redirect()->route('material-requests.index', $params);
+        $materialRequest->load(['items', 'creator', 'approvals.user']);
+        return view('material_requests.show', compact('materialRequest'));
     }
 
     public function create()
     {
         abort_unless(auth()->user()->isInput(), 403, "You don't have permission to add a Material Request.");
 
-        return view('material_requests.create');
+        $defaultNoMr = MaterialRequest::generateNextNoMr();
+
+        return view('material_requests.create', compact('defaultNoMr'));
     }
 
     public function store(Request $request)
@@ -106,7 +134,6 @@ class MaterialRequestController extends Controller
         abort_unless(auth()->user()->isInput(), 403, "You don't have permission to add a Material Request.");
 
         $validated = $request->validate([
-            'no_mr' => 'required|string|max:100|unique:material_requests,no_mr',
             'charge_to' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string',
@@ -118,8 +145,10 @@ class MaterialRequestController extends Controller
             'signature' => 'required|string',
         ]);
 
+        $noMr = MaterialRequest::generateNextNoMr();
+
         $materialRequest = MaterialRequest::create([
-            'no_mr' => $validated['no_mr'],
+            'no_mr' => $noMr,
             'date' => now(),
             'charge_to' => $validated['charge_to'],
             'created_by' => auth()->id(),
@@ -130,16 +159,31 @@ class MaterialRequestController extends Controller
             $materialRequest->items()->create($item);
         }
 
+        // Otomatis daftarkan tanda tangan inputer sebagai Tahap 1 (Prepared By)
+        \App\Models\DocumentApproval::create([
+            'document_type' => 'mr',
+            'document_id' => $materialRequest->id,
+            'step' => 1,
+            'label' => 'Prepared By',
+            'user_id' => auth()->id(),
+            'signature' => $validated['signature'],
+            'signed_at' => now(),
+        ]);
+
+        // Otomatis terapkan alur persetujuan dari template default jika sudah diatur
+        \App\Models\ApprovalTemplate::applyTemplateTo('mr', $materialRequest->id);
+
         Draft::forget('material-requests');
 
         return redirect()->route('material-requests.index', ['auto_open' => $materialRequest->id])
-            ->with('success', 'Material Request added successfully.');
+            ->with('success', 'Dokumen Material Request berhasil dibuat dan diajukan untuk persetujuan.');
     }
 
     public function edit(MaterialRequest $materialRequest)
     {
-        abort_unless(auth()->user()->isInput(), 403, "You don't have permission to edit this Material Request.");
-        abort_unless($materialRequest->is_rejected, 403, "MR can only be edited after it's rejected.");
+        abort_unless(auth()->user()->isInput() || auth()->user()->isAdmin(), 403, "You don't have permission to edit this Material Request.");
+        abort_if($materialRequest->is_approved, 403, "Dokumen Material Request yang sudah disetujui / selesai (done) tidak dapat diedit lagi.");
+        abort_unless($materialRequest->is_rejected, 403, "MR hanya dapat diedit setelah ditolak.");
 
         $materialRequest->load('items');
 
@@ -148,11 +192,11 @@ class MaterialRequestController extends Controller
 
     public function update(Request $request, MaterialRequest $materialRequest)
     {
-        abort_unless(auth()->user()->isInput(), 403, "You don't have permission to edit this Material Request.");
-        abort_unless($materialRequest->is_rejected, 403, "MR can only be edited after it's rejected.");
+        abort_unless(auth()->user()->isInput() || auth()->user()->isAdmin(), 403, "You don't have permission to edit this Material Request.");
+        abort_if($materialRequest->is_approved, 403, "Dokumen Material Request yang sudah disetujui / selesai (done) tidak dapat diedit lagi.");
+        abort_unless($materialRequest->is_rejected, 403, "MR hanya dapat diedit setelah ditolak.");
 
         $validated = $request->validate([
-            'no_mr' => 'required|string|max:100|unique:material_requests,no_mr,' . $materialRequest->id,
             'charge_to' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string',
@@ -164,7 +208,6 @@ class MaterialRequestController extends Controller
         $wasRejected = $materialRequest->is_rejected;
 
         $updateData = [
-            'no_mr' => $validated['no_mr'],
             'charge_to' => $validated['charge_to'],
         ];
 
@@ -190,6 +233,22 @@ class MaterialRequestController extends Controller
 
         $materialRequest->update($updateData);
 
+        if ($wasRejected) {
+            $materialRequest->approvals()->where('step', '>', 1)->update([
+                'signature' => null,
+                'signed_at' => null,
+                'rejected_at' => null,
+                'rejection_reason' => null,
+            ]);
+            $materialRequest->approvals()->update([
+                'rejected_at' => null,
+                'rejection_reason' => null,
+            ]);
+            $materialRequest->approvals()->where('step', 1)->update([
+                'signed_at' => now(),
+            ]);
+        }
+
         $materialRequest->items()->delete();
         foreach ($validated['items'] as $item) {
             $materialRequest->items()->create($item);
@@ -197,26 +256,13 @@ class MaterialRequestController extends Controller
 
         return redirect()->route('material-requests.index')
             ->with('success', $wasRejected
-                ? 'MR updated successfully and resubmitted for approval from the start.'
-                : 'Material Request updated successfully.');
+                ? 'Dokumen Material Request berhasil diperbarui dan diajukan ulang untuk persetujuan dari awal.'
+                : 'Dokumen Material Request berhasil diperbarui.');
     }
 
     public function destroy(MaterialRequest $materialRequest)
     {
-        abort_unless(auth()->user()->isInput(), 403, "You don't have permission to delete this Material Request.");
-
-        // MR yang sudah di-approve tidak boleh dihapus (sama seperti aturan edit).
-        // MR yang sedang ditolak / dikembalikan ke inputer tetap boleh dihapus.
-        abort_if(
-            $materialRequest->is_approved_by_a && ! $materialRequest->is_rejected,
-            403,
-            "This MR has already been approved and can't be deleted."
-        );
-
-        $materialRequest->delete();
-
-        return redirect()->route('material-requests.index')
-            ->with('success', 'Material Request deleted successfully.');
+        abort(403, 'Dokumen Material Request tidak dapat dihapus.');
     }
 
     public function signPrepared(Request $request, MaterialRequest $materialRequest)
@@ -459,7 +505,7 @@ class MaterialRequestController extends Controller
     // extra PDF library/dependency is required on the server.
     public function printPdf(MaterialRequest $materialRequest)
     {
-        $materialRequest->load(['items', 'approverA', 'approverC', 'creator', 'paidByUser']);
+        $materialRequest->load(['items', 'creator', 'approvals.user']);
 
         return view('material_requests.print', compact('materialRequest'));
     }

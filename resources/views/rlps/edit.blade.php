@@ -79,6 +79,27 @@
                     costs: {{ json_encode($initialCosts) }}
                  })">
 
+                @if($rlp->is_rejected)
+                    @php
+                        $rej = $rlp->approvals->first(fn($a) => $a->isRejected());
+                    @endphp
+                    <div class="mb-6 flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-sm shadow-xs">
+                        <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                        </svg>
+                        <div class="flex-1">
+                            <p class="font-semibold text-amber-900">Dokumen RRP ini sebelumnya <u>DITOLAK</u>{{ $rej ? ' pada tahap ' . $rej->label . ' (' . ($rej->user->name ?? 'Approver') . ')' : '' }}.</p>
+                            @if($rej && $rej->rejection_reason)
+                                <div class="mt-1.5 text-xs text-amber-900 bg-white/80 p-2.5 rounded-lg border border-amber-200">
+                                    <span class="font-bold text-red-800">Alasan Penolakan:</span>
+                                    <p class="mt-0.5 whitespace-pre-line">{{ $rej->rejection_reason }}</p>
+                                </div>
+                            @endif
+                            <p class="mt-2 text-xs text-amber-700">Jika Anda menyimpan perubahan ini, dokumen RRP akan <strong>otomatis diajukan ulang dari awal</strong> dan semua tanda tangan persetujuan sebelumnya akan di-reset.</p>
+                        </div>
+                    </div>
+                @endif
+
                 @if($errors->any())
                     <div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg text-sm">
                         <ul class="list-disc list-inside space-y-1">

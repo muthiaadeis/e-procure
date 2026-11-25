@@ -14,6 +14,7 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
         <style>
             #nav-progress {
@@ -22,10 +23,137 @@
                 transition: width .3s ease, opacity .2s ease;
             }
             #page-root.is-loading { opacity: .55; pointer-events: none; transition: opacity .15s; }
+
+            /* ========================================================
+               INTERACTIVE TACTILE & HOVER ANIMATIONS
+               Efek animasi tombol dan kolom saat di-hover dan dipencet
+               ======================================================== */
+            button:not(:disabled):not([class*="fixed"]):not([class*="absolute"]):not(#signature-pad):not(canvas),
+            a[class*="px-"][class*="py-"]:not(:disabled):not(.no-press),
+            a[class*="inline-flex"][class*="rounded"]:not(:disabled):not(.no-press),
+            input[type="submit"]:not(:disabled),
+            input[type="button"]:not(:disabled) {
+                transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1),
+                            box-shadow 0.16s cubic-bezier(0.34, 1.56, 0.64, 1),
+                            background-color 0.15s ease,
+                            border-color 0.15s ease,
+                            color 0.15s ease,
+                            filter 0.15s ease !important;
+                will-change: transform, box-shadow;
+                cursor: pointer;
+            }
+
+            /* Efek saat kursor diarahkan ke tombol (Hover: terangkat halus & glowing) */
+            button:not(:disabled):not([class*="fixed"]):not([class*="absolute"]):not(#signature-pad):not(canvas):hover,
+            a[class*="px-"][class*="py-"]:hover:not(.no-press),
+            a[class*="inline-flex"][class*="rounded"]:hover:not(.no-press),
+            input[type="submit"]:not(:disabled):hover,
+            input[type="button"]:not(:disabled):hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px -1px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                filter: brightness(1.02);
+            }
+
+            /* Efek saat tombol diklik / ditekan (Active: sensasi ditekan / dipencet ke dalam) */
+            button:not(:disabled):not([class*="fixed"]):not([class*="absolute"]):not(#signature-pad):not(canvas):active,
+            a[class*="px-"][class*="py-"]:active:not(.no-press),
+            a[class*="inline-flex"][class*="rounded"]:active:not(.no-press),
+            input[type="submit"]:not(:disabled):active,
+            input[type="button"]:not(:disabled):active {
+                transform: translateY(1.5px) scale(0.97) !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+                filter: brightness(0.94);
+            }
+
+            /* Ikon tombol aksi baris tabel (w-8 h-8) */
+            .w-8.h-8.inline-flex:hover,
+            .w-7.h-7.inline-flex:hover {
+                transform: translateY(-1.5px) scale(1.08) !important;
+            }
+            .w-8.h-8.inline-flex:active,
+            .w-7.h-7.inline-flex:active {
+                transform: translateY(1px) scale(0.92) !important;
+            }
+
+            /* Baris & Kolom Tabel Interaktif */
+            tbody tr.cursor-pointer,
+            tbody tr[onclick],
+            tbody tr[data-href] {
+                transition: background-color 0.15s ease,
+                            transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+                            box-shadow 0.15s ease !important;
+                cursor: pointer;
+                position: relative;
+            }
+
+            tbody tr.cursor-pointer:hover,
+            tbody tr[onclick]:hover,
+            tbody tr[data-href]:hover {
+                background-color: #f1f5f9 !important;
+                box-shadow: inset 3.5px 0 0 0 #6366f1, 0 2px 8px -2px rgba(99, 102, 241, 0.12);
+            }
+
+            tbody tr.cursor-pointer:active,
+            tbody tr[onclick]:active,
+            tbody tr[data-href]:active {
+                background-color: #e2e8f0 !important;
+                transform: scale(0.998);
+            }
+
+            /* Kartu Kolom Tahapan Persetujuan & Stat Cards */
+            .approval-stage-card,
+            .stat-card-interactive {
+                transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                            box-shadow 0.2s ease,
+                            border-color 0.2s ease,
+                            background-color 0.2s ease !important;
+            }
+
+            .approval-stage-card:hover,
+            .stat-card-interactive:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+            }
+
+            .approval-stage-card:active,
+            .stat-card-interactive:active {
+                transform: translateY(-1px) scale(0.99);
+            }
+
+            /* Kolom Input Form (Search, Date, Filter, Select) */
+            input[type="text"]:not([readonly]),
+            input[type="search"],
+            input[type="date"],
+            input[type="number"],
+            select {
+                transition: border-color 0.15s ease,
+                            box-shadow 0.15s ease,
+                            background-color 0.15s ease,
+                            transform 0.12s ease !important;
+            }
+
+            input[type="text"]:not([readonly]):hover,
+            input[type="search"]:hover,
+            input[type="date"]:hover,
+            input[type="number"]:hover,
+            select:hover {
+                border-color: #94a3b8;
+            }
+
+            input[type="text"]:not([readonly]):focus,
+            input[type="search"]:focus,
+            input[type="date"]:focus,
+            input[type="number"]:focus,
+            select:focus {
+                transform: translateY(-0.5px);
+            }
         </style>
     </head>
     <body class="font-sans antialiased bg-gray-50">
         <div id="nav-progress"></div>
+
+        {{-- Custom modal dialog pengganti alert() bawaan browser/windows --}}
+        <x-system-alert-modal />
 
         {{-- Pesan penolakan akses (403) yang mulus: muncul di pojok kanan atas, hilang sendiri --}}
         @if (session('access_error'))
@@ -252,6 +380,10 @@
                 document.write = function () {};
 
                 try {
+                    if (window.Alpine && typeof window.Alpine.destroyTree === 'function') {
+                        try { window.Alpine.destroyTree(root); } catch (e) {}
+                    }
+
                     root.replaceChildren.apply(root, Array.prototype.slice.call(next.childNodes));
 
                     root.querySelectorAll('script').forEach(function (old) {
@@ -261,6 +393,10 @@
                         s.textContent = old.textContent;
                         old.replaceWith(s); // script inline langsung dieksekusi di sini
                     });
+
+                    if (window.Alpine && typeof window.Alpine.initTree === 'function') {
+                        try { window.Alpine.initTree(root); } catch (e) { console.error('Alpine initTree error:', e); }
+                    }
                 } catch (e) {
                     console.error(e);
                 } finally {
@@ -356,18 +492,178 @@
                 go(location.href, false, true);
             });
         })();
+    </script>
 
+    {{-- Floating Toast Real-Time Dokumen Baru --}}
+        <div id="live-doc-toast"
+             style="z-index: 130;"
+             class="fixed top-5 right-5 w-[calc(100%-2rem)] max-w-sm bg-white border border-indigo-200/90 rounded-2xl shadow-2xl p-4 flex items-start gap-3.5 transition-all duration-300 transform -translate-y-6 opacity-0 pointer-events-none">
+            <span class="flex-shrink-0 w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mt-0.5 shadow-xs">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+            </span>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 mb-1">
+                    <span data-toast-badge class="px-1.5 py-0.5 rounded text-[10px] font-bold border bg-indigo-50 text-indigo-700 border-indigo-200">MR</span>
+                    <span class="text-xs font-bold text-gray-900">Dokumen Baru Masuk</span>
+                </div>
+                <p data-toast-title class="text-xs font-bold text-indigo-600 truncate"></p>
+                <p data-toast-message class="text-xs text-gray-500 mt-0.5 line-clamp-2"></p>
+                <div class="mt-2.5 flex items-center gap-3">
+                    <a data-toast-link href="#" class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                        Buka Dokumen
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            <button type="button" onclick="window.dismissLiveToast()" class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition p-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+    <script>
         // ------------------------------------------------------------------
-        // 2) Notifikasi masuk otomatis (polling), tanpa perlu refresh
+        // 2) Real-Time Sync: Dokumen baru otomatis masuk tanpa perlu reload
         // ------------------------------------------------------------------
         (function () {
-            var INTERVAL_MS = 30000;
+            var INTERVAL_MS = 6000;
+            var lastSystemVersion = null;
+            var currentUserId = {{ auth()->id() ?? 'null' }};
+            var isFirstCheck = true;
 
-            function poll() {
+            function playNotificationChime() {
+                try {
+                    var AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioCtx) return;
+                    var ctx = new AudioCtx();
+                    if (ctx.state === 'suspended') return;
+                    var osc = ctx.createOscillator();
+                    var gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.4);
+                } catch (e) {}
+            }
+
+            function showLiveToast(doc) {
+                var toast = document.getElementById('live-doc-toast');
+                if (!toast || !doc) return;
+
+                var badge = toast.querySelector('[data-toast-badge]');
+                var title = toast.querySelector('[data-toast-title]');
+                var msg = toast.querySelector('[data-toast-message]');
+                var link = toast.querySelector('[data-toast-link]');
+
+                if (badge) {
+                    badge.textContent = doc.type || 'DOC';
+                    badge.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold border ' + (doc.badge_class || 'bg-indigo-50 text-indigo-700 border-indigo-200');
+                }
+                if (title) title.textContent = doc.number || 'Dokumen Baru';
+                if (msg) msg.textContent = 'Dibuat oleh ' + (doc.creator_name || 'Staff') + ' • ' + (doc.module_title || doc.type);
+                if (link && doc.url) {
+                    link.href = doc.url;
+                }
+
+                toast.classList.remove('-translate-y-6', 'opacity-0', 'pointer-events-none');
+                toast.classList.add('translate-y-0', 'opacity-100');
+
+                if (window.__toastHideTimer) clearTimeout(window.__toastHideTimer);
+                window.__toastHideTimer = setTimeout(function () {
+                    window.dismissLiveToast();
+                }, 7000);
+            }
+
+            window.dismissLiveToast = function() {
+                var toast = document.getElementById('live-doc-toast');
+                if (toast) {
+                    toast.classList.remove('translate-y-0', 'opacity-100');
+                    toast.classList.add('-translate-y-6', 'opacity-0', 'pointer-events-none');
+                }
+            };
+
+            async function refreshPageDataQuietly() {
+                // Dispatch event untuk view yang punya custom handler (misal material requests)
+                window.dispatchEvent(new CustomEvent('document-list-refresh'));
+                window.dispatchEvent(new CustomEvent('mr-list-refresh'));
+
+                var targetIds = [
+                    'rlp-table-container',
+                    'pr-table-container',
+                    'po-table-container',
+                    'dashboard-stats-container',
+                    'dashboard-activities-container',
+                    'dashboard-forme-container'
+                ];
+
+                var found = targetIds.filter(function (id) { return !!document.getElementById(id); });
+                if (found.length === 0) return;
+
+                try {
+                    var res = await fetch(window.location.href, {
+                        credentials: 'same-origin',
+                        headers: {
+                            'Accept': 'text/html',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    if (!res.ok) return;
+                    var html = await res.text();
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+
+                    found.forEach(function (id) {
+                        var currentEl = document.getElementById(id);
+                        var newEl = doc.getElementById(id);
+                        if (currentEl && newEl && currentEl.innerHTML !== newEl.innerHTML) {
+                            currentEl.innerHTML = newEl.innerHTML;
+                        }
+                    });
+                } catch (e) {}
+            }
+
+            async function poll() {
                 var header = document.querySelector('header[x-data]');
                 if (!header || !window.Alpine) return;
                 var d = window.Alpine.$data(header);
-                if (d && !d.notificationLoading) d.loadNotifications();
+                if (!d || d.notificationLoading) return;
+
+                var data = await d.loadNotifications();
+                if (!data) return;
+
+                var version = data.system_version;
+                if (!version) return;
+
+                if (isFirstCheck) {
+                    isFirstCheck = false;
+                    lastSystemVersion = version;
+                    return;
+                }
+
+                if (version !== lastSystemVersion) {
+                    lastSystemVersion = version;
+
+                    // Dokumen baru atau perubahan alur terdeteksi -> sinkronkan isi tabel/dashboard otomatis
+                    refreshPageDataQuietly();
+
+                    // Tampilkan toast & chime audio jika dokumen baru dibuat oleh pengguna lain
+                    if (data.latest_document) {
+                        var isMe = currentUserId && data.latest_document.creator_id === currentUserId;
+                        if (!isMe) {
+                            playNotificationChime();
+                            showLiveToast(data.latest_document);
+                        }
+                    }
+                }
             }
 
             window.__pollNotifications = poll;

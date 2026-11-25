@@ -17,17 +17,22 @@ class ApprovalSlotHolder extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Daftar posisi tanda tangan yang bisa dipegang seseorang, diambil dari template PR dan PO
-    // supaya otomatis ikut kalau template berubah. Tahap "prepared" tidak dihitung karena
-    // itu tanda tangan pembuat dokumen sendiri.
+    // Posisi untuk MR dan RRP (label => dokumen). Posisi PR dan PO diambil dari template masing-masing.
+    public const MR_RRP_SLOTS = [
+        'MR Approval 1'   => 'MR',
+        'MR Approval 2'   => 'MR',
+        'MR Finance'      => 'MR',
+        'RRP Review'      => 'RRP',
+        'RRP Acknowledge' => 'RRP',
+        'RRP Approve'     => 'RRP',
+    ];
+
+    // Daftar posisi tanda tangan yang bisa dipegang seseorang: posisi MR/RRP ditambah posisi dari
+    // template PR dan PO (otomatis ikut kalau template berubah). Tahap "prepared" tidak dihitung
+    // karena itu tanda tangan pembuat dokumen sendiri.
     public static function labels(): array
     {
-        return collect(array_merge(PurchaseRequest::APPROVAL_TEMPLATE, PurchaseOrder::APPROVAL_TEMPLATE))
-            ->where('stage', '!=', 'prepared')
-            ->pluck('role_label')
-            ->unique()
-            ->values()
-            ->all();
+        return array_keys(self::MR_RRP_SLOTS);
     }
 
     // Apakah posisi ini sudah ada pemegangnya?

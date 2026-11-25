@@ -12,6 +12,8 @@ class DraftController extends Controller
 
     public function show(Request $request)
     {
+        abort_unless(auth()->user()->isInput(), 403, "You don't have permission to access drafts.");
+
         $data = $request->validate([
             'form' => ['required', Rule::in(self::FORMS)],
             'context' => 'nullable|string|max:100',
@@ -35,6 +37,8 @@ class DraftController extends Controller
 
         public function store(Request $request)
     {
+        abort_unless(auth()->user()->isInput(), 403, "You don't have permission to access drafts.");
+
         $data = $request->validate([
             'form' => ['required', Rule::in(self::FORMS)],
             'context' => 'nullable|string|max:100',
@@ -59,7 +63,7 @@ class DraftController extends Controller
     // Hapus dari tombol di list (redirect balik, beda dengan destroy() yang dipanggil JS)
     public function remove(Draft $draft)
     {
-        abort_unless($draft->user_id === auth()->id(), 403);
+        abort_unless(auth()->user()->isInput() && $draft->user_id === auth()->id(), 403);
 
         $draft->delete();
 
@@ -68,6 +72,8 @@ class DraftController extends Controller
 
     public function destroy(Request $request)
     {
+        abort_unless(auth()->user()->isInput(), 403, "You don't have permission to access drafts.");
+
         $data = $request->validate([
             'form' => ['required', Rule::in(self::FORMS)],
             'context' => 'nullable|string|max:100',

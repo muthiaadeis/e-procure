@@ -112,6 +112,7 @@
                         </div>
                     </div>
 
+                    @if(auth()->user()->isInput())
                     <a href="{{ route('vendors.create') }}"
                        class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,6 +120,7 @@
                         </svg>
                         Tambah Vendor
                     </a>
+                    @endif
                 </div>
 
                 <div id="vendor-results" class="relative">

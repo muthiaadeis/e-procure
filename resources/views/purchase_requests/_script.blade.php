@@ -7,11 +7,29 @@
             use_ppn: !!initial.use_ppn,
             ppn_percent: initial.ppn_percent || 11,
 
+            init() {
+                this.$nextTick(() => {
+                    if (this.$el) {
+                        this.$el.querySelectorAll('textarea').forEach(t => this.autoResize(t));
+                    }
+                });
+            },
+
+            autoResize(el) {
+                if (!el) return;
+                el.style.height = 'auto';
+                const h = Math.max(38, el.scrollHeight);
+                el.style.height = h + 'px';
+            },
+
             addItem() {
                 this.items.push({ description: '', line_table: '', line_sub_table: '', qty: '1', unit: '', price: '', remarks: '' });
                 this.$nextTick(() => {
                     const el = document.getElementById('pr-item-row-' + (this.items.length - 1));
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.querySelectorAll('textarea').forEach(t => this.autoResize(t));
+                    }
                 });
             },
 
@@ -52,10 +70,11 @@
                 return this.subtotal + this.ppnAmount;
             },
 
-            handleSubmit(event) {
+            async handleSubmit(event) {
+                event.preventDefault();
+
                 if (this.items.length === 0) {
                     alert('Tambahkan minimal 1 item.');
-                    event.preventDefault();
                     return;
                 }
                 const incomplete = this.items.some(i =>
@@ -66,8 +85,30 @@
                 );
                 if (incomplete) {
                     alert('Lengkapi Description, Qty, Unit, dan Price untuk setiap item.');
-                    event.preventDefault();
+                    return;
                 }
+
+                const sigInput = document.getElementById('pr-create-signature-input');
+                if (sigInput && !sigInput.value) {
+                    alert('Silakan tanda tangani dokumen sebagai pembuat (Prepared By) terlebih dahulu.');
+                    return;
+                }
+
+                const form = event.target;
+                const isEdit = Boolean(form.querySelector('input[name="_method"][value="PUT"]'));
+                const confirmMsg = isEdit
+                    ? 'Apakah data Purchase Request sudah benar? Dokumen akan diajukan ulang untuk persetujuan dari awal.'
+                    : 'Apakah Anda yakin ingin menyimpan dan mengajukan Purchase Request ini?';
+
+                const confirmed = await window.showConfirm(confirmMsg, {
+                    title: isEdit ? 'Ajukan Ulang PR' : 'Simpan PR',
+                    confirmText: isEdit ? 'Ya, Ajukan Ulang' : 'Ya, Simpan',
+                    cancelText: 'Periksa Lagi'
+                });
+
+                if (!confirmed) return;
+
+                form.submit();
             },
         };
     }

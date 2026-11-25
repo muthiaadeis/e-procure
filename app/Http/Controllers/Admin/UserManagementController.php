@@ -14,22 +14,13 @@ class UserManagementController extends Controller
     {
         $search = trim($request->input('search', ''));
 
-        $query = User::query();
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('role', 'like', "%{$search}%");
-            });
-        }
-
-        $users = $query->orderBy('name')->get();
+        // Load all users to enable smooth, instant client-side search and restoration
+        $users = User::orderBy('name')->get();
 
         // Summary stats
         $totalUsers = User::count();
         $totalAdmins = User::where('is_admin', true)->count();
-        $totalApprovers = User::whereIn('role', ['approver_a', 'approver_c'])->count();
+        $totalApprovers = User::where('role', 'approver')->count();
         $pendingPasswordChanges = User::where('must_change_password', true)->count();
 
         return view('admin.users.index', compact(
@@ -53,8 +44,9 @@ class UserManagementController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'jabatan' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'string', 'in:input,approver_a,approver_c,finance'],
+            'role' => ['required', 'string', 'in:input,approver,admin'],
             'is_admin' => ['nullable', 'boolean'],
             'password_type' => ['required', 'in:auto,manual'],
             'password' => ['nullable', 'required_if:password_type,manual', 'string', 'min:6'],
@@ -69,9 +61,10 @@ class UserManagementController extends Controller
 
         $user = User::create([
             'name' => $validated['name'],
+            'jabatan' => $validated['jabatan'] ?? null,
             'email' => $validated['email'],
             'role' => $validated['role'],
-            'is_approver' => in_array($validated['role'], ['approver_a', 'approver_c']),
+            'is_approver' => $validated['role'] === 'approver',
             'is_admin' => $request->boolean('is_admin'),
             'password' => $plainPassword,
             'must_change_password' => $request->has('must_change_password') ? $request->boolean('must_change_password') : true,
@@ -94,8 +87,9 @@ class UserManagementController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'jabatan' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'role' => ['required', 'string', 'in:input,approver_a,approver_c,finance'],
+            'role' => ['required', 'string', 'in:input,approver,admin'],
             'is_admin' => ['nullable', 'boolean'],
             'must_change_password' => ['nullable', 'boolean'],
         ]);
@@ -104,9 +98,10 @@ class UserManagementController extends Controller
 
         $user->update([
             'name' => $validated['name'],
+            'jabatan' => $validated['jabatan'] ?? null,
             'email' => $validated['email'],
             'role' => $validated['role'],
-            'is_approver' => in_array($validated['role'], ['approver_a', 'approver_c']),
+            'is_approver' => $validated['role'] === 'approver',
             'is_admin' => $isAdmin,
             'must_change_password' => $request->boolean('must_change_password'),
         ]);
@@ -117,16 +112,7 @@ class UserManagementController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        if ($user->id === auth()->id()) {
-            return redirect()->route('admin.users.index')
-                ->with('error', 'You cannot delete your own administrator account.');
-        }
-
-        $userName = $user->name;
-        $user->delete();
-
-        return redirect()->route('admin.users.index')
-            ->with('success', "User {$userName} has been removed successfully.");
+        abort(403, 'Akun pengguna tidak dapat dihapus demi integritas data dan riwayat persetujuan.');
     }
 
     public function resetPassword(User $user): RedirectResponse
